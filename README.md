@@ -1,6 +1,6 @@
-# Studio Empire - Incremental Game Dev
+# GameVibeStory
 
-Un juego incremental estilo Game Dev Story donde administras un estudio de desarrollo de juegos.
+Un juego incremental donde administras un estudio de desarrollo de juegos.
 
 ## Controles
 
@@ -43,17 +43,7 @@ Cada prestige puede desbloquear una nueva consola con bonuses:
 - **Ingresos**: Calidad^1.5 * Fama * Reputación * 100
 - **Legado**: log10(dinero_total) * (1 + 0.1 * prestiges)
 
-## Guardado
+## Visualiza la evolución
 
-Presiona **S** para guardar. El juego también guarda automáticamente al cerrar.
+Pasa por múltiples sistemas operativos, ve la evolución no solo de tu compañía si no de tu PC virtual.
 
-## Contenido
-
-- 8 géneros de juegos
-- 4 plataformas
-- 5 combos ocultos
-- 6 niveles de oficina
-- 6 mejoras de equipo
-- 4 generaciones de consolas
-- 6 mejoras de legado
-- Sistema de staff con 5 carreras
