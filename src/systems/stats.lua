@@ -4,7 +4,7 @@ Stats.__index = Stats
 function Stats.new()
     local self = setmetatable({}, Stats)
     
-    self.money = 0
+    self.money = 1000
     self.research = 0
     self.fame = 0
     self.reputation = 0

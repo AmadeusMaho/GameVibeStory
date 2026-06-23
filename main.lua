@@ -9,6 +9,9 @@ local clickSound = nil
 local startupSound = nil
 local bootFont = nil
 local desktopBg = nil
+local shader = nil
+local CURVATURE = 0.02
+local mainCanvas = nil
 
 local bootLines = {
     {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
@@ -76,14 +79,21 @@ function love.load()
     local ok, snd = pcall(love.audio.newSource, "assets/sounds/start.wav", "static")
     if ok then
         bootSound = snd
+        bootSound:setVolume(0.6)
         bootSound:play()
     end
 
     local ok2, snd2 = pcall(love.audio.newSource, "assets/sounds/click.wav", "static")
-    if ok2 then clickSound = snd2 end
+    if ok2 then
+        clickSound = snd2
+        clickSound:setVolume(0.6)
+    end
 
     local ok3, snd3 = pcall(love.audio.newSource, "assets/sounds/startupWindows.wav", "static")
-    if ok3 then startupSound = snd3 end
+    if ok3 then
+        startupSound = snd3
+        startupSound:setVolume(0.6)
+    end
 
     local ok4, img4 = pcall(love.graphics.newImage, "assets/sprites/bg.jpg")
     if ok4 then desktopBg = img4 end
@@ -92,6 +102,14 @@ function love.load()
     if ok5 then iconImages["trash"] = img5 end
     local ok6, img6 = pcall(love.graphics.newImage, "assets/sprites/notepad.png")
     if ok6 then iconImages["text"] = img6 end
+
+    local okShader, s = pcall(love.graphics.newShader, "assets/shaders/crt.glsl")
+    if okShader then shader = s end
+
+    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local pad = 0.15
+    mainCanvas = love.graphics.newCanvas(w * (1 + pad * 2), h * (1 + pad * 2))
+    mainCanvas:setWrap("repeat", "repeat")
 
     local font = love.graphics.newFont(16)
     love.graphics.setFont(font)
@@ -245,73 +263,74 @@ function drawDesktop()
         end
     end
 
+    local taskY = winH - taskH
     love.graphics.setColor(W95.bg)
-    love.graphics.rectangle("fill", 0, winH - taskH, winW, taskH)
+    love.graphics.rectangle("fill", 0, taskY, winW, taskH)
 
     love.graphics.setColor(W95.borderLight)
-    love.graphics.line(0, winH - taskH, winW, winH - taskH)
+    love.graphics.line(0, taskY, winW, taskY)
     love.graphics.setColor(W95.borderUltra)
-    love.graphics.line(0, winH - taskH + 1, winW, winH - taskH + 1)
+    love.graphics.line(0, taskY + 1, winW, taskY + 1)
 
-    local startHover = mx >= 2 and mx <= 90 and my >= winH - taskH + 2 and my <= winH - 2
+    local startHover = mx >= 2 and mx <= 90 and my >= taskY + 2 and my <= taskY + taskH - 2
     love.graphics.setColor(W95.bg)
-    love.graphics.rectangle("fill", 2, winH - taskH + 2, 88, taskH - 4)
+    love.graphics.rectangle("fill", 2, taskY + 2, 88, taskH - 4)
     if startHover then
         love.graphics.setColor(W95.borderDark)
-        love.graphics.line(2, winH - taskH + 2, 89, winH - taskH + 2)
-        love.graphics.line(2, winH - taskH + 2, 2, winH - 3)
+        love.graphics.line(2, taskY + 2, 89, taskY + 2)
+        love.graphics.line(2, taskY + 2, 2, taskY + taskH - 3)
         love.graphics.setColor(W95.borderUltra)
-        love.graphics.line(89, winH - taskH + 3, 89, winH - 3)
-        love.graphics.line(3, winH - 3, 89, winH - 3)
+        love.graphics.line(89, taskY + 3, 89, taskY + taskH - 3)
+        love.graphics.line(3, taskY + taskH - 3, 89, taskY + taskH - 3)
     else
         love.graphics.setColor(W95.borderLight)
-        love.graphics.line(2, winH - taskH + 2, 89, winH - taskH + 2)
-        love.graphics.line(2, winH - taskH + 2, 2, winH - 3)
+        love.graphics.line(2, taskY + 2, 89, taskY + 2)
+        love.graphics.line(2, taskY + 2, 2, taskY + taskH - 3)
         love.graphics.setColor(W95.borderUltra)
-        love.graphics.line(89, winH - taskH + 3, 89, winH - 3)
-        love.graphics.line(3, winH - 3, 89, winH - 3)
+        love.graphics.line(89, taskY + 3, 89, taskY + taskH - 3)
+        love.graphics.line(3, taskY + taskH - 3, 89, taskY + taskH - 3)
     end
     love.graphics.setColor(W95.fieldText)
-    love.graphics.print("Start", 20, winH - taskH + 12)
+    love.graphics.print("Start", 20, taskY + 12)
 
     love.graphics.setColor(W95.borderDark)
-    love.graphics.line(94, winH - taskH + 4, 94, winH - 5)
+    love.graphics.line(94, taskY + 4, 94, taskY + taskH - 5)
 
     local taskBtnX = 100
     local taskBtnW = 160
     love.graphics.setColor(W95.bg)
-    love.graphics.rectangle("fill", taskBtnX, winH - taskH + 2, taskBtnW, taskH - 4)
+    love.graphics.rectangle("fill", taskBtnX, taskY + 2, taskBtnW, taskH - 4)
     love.graphics.setColor(W95.borderDark)
-    love.graphics.line(taskBtnX, winH - taskH + 2, taskBtnX + taskBtnW, winH - taskH + 2)
-    love.graphics.line(taskBtnX, winH - taskH + 2, taskBtnX, winH - 3)
+    love.graphics.line(taskBtnX, taskY + 2, taskBtnX + taskBtnW, taskY + 2)
+    love.graphics.line(taskBtnX, taskY + 2, taskBtnX, taskY + taskH - 3)
     love.graphics.setColor(W95.borderLight)
-    love.graphics.line(taskBtnX + taskBtnW - 1, winH - taskH + 3, taskBtnX + taskBtnW - 1, winH - 3)
-    love.graphics.line(taskBtnX + 1, winH - 3, taskBtnX + taskBtnW - 1, winH - 3)
+    love.graphics.line(taskBtnX + taskBtnW - 1, taskY + 3, taskBtnX + taskBtnW - 1, taskY + taskH - 3)
+    love.graphics.line(taskBtnX + 1, taskY + taskH - 3, taskBtnX + taskBtnW - 1, taskY + taskH - 3)
     love.graphics.setColor(W95.fieldText)
-    love.graphics.print("Studio Empire", taskBtnX + 8, winH - taskH + 12)
+    love.graphics.print("Studio Empire", taskBtnX + 8, taskY + 12)
 
     love.graphics.setColor(W95.borderDark)
-    love.graphics.line(264, winH - taskH + 4, 264, winH - 5)
+    love.graphics.line(264, taskY + 4, 264, taskY + taskH - 5)
 
     love.graphics.setColor(W95.borderDark)
-    love.graphics.line(winW - 135, winH - taskH + 4, winW - 135, winH - 5)
+    love.graphics.line(winW - 135, taskY + 4, winW - 135, taskY + taskH - 5)
     local time = os.date("%H:%M")
     love.graphics.setColor(W95.borderLight)
-    love.graphics.line(winW - 132, winH - taskH + 4, winW - 132, winH - 5)
+    love.graphics.line(winW - 132, taskY + 4, winW - 132, taskY + taskH - 5)
     love.graphics.setColor(W95.bg)
-    love.graphics.rectangle("fill", winW - 130, winH - taskH + 4, 126, taskH - 8)
+    love.graphics.rectangle("fill", winW - 130, taskY + 4, 126, taskH - 8)
     love.graphics.setColor(W95.borderLight)
-    love.graphics.line(winW - 130, winH - taskH + 4, winW - 5, winH - taskH + 4)
-    love.graphics.line(winW - 130, winH - taskH + 4, winW - 130, winH - 5)
+    love.graphics.line(winW - 130, taskY + 4, winW - 5, taskY + 4)
+    love.graphics.line(winW - 130, taskY + 4, winW - 130, taskY + taskH - 5)
     love.graphics.setColor(W95.borderUltra)
-    love.graphics.line(winW - 5, winH - taskH + 5, winW - 5, winH - 5)
-    love.graphics.line(winW - 129, winH - 5, winW - 5, winH - 5)
+    love.graphics.line(winW - 5, taskY + 5, winW - 5, taskY + taskH - 5)
+    love.graphics.line(winW - 129, taskY + taskH - 5, winW - 5, taskY + taskH - 5)
     love.graphics.setColor(W95.fieldText)
-    love.graphics.printf(time, winW - 125, winH - taskH + 12, 110, "right")
+    love.graphics.printf(time, winW - 125, taskY + 12, 110, "right")
 
     if startMenuOpen then
         local menuX = 2
-        local menuY = winH - taskH - 180
+        local menuY = taskY - 180
         local menuW = 180
         local menuH = 180
 
@@ -356,8 +375,15 @@ function drawDesktop()
 end
 
 function love.draw()
+    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local pad = mainCanvas:getWidth() * 0.065
+
+    love.graphics.setCanvas(mainCanvas)
+    love.graphics.clear(0, 0, 0)
+    love.graphics.push()
+    love.graphics.translate(pad, pad)
+
     if gameState == "boot" then
-        love.graphics.clear(0, 0, 0)
         drawAMIBIOSLogo(80, 10)
         drawEnergyStar(1680, 10)
         love.graphics.setColor(0.8, 0.8, 0.8)
@@ -393,9 +419,26 @@ function love.draw()
 
     elseif gameState == "desktop" then
         drawDesktop()
+
     elseif gameState == "play" then
-        UI.draw(game)
+        love.graphics.pop()
+        love.graphics.setCanvas()
+        UI.draw(game, shader, CURVATURE)
+        CursorManager.draw()
+        return
     end
+
+    love.graphics.pop()
+    love.graphics.setCanvas()
+
+    if shader then
+        shader:send("time", love.timer.getTime())
+        shader:send("curvature", CURVATURE)
+        love.graphics.setShader(shader)
+    end
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(mainCanvas, -pad, -pad)
+    love.graphics.setShader()
     CursorManager.draw()
 end
 

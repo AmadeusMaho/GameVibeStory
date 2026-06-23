@@ -2,7 +2,6 @@ local UI = {}
 
 local CursorManager = require("src.cursor")
 
-local shader = nil
 local canvas = nil
 local CANVAS_W = 1920
 local CANVAS_H = 1080
@@ -37,7 +36,6 @@ local W95 = {
 }
 
 function UI.init()
-    shader = love.graphics.newShader("assets/shaders/crt.glsl")
     canvas = love.graphics.newCanvas(CANVAS_W, CANVAS_H)
     love.graphics.setBackgroundColor(0, 0, 0)
 end
@@ -95,7 +93,7 @@ function UI.inverseDistortScreen(mx, my)
     return UI.applyDistortion(canvasX, canvasY)
 end
 
-function UI.draw(game)
+function UI.draw(game, crtShader, curvature)
     buttons = {}
     
     love.graphics.setCanvas(canvas)
@@ -115,10 +113,11 @@ function UI.draw(game)
     local drawX = (winW - CANVAS_W * scale) / 2
     local drawY = (winH - CANVAS_H * scale) / 2
     
-    shader:send("screen_size", {CANVAS_W, CANVAS_H})
-    shader:send("time", love.timer.getTime())
-    shader:send("curvature", CURVATURE)
-    love.graphics.setShader(shader)
+    if crtShader then
+        crtShader:send("time", love.timer.getTime())
+        crtShader:send("curvature", curvature or 0.02)
+        love.graphics.setShader(crtShader)
+    end
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(canvas, drawX, drawY, 0, scale, scale)
     love.graphics.setShader()
