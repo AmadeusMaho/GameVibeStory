@@ -131,6 +131,7 @@ function love.load()
     if winampMusic then
         winamp:setMusic(winampMusic)
     end
+    print("WINAMP CREATED: " .. tostring(winamp ~= nil))
 end
 
 function love.update(dt)
@@ -441,10 +442,14 @@ function love.draw()
     love.graphics.draw(mainCanvas, -pad, -pad)
     love.graphics.setShader()
     CursorManager.draw()
+
+    love.graphics.setColor(1, 1, 0)
+    love.graphics.print("state=" .. gameState .. " winamp=" .. tostring(winamp ~= nil) .. " menu=" .. tostring(startMenuOpen), 10, 10)
 end
 
 function love.mousepressed(x, y, button)
     if button ~= 1 then return end
+    print("CLICK state=" .. gameState .. " at " .. x .. "," .. y)
 
     if gameState == "boot" then
         return
