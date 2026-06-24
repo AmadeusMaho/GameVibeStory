@@ -62,9 +62,7 @@ function WindowManager:drawTitleBar()
     local maxX = closeX - btnSize - 2
     local minX = maxX - btnSize - 2
 
-    local mx, my = love.mouse.getPosition()
-
-    local function drawBtn(bx, by, label)
+    local function drawBtn(bx, by)
         love.graphics.setColor(W95.buttonBg)
         love.graphics.rectangle("fill", bx, by, btnSize, btnSize)
         love.graphics.setColor(W95.borderLight)
@@ -73,16 +71,26 @@ function WindowManager:drawTitleBar()
         love.graphics.setColor(W95.borderDark)
         love.graphics.line(bx + btnSize, by, bx + btnSize, by + btnSize)
         love.graphics.line(bx, by + btnSize, bx + btnSize, by + btnSize)
-        love.graphics.setColor(W95.buttonText)
-        local font = love.graphics.getFont()
-        local fontH = font:getHeight()
-        local textY = by + (btnSize - fontH) / 2
-        love.graphics.printf(label, bx, textY, btnSize, "center")
     end
 
-    drawBtn(minX, btnY, "_")
-    drawBtn(maxX, btnY, "□")
-    drawBtn(closeX, btnY, "x")
+    local cx = btnSize / 2
+    local cy = btnSize / 2
+
+    drawBtn(minX, btnY)
+    love.graphics.setColor(W95.buttonText)
+    love.graphics.setLineWidth(1)
+    love.graphics.line(minX + 3, btnY + btnSize - 4, minX + btnSize - 3, btnY + btnSize - 4)
+
+    drawBtn(maxX, btnY)
+    love.graphics.setColor(W95.buttonText)
+    love.graphics.setLineWidth(1)
+    love.graphics.rectangle("line", maxX + 3, btnY + 3, btnSize - 6, btnSize - 6)
+
+    drawBtn(closeX, btnY)
+    love.graphics.setColor(W95.buttonText)
+    love.graphics.setLineWidth(1)
+    love.graphics.line(closeX + 4, btnY + 4, closeX + btnSize - 4, btnY + btnSize - 4)
+    love.graphics.line(closeX + btnSize - 4, btnY + 4, closeX + 4, btnY + btnSize - 4)
 
     self.buttons = {
         {x = minX, y = btnY, w = btnSize, h = btnSize, action = "minimize"},

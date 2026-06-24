@@ -44,6 +44,7 @@ local startMenuOpen = false
 local lastClickTime = 0
 local doubleClickTime = 0.4
 local taskbarApps = {}
+local winampMusic2 = nil
 
 local iconImages = {}
 local winampMusic = nil
@@ -152,6 +153,12 @@ function love.load()
         winampMusic:setVolume(0.7)
     end
 
+    local ok9, snd9 = pcall(love.audio.newSource, "assets/sounds/songw95_2.wav", "stream")
+    if ok9 then
+        winampMusic2 = snd9
+        winampMusic2:setVolume(0.7)
+    end
+
     local okShader, s = pcall(love.graphics.newShader, "assets/shaders/crt.glsl")
     if okShader then shader = s end
 
@@ -168,9 +175,14 @@ function love.load()
 
     winamp = WinampClass.new(200, 150)
     if winampMusic then
-        winamp:setMusic(winampMusic)
+        winamp:setSource(1, winampMusic)
     end
-    print("WINAMP CREATED: " .. tostring(winamp ~= nil))
+    if winampMusic2 then
+        winamp:setSource(2, winampMusic2)
+    end
+    winamp.window.onClose = function()
+        updateTaskbar()
+    end
 end
 
 function love.update(dt)
@@ -506,9 +518,6 @@ function love.draw()
         winamp:draw(mx, my)
     end
     CursorManager.draw()
-
-    love.graphics.setColor(1, 1, 0)
-    love.graphics.print("state=" .. gameState .. " winamp=" .. tostring(winamp ~= nil) .. " menu=" .. tostring(startMenuOpen), 10, 10)
 end
 
 function love.mousepressed(x, y, button)

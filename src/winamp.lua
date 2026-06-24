@@ -28,11 +28,13 @@ function Winamp.new(x, y)
     self.volume = 0.7
     self.shuffle = false
     self.music = nil
+    self.sources = {}
     self.titleFont = love.graphics.newFont(14)
     self.smallFont = love.graphics.newFont(11)
 
     self.playlist = {
         {title = "The man who sold the world - Nirvana", duration = 0, file = "songw95_1.wav"},
+        {title = "Aeroplane - Red Hot Chili Peppers", duration = 0, file = "songw95_2.wav"},
     }
     self.selectedTrack = 1
     self.buttons = {}
@@ -47,11 +49,22 @@ function Winamp.new(x, y)
     return self
 end
 
-function Winamp:setMusic(source)
-    self.music = source
-    if source then
+function Winamp:setSource(index, source)
+    self.sources[index] = source
+    if index == self.selectedTrack and source then
+        self.music = source
         self.totalTime = source:getDuration()
-        self.playlist[1].duration = self.totalTime
+        self.playlist[index].duration = self.totalTime
+    end
+end
+
+function Winamp:switchTrack()
+    self.music = self.sources[self.selectedTrack]
+    if self.music then
+        self.totalTime = self.music:getDuration()
+        self.playlist[self.selectedTrack].duration = self.totalTime
+        self.currentTime = 0
+        self.seekPos = 0
     end
 end
 
@@ -83,12 +96,7 @@ function Winamp:nextTrack()
     else
         self.selectedTrack = 1
     end
-    self.currentTime = 0
-    self.seekPos = 0
-    if self.music then
-        self.totalTime = self.music:getDuration()
-        self.playlist[self.selectedTrack].duration = self.totalTime
-    end
+    self:switchTrack()
 end
 
 function Winamp:prevTrack()
@@ -99,12 +107,7 @@ function Winamp:prevTrack()
         self.currentTime = 0
     elseif self.selectedTrack > 1 then
         self.selectedTrack = self.selectedTrack - 1
-        self.currentTime = 0
-        self.seekPos = 0
-        if self.music then
-            self.totalTime = self.music:getDuration()
-            self.playlist[self.selectedTrack].duration = self.totalTime
-        end
+        self:switchTrack()
     end
 end
 
