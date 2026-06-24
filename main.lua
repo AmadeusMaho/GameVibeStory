@@ -487,12 +487,22 @@ function drawDesktopIcon(icon, mx, my)
         love.graphics.rectangle("line", iconX, iconY, iconW, iconH)
     end
 
-    if hovered then
-        love.graphics.setColor(1, 1, 1)
-    else
-        love.graphics.setColor(1, 1, 1)
-    end
+    love.graphics.setColor(1, 1, 1)
     love.graphics.printf(icon.label, icon.x, icon.y + 70, 90, "center")
+
+    if icon.icon == "email" and email then
+        local unread = 0
+        for _, e in ipairs(email.inbox) do
+            if not e.read then unread = unread + 1 end
+        end
+        if unread > 0 then
+            local badge = "(" .. unread .. ")"
+            local prevFont = love.graphics.getFont()
+            love.graphics.setColor(1, 0, 0)
+            love.graphics.print(badge, icon.x + 28, icon.y + 70)
+            love.graphics.setFont(prevFont)
+        end
+    end
 end
 
 function drawDesktop()
