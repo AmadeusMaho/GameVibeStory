@@ -12,7 +12,7 @@ Un juego incremental de nostalgia donde visualizas la evolución de componentes,
 
 ### Inicio
 1. Empiezas en un garaje con $0
-2. Ejecuta "Not shady at all" para empezar a generar dinero de cierta forma..
+2. Ejecuta "Trabajo" para empezar a generar dinero
 3. Gana dinero y mejora tu PC
 4. ¡Mejora tu OS y llega hasta la actualidad!
 
