@@ -48,6 +48,19 @@ function WindowManager:getContentArea()
     return self.x, self.y + self.titleH, self.w, self.h - self.titleH
 end
 
+function WindowManager:getTitleBarButtons()
+    local btnSize = self.titleH - 4
+    local btnY = self.y + 2
+    local closeX = self.x + self.w - btnSize - 2
+    local maxX = closeX - btnSize - 2
+    local minX = maxX - btnSize - 2
+    return {
+        {x = minX, y = btnY, w = btnSize, h = btnSize, action = "minimize"},
+        {x = maxX, y = btnY, w = btnSize, h = btnSize, action = "fullscreen"},
+        {x = closeX, y = btnY, w = btnSize, h = btnSize, action = "close"},
+    }, btnSize, btnY, minX, maxX, closeX
+end
+
 function WindowManager:drawTitleBar()
     local btnSize = self.titleH - 4
     local btnY = self.y + 2
@@ -73,9 +86,6 @@ function WindowManager:drawTitleBar()
         love.graphics.line(bx, by + btnSize, bx + btnSize, by + btnSize)
     end
 
-    local cx = btnSize / 2
-    local cy = btnSize / 2
-
     drawBtn(minX, btnY)
     love.graphics.setColor(W95.buttonText)
     love.graphics.setLineWidth(1)
@@ -92,11 +102,7 @@ function WindowManager:drawTitleBar()
     love.graphics.line(closeX + 4, btnY + 4, closeX + btnSize - 4, btnY + btnSize - 4)
     love.graphics.line(closeX + btnSize - 4, btnY + 4, closeX + 4, btnY + btnSize - 4)
 
-    self.buttons = {
-        {x = minX, y = btnY, w = btnSize, h = btnSize, action = "minimize"},
-        {x = maxX, y = btnY, w = btnSize, h = btnSize, action = "fullscreen"},
-        {x = closeX, y = btnY, w = btnSize, h = btnSize, action = "close"},
-    }
+    self.buttons = self:getTitleBarButtons()
 end
 
 function WindowManager:drawFrame()
@@ -140,6 +146,8 @@ end
 function WindowManager:mousepressed(x, y, button)
     if button ~= 1 then return false end
     if not self.visible or self.minimized then return false end
+
+    self.buttons = self:getTitleBarButtons()
 
     for _, btn in ipairs(self.buttons) do
         if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
