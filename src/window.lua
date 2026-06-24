@@ -74,7 +74,10 @@ function WindowManager:drawTitleBar()
         love.graphics.line(bx + btnSize, by, bx + btnSize, by + btnSize)
         love.graphics.line(bx, by + btnSize, bx + btnSize, by + btnSize)
         love.graphics.setColor(W95.buttonText)
-        love.graphics.printf(label, bx, by, btnSize, "center")
+        local font = love.graphics.getFont()
+        local fontH = font:getHeight()
+        local textY = by + (btnSize - fontH) / 2
+        love.graphics.printf(label, bx, textY, btnSize, "center")
     end
 
     drawBtn(minX, btnY, "_")

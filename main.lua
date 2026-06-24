@@ -363,30 +363,20 @@ function drawDesktop()
         if isActive then
             love.graphics.setColor(W95.borderDark)
             love.graphics.rectangle("fill", tx, taskY + 2, taskItemW - 4, taskH - 4)
-            love.graphics.setColor(W95.borderLight)
-            love.graphics.line(tx, taskY + 2, tx + taskItemW - 4, taskY + 2)
-            love.graphics.line(tx, taskY + 2, tx, taskY + taskH - 3)
-            love.graphics.setColor(W95.borderUltra)
-            love.graphics.line(tx + taskItemW - 5, taskY + 3, tx + taskItemW - 5, taskY + taskH - 3)
-            love.graphics.line(tx + 1, taskY + taskH - 3, tx + taskItemW - 5, taskY + taskH - 3)
         else
             love.graphics.setColor(hovered and {0.85, 0.85, 0.85} or W95.bg)
             love.graphics.rectangle("fill", tx, taskY + 2, taskItemW - 4, taskH - 4)
-            love.graphics.setColor(W95.borderLight)
-            love.graphics.line(tx, taskY + 2, tx + taskItemW - 4, taskY + 2)
-            love.graphics.line(tx, taskY + 2, tx, taskY + taskH - 3)
-            love.graphics.setColor(W95.borderUltra)
-            love.graphics.line(tx + taskItemW - 5, taskY + 3, tx + taskItemW - 5, taskY + taskH - 3)
-            love.graphics.line(tx + 1, taskY + taskH - 3, tx + taskItemW - 5, taskY + taskH - 3)
         end
 
-        if iconImages[app.icon] then
-            love.graphics.setColor(1, 1, 1)
-            local img = iconImages[app.icon]
-            love.graphics.draw(img, tx + 4, taskY + 8, 0, 0.4, 0.4)
-        end
+        love.graphics.setColor(W95.borderLight)
+        love.graphics.line(tx, taskY + 2, tx + taskItemW - 4, taskY + 2)
+        love.graphics.line(tx, taskY + 2, tx, taskY + taskH - 3)
+        love.graphics.setColor(W95.borderUltra)
+        love.graphics.line(tx + taskItemW - 5, taskY + 3, tx + taskItemW - 5, taskY + taskH - 3)
+        love.graphics.line(tx + 1, taskY + taskH - 3, tx + taskItemW - 5, taskY + taskH - 3)
+
         love.graphics.setColor(W95.fieldText)
-        love.graphics.printf(app.label, tx + 24, taskY + 12, taskItemW - 28, "left")
+        love.graphics.printf(app.label, tx + 6, taskY + 12, taskItemW - 12, "left")
     end
 
     love.graphics.setColor(W95.borderDark)
