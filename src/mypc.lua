@@ -52,6 +52,14 @@ function MyPC.new(x, y)
     return self
 end
 
+function MyPC:toggleVisible()
+    self.window.visible = not self.window.visible
+    self.window.minimized = false
+end
+
+function MyPC:update(dt)
+end
+
 function MyPC:drawBevel(x, y, w, h)
     love.graphics.setColor(W95.borderLight)
     love.graphics.line(x, y, x + w, y)
