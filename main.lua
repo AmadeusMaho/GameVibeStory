@@ -1,5 +1,6 @@
 local CursorManager = require("src.cursor")
 local WinampClass = require("src.winamp")
+local MyPCClass = require("src.mypc")
 
 local gameState = "boot"
 local bootSound = nil
@@ -11,6 +12,7 @@ local shader = nil
 local CURVATURE = 0.02
 local mainCanvas = nil
 local winamp = nil
+local mypc = nil
 
 local bootLines = {
     {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
@@ -50,9 +52,10 @@ local iconImages = {}
 local winampMusic = nil
 
 local desktopIcons = {
-    {label = "Winamp", icon = "winamp", x = 40, y = 40},
-    {label = "Recycle Bin", icon = "trash", x = 40, y = 140},
-    {label = "Notepad", icon = "text", x = 40, y = 240},
+    {label = "Mi PC", icon = "mypc", x = 40, y = 40},
+    {label = "Winamp", icon = "winamp", x = 40, y = 140},
+    {label = "Recycle Bin", icon = "trash", x = 40, y = 240},
+    {label = "Notepad", icon = "text", x = 40, y = 340},
 }
 local W95 = {
     bg = {0.75, 0.75, 0.75},
@@ -83,6 +86,12 @@ function openApp(appId)
         elseif not winamp.window.visible then
             winamp:toggleVisible()
         end
+    elseif appId == "mypc" and mypc then
+        if mypc.window.visible and mypc.window.minimized then
+            mypc.window.minimized = false
+        elseif not mypc.window.visible then
+            mypc:toggleVisible()
+        end
     end
     updateTaskbar()
 end
@@ -90,6 +99,8 @@ end
 function closeApp(appId)
     if appId == "winamp" and winamp then
         winamp.window.visible = false
+    elseif appId == "mypc" and mypc then
+        mypc.window.visible = false
     end
     updateTaskbar()
 end
@@ -103,6 +114,14 @@ function toggleApp(appId)
         else
             winamp.window.minimized = true
         end
+    elseif appId == "mypc" and mypc then
+        if not mypc.window.visible then
+            mypc:toggleVisible()
+        elseif mypc.window.minimized then
+            mypc.window.minimized = false
+        else
+            mypc.window.minimized = true
+        end
     end
     updateTaskbar()
 end
@@ -110,7 +129,10 @@ end
 function updateTaskbar()
     taskbarApps = {}
     if winamp and winamp.window.visible then
-        table.insert(taskbarApps, {id = "winamp", label = "Winamp", icon = "winamp"})
+        table.insert(taskbarApps, {id = "winamp", label = "Winamp"})
+    end
+    if mypc and mypc.window.visible then
+        table.insert(taskbarApps, {id = "mypc", label = "Mi PC"})
     end
 end
 
@@ -146,6 +168,8 @@ function love.load()
     if ok6 then iconImages["text"] = img6 end
     local ok7, img7 = pcall(love.graphics.newImage, "assets/sprites/winamp.png")
     if ok7 then iconImages["winamp"] = img7 end
+    local ok8, img8 = pcall(love.graphics.newImage, "assets/sprites/mypc.png")
+    if ok8 then iconImages["mypc"] = img8 end
 
     local ok8, snd8 = pcall(love.audio.newSource, "assets/sounds/songw95_1.wav", "stream")
     if ok8 then
@@ -181,6 +205,15 @@ function love.load()
         winamp:setSource(2, winampMusic2)
     end
     winamp.window.onClose = function()
+        if winamp.music then
+            winamp.music:stop()
+            winamp.playing = false
+        end
+        updateTaskbar()
+    end
+
+    mypc = MyPCClass.new(120, 80)
+    mypc.window.onClose = function()
         updateTaskbar()
     end
 end
@@ -247,6 +280,7 @@ function love.update(dt)
     end
 
     if winamp then winamp:update(dt) end
+    if mypc then mypc:update(dt) end
 end
 
 function drawAMIBIOSLogo(x, y)
@@ -329,6 +363,9 @@ function drawDesktop()
     end
 
     if winamp and winamp.visible and winamp:hitTest(mx, my) then
+        CursorManager.set("link")
+    end
+    if mypc and mypc.window.visible and mypc:hitTest(mx, my) then
         CursorManager.set("link")
     end
 
@@ -426,6 +463,7 @@ function drawDesktop()
         love.graphics.line(menuX + menuW - 1, menuY + 1, menuX + menuW - 1, menuY + menuH - 1)
 
         local menuItems = {
+            {label = "Mi PC", action = "mypc"},
             {label = "Winamp", action = "winamp"},
             {label = "Notepad", action = "none"},
             {label = "---", action = "none"},
@@ -517,6 +555,10 @@ function love.draw()
         local mx, my = love.mouse.getPosition()
         winamp:draw(mx, my)
     end
+    if gameState == "desktop" and mypc then
+        local mx, my = love.mouse.getPosition()
+        mypc:draw(mx, my)
+    end
     CursorManager.draw()
 end
 
@@ -526,6 +568,10 @@ function love.mousepressed(x, y, button)
     if gameState == "boot" then
         return
     elseif gameState == "desktop" then
+        if mypc and mypc.window.visible and not mypc.window.minimized and mypc:hitTest(x, y) then
+            mypc:mousepressed(x, y, button)
+            return
+        end
         if winamp and winamp.window.visible and not winamp.window.minimized and winamp:hitTest(x, y) then
             winamp:mousepressed(x, y, button)
             return
@@ -550,8 +596,10 @@ function love.mousepressed(x, y, button)
             if x >= menuX and x <= menuX + menuW and y >= menuY and y <= taskY then
                 local clickedItem = math.floor((y - menuY) / 22) + 1
                 if clickedItem == 1 then
+                    toggleApp("mypc")
+                elseif clickedItem == 2 then
                     toggleApp("winamp")
-                elseif clickedItem == 4 then
+                elseif clickedItem == 5 then
                     love.event.quit()
                 end
                 startMenuOpen = false
@@ -573,13 +621,15 @@ function love.mousepressed(x, y, button)
 
         for _, icon in ipairs(desktopIcons) do
             if x >= icon.x and x <= icon.x + 90 and y >= icon.y and y <= icon.y + 90 then
-                if icon.icon == "winamp" then
-                    local currentTime = love.timer.getTime()
-                    if currentTime - lastClickTime <= doubleClickTime then
+                local currentTime = love.timer.getTime()
+                if currentTime - lastClickTime <= doubleClickTime then
+                    if icon.icon == "winamp" then
                         toggleApp("winamp")
+                    elseif icon.icon == "mypc" then
+                        toggleApp("mypc")
                     end
-                    lastClickTime = currentTime
                 end
+                lastClickTime = currentTime
                 break
             end
         end
@@ -588,10 +638,12 @@ end
 
 function love.mousereleased(x, y, button)
     if winamp then winamp:mousereleased(x, y, button) end
+    if mypc then mypc:mousereleased(x, y, button) end
 end
 
 function love.mousemoved(x, y)
     if winamp then winamp:mousemoved(x, y) end
+    if mypc then mypc:mousemoved(x, y) end
 end
 
 function love.keypressed(key)
