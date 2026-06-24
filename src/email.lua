@@ -144,7 +144,7 @@ function Email:toggleVisible()
 end
 
 function Email:playChime()
-    if self.chimeSound then
+    if self.chimeSound and self.window.visible then
         self.chimeSound:stop()
         self.chimeSound:play()
     end
