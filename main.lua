@@ -41,9 +41,6 @@ local countdownValue = 3
 local countdownTimer = 0
 
 local startMenuOpen = false
-local lastClickTime = 0
-local doubleClickTime = 0.4
-local clickDebug = ""
 
 local iconImages = {}
 local winampMusic = nil
@@ -446,13 +443,10 @@ function love.draw()
 
     love.graphics.setColor(1, 1, 0)
     love.graphics.print("state=" .. gameState .. " winamp=" .. tostring(winamp ~= nil) .. " menu=" .. tostring(startMenuOpen), 10, 10)
-    love.graphics.setColor(1, 0, 0)
-    love.graphics.print(clickDebug, 10, 30)
 end
 
 function love.mousepressed(x, y, button)
     if button ~= 1 then return end
-    clickDebug = "CLICK at " .. math.floor(x) .. "," .. math.floor(y)
 
     if gameState == "boot" then
         return
@@ -470,7 +464,6 @@ function love.mousepressed(x, y, button)
 
         if startHover then
             startMenuOpen = not startMenuOpen
-            clickDebug = clickDebug .. " START"
             return
         end
 
@@ -481,7 +474,6 @@ function love.mousepressed(x, y, button)
 
             if x >= menuX and x <= menuX + menuW and y >= menuY and y <= taskY then
                 local clickedItem = math.floor((y - menuY) / 22) + 1
-                clickDebug = clickDebug .. " MENU item=" .. clickedItem
                 if clickedItem == 1 and winamp then
                     winamp:toggleVisible()
                 elseif clickedItem == 4 then
@@ -496,13 +488,8 @@ function love.mousepressed(x, y, button)
 
         for _, icon in ipairs(desktopIcons) do
             if x >= icon.x and x <= icon.x + 90 and y >= icon.y and y <= icon.y + 90 then
-                clickDebug = clickDebug .. " ICON=" .. icon.icon
                 if icon.icon == "winamp" then
-                    local currentTime = love.timer.getTime()
-                    if currentTime - lastClickTime <= doubleClickTime then
-                        winamp:toggleVisible()
-                    end
-                    lastClickTime = currentTime
+                    winamp:toggleVisible()
                 end
                 break
             end
