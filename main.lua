@@ -499,7 +499,7 @@ function drawDesktopIcon(icon, mx, my)
             local badge = "(" .. unread .. ")"
             local prevFont = love.graphics.getFont()
             love.graphics.setColor(1, 0, 0)
-            love.graphics.print(badge, icon.x + 28, icon.y + 70)
+            love.graphics.print(badge, icon.x + 71, icon.y + 70)
             love.graphics.setFont(prevFont)
         end
     end
