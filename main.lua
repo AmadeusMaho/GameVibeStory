@@ -101,6 +101,8 @@ function love.load()
     if ok5 then iconImages["trash"] = img5 end
     local ok6, img6 = pcall(love.graphics.newImage, "assets/sprites/notepad.png")
     if ok6 then iconImages["text"] = img6 end
+    local ok7, img7 = pcall(love.graphics.newImage, "assets/sprites/winamp.png")
+    if ok7 then iconImages["winamp"] = img7 end
 
     local okShader, s = pcall(love.graphics.newShader, "assets/shaders/crt.glsl")
     if okShader then shader = s end
@@ -217,10 +219,18 @@ function drawDesktopIcon(icon, mx, my)
         love.graphics.rectangle("line", icon.x, icon.y, 90, 88)
     end
 
-    love.graphics.setColor(0.6, 0.6, 0.6)
-    love.graphics.rectangle("fill", iconX, iconY, iconW, iconH, 2, 2)
-    love.graphics.setColor(0.4, 0.4, 0.4)
-    love.graphics.rectangle("line", iconX, iconY, iconW, iconH)
+    if iconImages[icon.icon] then
+        love.graphics.setColor(1, 1, 1)
+        local img = iconImages[icon.icon]
+        local imgW, imgH = img:getDimensions()
+        local scale = math.min(iconW / imgW, iconH / imgH)
+        love.graphics.draw(img, iconX + (iconW - imgW * scale) / 2, iconY + (iconH - imgH * scale) / 2, 0, scale, scale)
+    else
+        love.graphics.setColor(0.6, 0.6, 0.6)
+        love.graphics.rectangle("fill", iconX, iconY, iconW, iconH, 2, 2)
+        love.graphics.setColor(0.4, 0.4, 0.4)
+        love.graphics.rectangle("line", iconX, iconY, iconW, iconH)
+    end
 
     if hovered then
         love.graphics.setColor(1, 1, 1)

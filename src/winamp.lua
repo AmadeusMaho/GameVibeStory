@@ -1,6 +1,8 @@
 local Winamp = {}
 Winamp.__index = Winamp
 
+local WindowManager = require("src.window")
+
 local WA = {
     bg = {0.05, 0.05, 0.1},
     panelBg = {0.1, 0.1, 0.15},
@@ -9,8 +11,6 @@ local WA = {
     text = {0, 1, 0},
     textDim = {0, 0.5, 0},
     textBright = {0.2, 1, 0.2},
-    titleBg = {0.0, 0.0, 0.3},
-    titleText = {1, 1, 1},
     buttonBg = {0.15, 0.15, 0.2},
     buttonHover = {0.25, 0.25, 0.3},
     sliderBg = {0.05, 0.05, 0.1},
@@ -19,15 +19,7 @@ local WA = {
 
 function Winamp.new(x, y)
     local self = setmetatable({}, Winamp)
-    self.x = x or 100
-    self.y = y or 100
-    self.visible = false
-    self.dragging = false
-    self.dragOffsetX = 0
-    self.dragOffsetY = 0
-
-    self.w = 275
-    self.h = 140
+    self.window = WindowManager.new("Winamp", x or 100, y or 100, 275, 165)
 
     self.playing = false
     self.currentTime = 0
@@ -46,6 +38,19 @@ function Winamp.new(x, y)
     self.selectedTrack = 1
     self.buttons = {}
 
+    self.window.onDraw = function(_, cx, cy, cw, ch)
+        self:drawContent(cx, cy, cw, ch)
+    end
+    self.window.onMousePressed = function(_, x, y, button)
+        return self:handleClick(x, y, button)
+    end
+    self.window.onMouseReleased = function(_, x, y, button)
+        self:handleRelease(x, y, button)
+    end
+    self.window.onMouseMoved = function(_, x, y)
+        self:handleMove(x, y)
+    end
+
     return self
 end
 
@@ -56,11 +61,12 @@ function Winamp:formatTime(seconds)
 end
 
 function Winamp:toggleVisible()
-    self.visible = not self.visible
+    self.window.visible = not self.window.visible
+    self.window.minimized = false
 end
 
 function Winamp:update(dt)
-    if not self.visible then return end
+    if not self.window.visible then return end
     if self.playing then
         self.currentTime = self.currentTime + dt
         if self.currentTime >= self.totalTime then
@@ -113,56 +119,49 @@ function Winamp:drawButton(x, y, w, h, label, hovered)
     love.graphics.printf(label, x, y + (h - 12) / 2, w, "center")
 end
 
-function Winamp:draw(mx, my)
-    if not self.visible then return end
+function Winamp:drawContent(cx, cy, cw, ch)
     self.buttons = {}
 
-    local px, py = self.x, self.y
-
     love.graphics.setColor(WA.panelBg)
-    love.graphics.rectangle("fill", px, py, self.w, self.h)
-    self:drawBorder(px, py, self.w, self.h, false)
-
-    love.graphics.setColor(WA.titleBg)
-    love.graphics.rectangle("fill", px + 2, py + 2, self.w - 4, 14)
-    love.graphics.setColor(WA.titleText)
-    love.graphics.printf("WINAMP", px + 2, py + 2, self.w - 4, "center")
+    love.graphics.rectangle("fill", cx, cy, cw, ch)
 
     love.graphics.setColor(WA.bg)
-    love.graphics.rectangle("fill", px + 5, py + 20, self.w - 10, 24)
-    self:drawBorder(px + 5, py + 20, self.w - 10, 24, true)
+    love.graphics.rectangle("fill", cx + 5, cy + 5, cw - 10, 24)
+    self:drawBorder(cx + 5, cy + 5, cw - 10, 24, true)
 
     local track = self.playlist[self.selectedTrack]
     local title = track and track.title or "No track"
     love.graphics.setColor(WA.textBright)
-    love.graphics.printf(title, px + 10, py + 27, self.w - 20, "center")
+    love.graphics.printf(title, cx + 10, cy + 12, cw - 20, "center")
 
     love.graphics.setColor(WA.sliderBg)
-    love.graphics.rectangle("fill", px + 5, py + 50, self.w - 10, 8)
+    love.graphics.rectangle("fill", cx + 5, cy + 35, cw - 10, 8)
     love.graphics.setColor(WA.sliderFill)
-    love.graphics.rectangle("fill", px + 5, py + 50, (self.w - 10) * self.seekPos, 8)
-    self:drawBorder(px + 5, py + 50, self.w - 10, 8, true)
+    love.graphics.rectangle("fill", cx + 5, cy + 35, (cw - 10) * self.seekPos, 8)
+    self:drawBorder(cx + 5, cy + 35, cw - 10, 8, true)
 
     local timeStr = self:formatTime(self.currentTime) .. " / " .. self:formatTime(self.totalTime)
     love.graphics.setColor(WA.text)
-    love.graphics.printf(timeStr, px + 5, py + 62, self.w - 10, "right")
+    love.graphics.printf(timeStr, cx + 5, cy + 47, cw - 10, "right")
 
-    local btnY = py + 80
+    local btnY = cy + 65
     local btnH = 20
     local btnW = 40
     local btnGap = 5
     local btns = {">", "[]", ">|"}
-    local startX = px + (self.w - (#btns * (btnW + btnGap) - btnGap)) / 2
+    local startX = cx + (cw - (#btns * (btnW + btnGap) - btnGap)) / 2
 
     for i, label in ipairs(btns) do
         local bx = startX + (i - 1) * (btnW + btnGap)
+        local mx, my = love.mouse.getPosition()
         local hov = mx >= bx and mx <= bx + btnW and my >= btnY and my <= btnY + btnH
         self:drawButton(bx, btnY, btnW, btnH, label, hov)
         table.insert(self.buttons, {x = bx, y = btnY, w = btnW, h = btnH, action = label})
     end
 
-    local shufX = px + 5
-    local shufY = py + 108
+    local shufX = cx + 5
+    local shufY = cy + 93
+    local mx, my = love.mouse.getPosition()
     local shufHov = mx >= shufX and mx <= shufX + 50 and my >= shufY and my <= shufY + 14
     love.graphics.setColor(self.shuffle and WA.textBright or WA.textDim)
     love.graphics.rectangle("fill", shufX, shufY, 50, 14)
@@ -170,7 +169,7 @@ function Winamp:draw(mx, my)
     love.graphics.printf("SHUFFLE", shufX, shufY, 50, "center")
     table.insert(self.buttons, {x = shufX, y = shufY, w = 50, h = 14, action = "shuffle"})
 
-    local volX = px + self.w - 100
+    local volX = cx + cw - 100
     love.graphics.setColor(WA.textDim)
     love.graphics.print("VOL", volX, shufY + 1)
     love.graphics.setColor(WA.sliderBg)
@@ -181,31 +180,10 @@ function Winamp:draw(mx, my)
 
     local trackInfo = string.format("%d/%d", self.selectedTrack, #self.playlist)
     love.graphics.setColor(WA.textDim)
-    love.graphics.printf(trackInfo, px + 60, shufY + 1, 80, "center")
+    love.graphics.printf(trackInfo, cx + 60, shufY + 1, 80, "center")
 end
 
-function Winamp:isTitleBar(mx, my)
-    return mx >= self.x and mx <= self.x + self.w
-        and my >= self.y and my <= self.y + 16
-end
-
-function Winamp:hitTest(mx, my)
-    if not self.visible then return false end
-    return mx >= self.x and mx <= self.x + self.w
-        and my >= self.y and my <= self.y + self.h
-end
-
-function Winamp:mousepressed(x, y, button)
-    if button ~= 1 then return false end
-    if not self.visible then return false end
-
-    if self:isTitleBar(x, y) then
-        self.dragging = true
-        self.dragOffsetX = x - self.x
-        self.dragOffsetY = y - self.y
-        return true
-    end
-
+function Winamp:handleClick(x, y, button)
     for _, btn in ipairs(self.buttons) do
         if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
             if btn.action == ">" then
@@ -228,21 +206,33 @@ function Winamp:mousepressed(x, y, button)
             return true
         end
     end
-
     return true
 end
 
+function Winamp:handleRelease(x, y, button)
+end
+
+function Winamp:handleMove(x, y)
+end
+
+function Winamp:draw(mx, my)
+    self.window:drawFrame()
+end
+
+function Winamp:hitTest(mx, my)
+    return self.window:hitTest(mx, my)
+end
+
+function Winamp:mousepressed(x, y, button)
+    return self.window:mousepressed(x, y, button)
+end
+
 function Winamp:mousereleased(x, y, button)
-    if button == 1 then
-        self.dragging = false
-    end
+    self.window:mousereleased(x, y, button)
 end
 
 function Winamp:mousemoved(x, y)
-    if self.dragging then
-        self.x = x - self.dragOffsetX
-        self.y = y - self.dragOffsetY
-    end
+    self.window:mousemoved(x, y)
 end
 
 return Winamp
