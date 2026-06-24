@@ -286,6 +286,8 @@ function love.load()
     if ok11 then iconImages["email"] = img11 end
     local ok12, img12 = pcall(love.graphics.newImage, "assets/sprites/recyclebin.png")
     if ok12 then iconImages["recyclebin"] = img12 end
+    local ok13, img13 = pcall(love.graphics.newImage, "assets/sprites/taskbaricon.png")
+    if ok13 then iconImages["taskbar"] = img13 end
 
     local ok8, snd8 = pcall(love.audio.newSource, "assets/sounds/songw95_1.wav", "stream")
     if ok8 then
@@ -556,7 +558,17 @@ function drawDesktop()
         love.graphics.line(3, taskY + taskH - 3, 89, taskY + taskH - 3)
     end
     love.graphics.setColor(W95.fieldText)
-    love.graphics.print("Start", 20, taskY + 12)
+    if iconImages["taskbar"] then
+        local img = iconImages["taskbar"]
+        local imgW, imgH = img:getDimensions()
+        local iconScale = math.min(14 / imgW, 14 / imgH)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(img, 6, taskY + (taskH - 14 * iconScale) / 2, 0, iconScale, iconScale)
+        love.graphics.setColor(W95.fieldText)
+        love.graphics.print("Start", 22, taskY + 12)
+    else
+        love.graphics.print("Start", 20, taskY + 12)
+    end
 
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(94, taskY + 4, 94, taskY + taskH - 5)
