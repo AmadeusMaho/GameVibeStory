@@ -83,7 +83,6 @@ function MyPC:drawContent(cx, cy, cw, ch)
 
     local prevFont = love.graphics.getFont()
     local smallFont = love.graphics.newFont(11)
-    local boldFont = love.graphics.newFont(11, "normal", "normal", "normal")
 
     love.graphics.setFont(smallFont)
 
