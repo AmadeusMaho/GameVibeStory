@@ -1,5 +1,4 @@
 local CursorManager = require("src.cursor")
-local Winamp = require("src.winamp")
 
 local gameState = "boot"
 local bootSound = nil
@@ -128,9 +127,13 @@ function love.load()
     bootFont = font
 
     CursorManager.init()
-    winamp = Winamp.new(200, 150)
-    if winampMusic then
-        winamp:setMusic(winampMusic)
+
+    local okW, winampMod = pcall(require, "src.winamp")
+    if okW then
+        winamp = winampMod.new(200, 150)
+        if winampMusic then
+            winamp:setMusic(winampMusic)
+        end
     end
 end
 
@@ -451,23 +454,15 @@ function love.mousepressed(x, y, button)
         return
     elseif gameState == "desktop" then
         if winamp and winamp.window.visible and not winamp.window.minimized and winamp:hitTest(x, y) then
-            if winamp:mousepressed(x, y, button) then
-                return
-            end
+            winamp:mousepressed(x, y, button)
+            return
         end
-
-        local currentTime = love.timer.getTime()
-        local distX = math.abs(x - lastClickX)
-        local distY = math.abs(y - lastClickY)
-        local isDoubleClick = (currentTime - lastClickTime) <= doubleClickTime and distX < 30 and distY < 30
-        lastClickTime = currentTime
-        lastClickX = x
-        lastClickY = y
 
         playClick()
         local winH = love.graphics.getHeight()
         local taskH = 40
-        local startHover = x >= 2 and x <= 90 and y >= winH - taskH + 2 and y <= winH - 2
+        local taskY = winH - taskH
+        local startHover = x >= 2 and x <= 90 and y >= taskY + 2 and y <= taskY + taskH - 2
 
         if startHover then
             startMenuOpen = not startMenuOpen
@@ -476,28 +471,17 @@ function love.mousepressed(x, y, button)
 
         if startMenuOpen then
             local menuX = 2
-            local menuY = winH - taskH - 110
+            local menuY = taskY - 110
             local menuW = 160
-            local menuItems = {
-                {action = "winamp"},
-                {action = "none"},
-                {action = "none"},
-                {action = "quit"},
-            }
 
-            if x >= menuX and x <= menuX + menuW and y >= menuY and y <= menuY + 110 then
-                for i, item in ipairs(menuItems) do
-                    local itemY = menuY + (i - 1) * 22
-                    if y >= itemY and y <= itemY + 20 then
-                        if item.action == "winamp" then
-                            if winamp then winamp:toggleVisible() end
-                            startMenuOpen = false
-                        elseif item.action == "quit" then
-                            love.event.quit()
-                        end
-                        break
-                    end
+            if x >= menuX and x <= menuX + menuW and y >= menuY and y <= taskY then
+                local clickedItem = math.floor((y - menuY) / 22) + 1
+                if clickedItem == 1 then
+                    winamp:toggleVisible()
+                elseif clickedItem == 4 then
+                    love.event.quit()
                 end
+                startMenuOpen = false
                 return
             else
                 startMenuOpen = false
@@ -506,10 +490,15 @@ function love.mousepressed(x, y, button)
 
         for _, icon in ipairs(desktopIcons) do
             if x >= icon.x and x <= icon.x + 90 and y >= icon.y and y <= icon.y + 90 then
-                if isDoubleClick then
-                    if icon.icon == "winamp" then
-                        if winamp then winamp:toggleVisible() end
-                    end
+                local currentTime = love.timer.getTime()
+                local distX = math.abs(x - lastClickX)
+                local distY = math.abs(y - lastClickY)
+                local isDoubleClick = (currentTime - lastClickTime) <= doubleClickTime and distX < 30 and distY < 30
+                lastClickTime = currentTime
+                lastClickX = x
+                lastClickY = y
+                if isDoubleClick and icon.icon == "winamp" then
+                    winamp:toggleVisible()
                 end
                 break
             end
