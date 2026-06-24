@@ -81,10 +81,10 @@ function Notepad:update(dt)
                 if self.emailRef and not self.personalEmailSent then
                     self.personalEmailSent = true
                     self.emailRef:addEmailToInbox({
-                        subject = "Nuevo: Departamento de Personal",
+                        subject = "Felicidades! Proyecto completado",
                         sender = "admin@empresa.com",
                         type = "news",
-                        body = "Estimado freelancer:\n\nFelicidades por completar\nsu primer proyecto!\n\nAhora puede contratar personal\npara que trabajen por usted.\n\nNuevo icono disponible:\n'Personal' en el escritorio.\n\nSus empleados generaran\ndinero automaticamente.\n\nSaludos cordiales.",
+                        body = "Estimado freelancer:\n\nFelicidades por completar\nsu primer proyecto!\n\nHa demostrado ser un\ntrabajador confiable.\n\nSiga asi y pronto habran\nmas oportunidades.\n\nSaludos cordiales.",
                     })
                 end
             elseif obj.id == "work20" and tasksDone >= 20 then

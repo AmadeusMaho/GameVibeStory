@@ -500,13 +500,13 @@ function Email:handleClick(x, y, button)
                     if self.notepadRef then
                         self.notepadRef.emailJobsAccepted = (self.notepadRef.emailJobsAccepted or 0) + 1
                     end
-                elseif self.selectedEmail.type == "malware" and self.selectedEmail.moneyLoss and self.trabajoRef then
-                    self.trabajoRef.money = math.max(0, self.trabajoRef.money - self.selectedEmail.moneyLoss)
+                elseif self.selectedEmail.type == "malware" and self.selectedEmail.isDesktopMalware then
+                    self.downloadIconActive = true
                     if self.notepadRef then
                         self.notepadRef.malwareDownloaded = (self.notepadRef.malwareDownloaded or 0) + 1
                     end
-                elseif self.selectedEmail.type == "malware" and self.selectedEmail.isDesktopMalware then
-                    self.downloadIconActive = true
+                elseif self.selectedEmail.type == "malware" and self.selectedEmail.moneyLoss and self.selectedEmail.moneyLoss > 0 and self.trabajoRef then
+                    self.trabajoRef.money = math.max(0, self.trabajoRef.money - self.selectedEmail.moneyLoss)
                     if self.notepadRef then
                         self.notepadRef.malwareDownloaded = (self.notepadRef.malwareDownloaded or 0) + 1
                     end

@@ -12,6 +12,8 @@ local AchievementsClass = require("src.achievements")
 local gameState = "boot"
 local bsodTimer = 0
 local bsodActive = false
+local malwarePopupTimer = 0
+local malwarePopupDuration = 3.0
 local bootSound = nil
 local clickSound = nil
 local startupSound = nil
@@ -117,9 +119,8 @@ function playClick()
 end
 
 function triggerMalware()
-    bsodActive = true
-    bsodTimer = 5.0
-    gameState = "bsod"
+    gameState = "malware_popup"
+    malwarePopupTimer = 0
     if trabajo then
         local loss = math.floor(trabajo.money * (0.3 + math.random() * 0.3))
         trabajo.money = math.max(0, trabajo.money - loss)
@@ -128,30 +129,84 @@ end
 
 function drawBSOD()
     local w, h = love.graphics.getDimensions()
-    love.graphics.setColor(0, 0, 0.5)
+    local margin = 80
+    local colW = w - margin * 2
+
+    love.graphics.setColor(0, 0, 0.65)
     love.graphics.rectangle("fill", 0, 0, w, h)
 
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(love.graphics.newFont(16))
-    love.graphics.printf("Windows", 0, h * 0.15, w, "center")
+    love.graphics.print("Windows", margin, h * 0.15)
+
     love.graphics.setFont(love.graphics.newFont(12))
-    love.graphics.printf("Un error irrecoverable ha occurrido.", 0, h * 0.25, w, "center")
-    love.graphics.printf("Se ha producido un error y Windows", 0, h * 0.30, w, "center")
-    love.graphics.printf("ha de cerrarse para evitar danos al equipo.", 0, h * 0.33, w, "center")
-    love.graphics.printf("")
-    love.graphics.printf("ERROR: 0E : 016F : BFF9B3D4", 0, h * 0.40, w, "center")
-    love.graphics.printf(" KERNEL32.DLL", 0, h * 0.43, w, "center")
-    love.graphics.printf("")
-    love.graphics.printf("* Presione cualquier tecla para terminar", 0, h * 0.52, w, "center")
-    love.graphics.printf("  la sesion actual.", 0, h * 0.55, w, "center")
-    love.graphics.printf("")
-    love.graphics.printf("* Reinicie el equipo. Presione F5", 0, h * 0.62, w, "center")
-    love.graphics.printf("  para iniciar el Modo a prueba de errores.", 0, h * 0.65, w, "center")
-    love.graphics.printf("")
+    love.graphics.print("Un error irrecoverable ha occurrido.", margin, h * 0.25)
+    love.graphics.print("Se ha producido un error y Windows", margin, h * 0.30)
+    love.graphics.print("ha de cerrarse para evitar danos al equipo.", margin, h * 0.33)
+    love.graphics.print("", margin, h * 0.36)
+    love.graphics.print("ERROR: 0E : 016F : BFF9B3D4", margin, h * 0.40)
+    love.graphics.print(" KERNEL32.DLL", margin, h * 0.43)
+    love.graphics.print("", margin, h * 0.46)
+    love.graphics.print("* Presione cualquier tecla para terminar", margin, h * 0.52)
+    love.graphics.print("  la sesion actual.", margin, h * 0.55)
+    love.graphics.print("", margin, h * 0.58)
+    love.graphics.print("* Reinicie el equipo. Presione F5", margin, h * 0.62)
+    love.graphics.print("  para iniciar el Modo a prueba de errores.", margin, h * 0.65)
     love.graphics.setFont(love.graphics.newFont(10))
-    love.graphics.printf("Informacion de depuracion:", 0, h * 0.75, w, "center")
-    love.graphics.printf("  Filtros=00000001 Dispositivo=00000000", 0, h * 0.78, w, "center")
-    love.graphics.printf("  Carga de la direccion de comandos no disponible", 0, h * 0.81, w, "center")
+    love.graphics.print("Informacion de depuracion:", margin, h * 0.75)
+    love.graphics.print("  Filtros=00000001 Dispositivo=00000000", margin, h * 0.78)
+    love.graphics.print("  Carga de la direccion de comandos no disponible", margin, h * 0.81)
+end
+
+function drawMalwarePopup()
+    local w, h = love.graphics.getDimensions()
+    local popupW = 420
+    local popupH = 180
+    local popupX = (w - popupW) / 2
+    local popupY = (h - popupH) / 2
+
+    love.graphics.setColor(0.75, 0.75, 0.75)
+    love.graphics.rectangle("fill", popupX, popupY, popupW, popupH)
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("fill", popupX + 2, popupY + 2, popupW - 4, popupH - 4)
+
+    love.graphics.setColor(0, 0, 0.5)
+    love.graphics.rectangle("fill", popupX + 2, popupY + 2, popupW - 4, 20)
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.setFont(love.graphics.newFont(12))
+    love.graphics.print("Error", popupX + 8, popupY + 5)
+
+    local iconX = popupX + 25
+    local iconY = popupY + 35
+    love.graphics.setColor(1, 0, 0)
+    love.graphics.circle("fill", iconX + 16, iconY + 16, 14)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.circle("fill", iconX + 16, iconY + 16, 12)
+    love.graphics.setColor(1, 0, 0)
+    love.graphics.setLineWidth(3)
+    love.graphics.line(iconX + 8, iconY + 8, iconX + 24, iconY + 24)
+    love.graphics.line(iconX + 24, iconY + 8, iconX + 8, iconY + 24)
+    love.graphics.setLineWidth(1)
+
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print("Su equipo ha sido infectado por malware.", popupX + 60, popupY + 40)
+    love.graphics.print("Windows va a cerrarse para evitar danos.", popupX + 60, popupY + 60)
+
+    love.graphics.setColor(0.75, 0.75, 0.75)
+    love.graphics.rectangle("fill", popupX + popupW - 85, popupY + popupH - 35, 75, 23)
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("fill", popupX + popupW - 83, popupY + popupH - 33, 71, 19)
+
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print("Aceptar", popupX + popupW - 65, popupY + popupH - 28)
+
+    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.rectangle("line", popupX, popupY, popupW, popupH)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("line", popupX + 1, popupY + 1, popupW - 2, popupH - 2)
 end
 
 function openApp(appId)
@@ -582,6 +637,16 @@ function love.load()
 end
 
 function love.update(dt)
+    if gameState == "malware_popup" then
+        malwarePopupTimer = malwarePopupTimer + dt
+        if malwarePopupTimer >= malwarePopupDuration then
+            gameState = "bsod"
+            bsodActive = true
+            bsodTimer = 5.0
+        end
+        return
+    end
+
     if gameState == "bsod" then
         bsodTimer = bsodTimer - dt
         if bsodTimer <= 0 then
@@ -990,6 +1055,9 @@ function love.draw()
             love.graphics.print(bottomLines[2], 80, 1045)
         end
 
+    elseif gameState == "malware_popup" then
+        drawMalwarePopup()
+
     elseif gameState == "bsod" then
         drawBSOD()
 
@@ -1035,6 +1103,20 @@ function love.mousepressed(x, y, button)
     if button ~= 1 then return end
 
     if gameState == "boot" then
+        return
+    elseif gameState == "malware_popup" then
+        local w, h = love.graphics.getDimensions()
+        local popupW = 420
+        local popupH = 180
+        local popupX = (w - popupW) / 2
+        local popupY = (h - popupH) / 2
+        local btnX = popupX + popupW - 85
+        local btnY = popupY + popupH - 35
+        if x >= btnX and x <= btnX + 75 and y >= btnY and y <= btnY + 23 then
+            gameState = "bsod"
+            bsodActive = true
+            bsodTimer = 5.0
+        end
         return
     elseif gameState == "desktop" then
         local appMap = {
