@@ -23,11 +23,15 @@ function Notepad.new(x, y)
     local self = setmetatable({}, Notepad)
     self.window = WindowManager.new("Sin titulo - Bloc de notas", x or 150, y or 100, 500, 380)
 
-    self.text = "=== OBJETIVOS ===\n\n[ ] Genera $100\n[ ] Compra tu primer upgrade\n[ ] Mejora el procesador\n[ ] Alcanza $500\n[ ] Completa todas las mejoras\n\n\n(Selecciona los objetivos completados)"
+    self.text = "=== OBJETIVOS ===\n\n[ ] Genera $100\n[ ] Compra tu primer upgrade\n[ ] Mejora el procesador\n[ ] Alcanza $500\n[ ] Completa todas las mejoras\n[ ] Responde 3 correos de trabajo\n[ ] Elimina 3 correos maliciosos\n[ ] Elimina todos los correos\n\n\n(Selecciona los objetivos completados)"
     self.scrollY = 0
     self.cursorPos = #self.text
     self.trabajoRef = nil
     self.explorerRef = nil
+    self.emailJobsAccepted = 0
+    self.malwareDownloaded = 0
+    self.emailsDeleted = 0
+    self.malwareDeleted = 0
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
@@ -104,6 +108,9 @@ function Notepad:drawContent(cx, cy, cw, ch)
         {text = "Mejora el procesador", done = cpuUpgraded},
         {text = "Alcanza $500", done = money >= 500},
         {text = "Completa todas las mejoras", done = allUpgrades},
+        {text = "Responde 3 correos de trabajo (" .. (self.emailJobsAccepted or 0) .. "/3)", done = (self.emailJobsAccepted or 0) >= 3},
+        {text = "Elimina 3 correos maliciosos (" .. (self.malwareDeleted or 0) .. "/3)", done = (self.malwareDeleted or 0) >= 3},
+        {text = "Elimina todos los correos", done = false},
     }
 
     local lines = {"=== OBJETIVOS ===", ""}

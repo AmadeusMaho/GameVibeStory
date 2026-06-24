@@ -4,6 +4,8 @@ local MyPCClass = require("src.mypc")
 local ExplorerClass = require("src.explorer")
 local NotepadClass = require("src.notepad")
 local TrabajoClass = require("src.trabajo")
+local EmailClass = require("src.email")
+local RecycleBinClass = require("src.recyclebin")
 
 local gameState = "boot"
 local bootSound = nil
@@ -19,6 +21,8 @@ local mypc = nil
 local explorer = nil
 local notepad = nil
 local trabajo = nil
+local email = nil
+local recyclebin = nil
 
 local bootLines = {
     {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
@@ -62,7 +66,9 @@ local desktopIcons = {
     {label = "Internet Explorer", icon = "explorer", x = 40, y = 140},
     {label = "Winamp", icon = "winamp", x = 40, y = 240},
     {label = "Trabajo", icon = "trabajo", x = 40, y = 340},
-    {label = "Notepad", icon = "text", x = 40, y = 440},
+    {label = "Correo", icon = "email", x = 140, y = 40},
+    {label = "Notepad", icon = "text", x = 140, y = 140},
+    {label = "Papelera", icon = "recyclebin", x = 140, y = 240},
 }
 local W95 = {
     bg = {0.75, 0.75, 0.75},
@@ -117,6 +123,18 @@ function openApp(appId)
         elseif not trabajo.window.visible then
             trabajo:toggleVisible()
         end
+    elseif appId == "email" and email then
+        if email.window.visible and email.window.minimized then
+            email.window.minimized = false
+        elseif not email.window.visible then
+            email:toggleVisible()
+        end
+    elseif appId == "recyclebin" and recyclebin then
+        if recyclebin.window.visible and recyclebin.window.minimized then
+            recyclebin.window.minimized = false
+        elseif not recyclebin.window.visible then
+            recyclebin:toggleVisible()
+        end
     end
     updateTaskbar()
 end
@@ -132,6 +150,10 @@ function closeApp(appId)
         notepad.window.visible = false
     elseif appId == "trabajo" and trabajo then
         trabajo.window.visible = false
+    elseif appId == "email" and email then
+        email.window.visible = false
+    elseif appId == "recyclebin" and recyclebin then
+        recyclebin.window.visible = false
     end
     updateTaskbar()
 end
@@ -177,6 +199,22 @@ function toggleApp(appId)
         else
             trabajo.window.minimized = true
         end
+    elseif appId == "email" and email then
+        if not email.window.visible then
+            email:toggleVisible()
+        elseif email.window.minimized then
+            email.window.minimized = false
+        else
+            email.window.minimized = true
+        end
+    elseif appId == "recyclebin" and recyclebin then
+        if not recyclebin.window.visible then
+            recyclebin:toggleVisible()
+        elseif recyclebin.window.minimized then
+            recyclebin.window.minimized = false
+        else
+            recyclebin.window.minimized = true
+        end
     end
     updateTaskbar()
 end
@@ -194,6 +232,12 @@ function updateTaskbar()
     end
     if trabajo and trabajo.window.visible then
         table.insert(taskbarApps, {id = "trabajo", label = "Trabajo"})
+    end
+    if email and email.window.visible then
+        table.insert(taskbarApps, {id = "email", label = "Correo"})
+    end
+    if recyclebin and recyclebin.window.visible then
+        table.insert(taskbarApps, {id = "recyclebin", label = "Papelera"})
     end
     if notepad and notepad.window.visible then
         table.insert(taskbarApps, {id = "notepad", label = "Bloc de notas"})
@@ -302,6 +346,18 @@ function love.load()
     notepad.window.onClose = function()
         updateTaskbar()
     end
+
+    email = EmailClass.new(180, 90)
+    email.trabajoRef = trabajo
+    email.notepadRef = notepad
+    email.window.onClose = function()
+        updateTaskbar()
+    end
+
+    recyclebin = RecycleBinClass.new(300, 150)
+    recyclebin.window.onClose = function()
+        updateTaskbar()
+    end
 end
 
 function love.update(dt)
@@ -370,6 +426,8 @@ function love.update(dt)
     if explorer then explorer:update(dt) end
     if notepad then notepad:update(dt) end
     if trabajo then trabajo:update(dt) end
+    if email then email:update(dt) end
+    if recyclebin then recyclebin:update(dt) end
 end
 
 function drawAMIBIOSLogo(x, y)
@@ -425,6 +483,27 @@ function drawDesktopIcon(icon, mx, my)
         love.graphics.line(iconX + 18, iconY + 30, iconX + 46, iconY + 30)
         love.graphics.line(iconX + 18, iconY + 38, iconX + 46, iconY + 38)
         love.graphics.line(iconX + 18, iconY + 46, iconX + 36, iconY + 46)
+    elseif icon.icon == "email" then
+        love.graphics.setColor(0.8, 0.8, 0.2)
+        love.graphics.rectangle("fill", iconX + 6, iconY + 14, iconW - 12, iconH - 24, 2, 2)
+        love.graphics.setColor(0, 0, 0.5)
+        love.graphics.rectangle("line", iconX + 6, iconY + 14, iconW - 12, iconH - 24)
+        love.graphics.setColor(0.8, 0.8, 0.2)
+        love.graphics.line(iconX + 6, iconY + 14, iconX + iconW / 2, iconY + 30)
+        love.graphics.line(iconX + iconW - 6, iconY + 14, iconX + iconW / 2, iconY + 30)
+    elseif icon.icon == "recyclebin" then
+        love.graphics.setColor(0.6, 0.6, 0.6)
+        love.graphics.rectangle("fill", iconX + 14, iconY + 22, iconW - 28, iconH - 28, 2, 2)
+        love.graphics.setColor(0, 0, 0.5)
+        love.graphics.rectangle("line", iconX + 14, iconY + 22, iconW - 28, iconH - 28)
+        love.graphics.setColor(0.5, 0.5, 0.5)
+        love.graphics.rectangle("fill", iconX + 12, iconY + 16, iconW - 24, 8)
+        love.graphics.setColor(0, 0, 0.5)
+        love.graphics.rectangle("line", iconX + 12, iconY + 16, iconW - 24, 8)
+        love.graphics.setColor(0.4, 0.4, 0.4)
+        love.graphics.line(iconX + 24, iconY + 26, iconX + 24, iconY + 46)
+        love.graphics.line(iconX + 32, iconY + 26, iconX + 32, iconY + 46)
+        love.graphics.line(iconX + 40, iconY + 26, iconX + 40, iconY + 46)
     else
         love.graphics.setColor(0.6, 0.6, 0.6)
         love.graphics.rectangle("fill", iconX, iconY, iconW, iconH, 2, 2)
@@ -572,9 +651,9 @@ function drawDesktop()
 
     if startMenuOpen then
         local menuX = 2
-        local menuY = taskY - 132
+        local menuY = taskY - 198
         local menuW = 160
-        local menuH = 132
+        local menuH = 198
 
         love.graphics.setColor(W95.bg)
         love.graphics.rectangle("fill", menuX, menuY, menuW, menuH)
@@ -593,6 +672,8 @@ function drawDesktop()
             {label = "Internet Explorer", action = "explorer"},
             {label = "Winamp", action = "winamp"},
             {label = "Trabajo Freelance", action = "trabajo"},
+            {label = "Correo", action = "email"},
+            {label = "Papelera", action = "recyclebin"},
             {label = "Bloc de notas", action = "notepad"},
             {label = "---", action = "none"},
             {label = "Shut Down...", action = "quit"},
@@ -699,6 +780,14 @@ function love.draw()
         local mx, my = love.mouse.getPosition()
         trabajo:draw(mx, my)
     end
+    if gameState == "desktop" and email then
+        local mx, my = love.mouse.getPosition()
+        email:draw(mx, my)
+    end
+    if gameState == "desktop" and recyclebin then
+        local mx, my = love.mouse.getPosition()
+        recyclebin:draw(mx, my)
+    end
     CursorManager.draw()
 end
 
@@ -726,6 +815,14 @@ function love.mousepressed(x, y, button)
         end
         if trabajo and trabajo.window.visible and not trabajo.window.minimized and trabajo:hitTest(x, y) then
             trabajo:mousepressed(x, y, button)
+            return
+        end
+        if email and email.window.visible and not email.window.minimized and email:hitTest(x, y) then
+            email:mousepressed(x, y, button)
+            return
+        end
+        if recyclebin and recyclebin.window.visible and not recyclebin.window.minimized and recyclebin:hitTest(x, y) then
+            recyclebin:mousepressed(x, y, button)
             return
         end
 
@@ -756,8 +853,12 @@ function love.mousepressed(x, y, button)
                 elseif clickedItem == 4 then
                     toggleApp("trabajo")
                 elseif clickedItem == 5 then
-                    toggleApp("notepad")
+                    toggleApp("email")
+                elseif clickedItem == 6 then
+                    toggleApp("recyclebin")
                 elseif clickedItem == 7 then
+                    toggleApp("notepad")
+                elseif clickedItem == 9 then
                     love.event.quit()
                 end
                 startMenuOpen = false
@@ -789,6 +890,10 @@ function love.mousepressed(x, y, button)
                     toggleApp("explorer")
                 elseif icon.icon == "trabajo" then
                     toggleApp("trabajo")
+                elseif icon.icon == "email" then
+                    toggleApp("email")
+                elseif icon.icon == "recyclebin" then
+                    toggleApp("recyclebin")
                 elseif icon.icon == "text" then
                     toggleApp("notepad")
                 end
@@ -806,6 +911,8 @@ function love.mousereleased(x, y, button)
     if explorer then explorer:mousereleased(x, y, button) end
     if notepad then notepad:mousereleased(x, y, button) end
     if trabajo then trabajo:mousereleased(x, y, button) end
+    if email then email:mousereleased(x, y, button) end
+    if recyclebin then recyclebin:mousereleased(x, y, button) end
 end
 
 function love.mousemoved(x, y)
@@ -814,6 +921,8 @@ function love.mousemoved(x, y)
     if explorer then explorer:mousemoved(x, y) end
     if notepad then notepad:mousemoved(x, y) end
     if trabajo then trabajo:mousemoved(x, y) end
+    if email then email:mousemoved(x, y) end
+    if recyclebin then recyclebin:mousemoved(x, y) end
 end
 
 function love.keypressed(key)

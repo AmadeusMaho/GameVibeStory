@@ -40,6 +40,8 @@ function Explorer.new(x, y)
 
     self.favorites = {
         {label = "Tienda", page = "upgrades"},
+        {label = "Musica", page = "music"},
+        {label = "Fondo de escritorio", page = "wallpaper"},
         {label = "Windows Update", page = "update"},
         {label = "MSN", page = "msn"},
     }
@@ -227,6 +229,10 @@ function Explorer:drawContent(cx, cy, cw, ch)
         self:finishLoad()
         if self.currentPage == "upgrades" then
             self:drawUpgradesPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
+        elseif self.currentPage == "music" then
+            self:drawMusicPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
+        elseif self.currentPage == "wallpaper" then
+            self:drawWallpaperPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
         elseif self.currentPage == "update" then
             self:drawPlaceholderPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20, "Windows Update", "Su sistema esta actualizado.")
         elseif self.currentPage == "msn" then
@@ -455,6 +461,139 @@ end
 
 function Explorer:mousemoved(x, y)
     self.window:mousemoved(x, y)
+end
+
+function Explorer:drawMusicPage(x, y, w, h)
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Tienda de Musica - Microsoft", x, y, w, "center")
+
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x + 10, y + 20, x + w - 10, y + 20)
+
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Descargue la mejor musica para su PC", x, y + 28, w, "center")
+
+    local songs = {
+        {name = "Nirvana - Smells Like Teen Spirit", price = 5},
+        {name = "RHCP - Under the Bridge", price = 5},
+        {name = "Green Day - Basket Case", price = 5},
+        {name = "Oasis - Wonderwall", price = 8},
+        {name = "Blur - Song 2", price = 8},
+    }
+
+    local tableX = x + 20
+    local tableY = y + 50
+    local rowH = 24
+
+    love.graphics.setColor(W95.highlight)
+    love.graphics.rectangle("fill", tableX, tableY, w - 40, rowH)
+    love.graphics.setColor(W95.highlightText)
+    love.graphics.print("Cancion", tableX + 8, tableY + 6)
+    love.graphics.print("Precio", tableX + w - 120, tableY + 6)
+
+    for i, song in ipairs(songs) do
+        local ry = tableY + rowH + (i - 1) * rowH
+        local isEven = i % 2 == 0
+
+        if isEven then
+            love.graphics.setColor({0.92, 0.92, 0.92})
+            love.graphics.rectangle("fill", tableX, ry, w - 40, rowH)
+        end
+
+        love.graphics.setColor(W95.text)
+        love.graphics.print(song.name, tableX + 8, ry + 6)
+        love.graphics.setColor({0.8, 0, 0})
+        love.graphics.print("$" .. song.price, tableX + w - 120, ry + 6)
+
+        local btnW = 56
+        local btnH = 18
+        local btnX = tableX + w - 80
+        local btnY = ry + 3
+        local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
+        love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
+        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+        self:drawBevel(btnX, btnY, btnW, btnH)
+        love.graphics.setColor(W95.text)
+        love.graphics.printf("Comprar", btnX, btnY + 3, btnW, "center")
+    end
+
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x + 20, tableY + rowH + #songs * rowH + 4, x + w - 20, tableY + rowH + #songs * rowH + 4)
+
+    love.graphics.setColor(W95.textDim)
+    love.graphics.printf("Musica en formato digital. Compatible con Winamp.", x, y + h - 20, w, "center")
+end
+
+function Explorer:drawWallpaperPage(x, y, w, h)
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Fondo de Escritorio - Personalizacion", x, y, w, "center")
+
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x + 10, y + 20, x + w - 10, y + 20)
+
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Personalice el fondo de su escritorio", x, y + 28, w, "center")
+
+    local wallpapers = {
+        {name = "Azul clasico", price = 0, color = {0, 0, 0.5}},
+        {name = "Verde bosque", price = 10, color = {0, 0.3, 0}},
+        {name = "Rojo pasion", price = 10, color = {0.5, 0, 0}},
+        {name = "Purpura royal", price = 15, color = {0.3, 0, 0.5}},
+        {name = "Naranja atardecer", price = 15, color = {0.8, 0.4, 0}},
+    }
+
+    local tableX = x + 20
+    local tableY = y + 50
+    local rowH = 30
+
+    love.graphics.setColor(W95.highlight)
+    love.graphics.rectangle("fill", tableX, tableY, w - 40, rowH)
+    love.graphics.setColor(W95.highlightText)
+    love.graphics.print("Fondo", tableX + 8, tableY + 8)
+    love.graphics.print("Precio", tableX + 160, tableY + 8)
+
+    for i, wp in ipairs(wallpapers) do
+        local ry = tableY + rowH + (i - 1) * rowH
+        local isEven = i % 2 == 0
+
+        if isEven then
+            love.graphics.setColor({0.92, 0.92, 0.92})
+            love.graphics.rectangle("fill", tableX, ry, w - 40, rowH)
+        end
+
+        love.graphics.setColor(wp.color)
+        love.graphics.rectangle("fill", tableX + 8, ry + 5, 20, 16)
+        love.graphics.setColor(0, 0, 0.5)
+        love.graphics.rectangle("line", tableX + 8, ry + 5, 20, 16)
+
+        love.graphics.setColor(W95.text)
+        love.graphics.print(wp.name, tableX + 36, ry + 8)
+
+        if wp.price == 0 then
+            love.graphics.setColor(W95.green)
+            love.graphics.print("Gratis", tableX + 160, ry + 8)
+        else
+            love.graphics.setColor({0.8, 0, 0})
+            love.graphics.print("$" .. wp.price, tableX + 160, ry + 8)
+        end
+
+        local btnW = 56
+        local btnH = 20
+        local btnX = tableX + w - 80
+        local btnY = ry + 5
+        local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
+        love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
+        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+        self:drawBevel(btnX, btnY, btnW, btnH)
+        love.graphics.setColor(W95.text)
+        love.graphics.printf("Aplicar", btnX, btnY + 3, btnW, "center")
+    end
+
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x + 20, tableY + rowH + #wallpapers * rowH + 4, x + w - 20, tableY + rowH + #wallpapers * rowH + 4)
+
+    love.graphics.setColor(W95.textDim)
+    love.graphics.printf("Los fondos se aplican inmediatamente al escritorio.", x, y + h - 20, w, "center")
 end
 
 return Explorer
