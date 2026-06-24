@@ -37,6 +37,15 @@ function Explorer.new(x, y)
     self.loadDuration = 1.2
     self.selectedFav = 1
     self.trabajoRef = nil
+    self.pcStatsRef = nil
+    self.winampRef = nil
+
+    self.musicSongs = {
+        {name = "Nirvana - Smells Like Teen Spirit", price = 5, file = "songw95_1.wav", purchased = true},
+        {name = "RHCP - Aeroplane", price = 5, file = "songw95_2.wav", purchased = true},
+        {name = "Backstreet Boys - I Want It That Way", price = 100, file = "songw95_3.wav", purchased = false},
+        {name = "Las Ketchup - Asereje", price = 100, file = "songw95_4.wav", purchased = false},
+    }
 
     self.favorites = {
         {label = "Tienda", page = "upgrades"},
@@ -46,14 +55,50 @@ function Explorer.new(x, y)
         {label = "MSN", page = "msn"},
     }
 
-    self.upgrades = {
-        {name = "Procesador", current = "Pentium 75MHz", upgrade = "Pentium 100MHz", price = 150, stat = "cpu"},
-        {name = "Memoria RAM", current = "16 MB", upgrade = "32 MB", price = 80, stat = "ram"},
-        {name = "Disco Duro", current = "850 MB", upgrade = "1.2 GB", price = 120, stat = "disk"},
-        {name = "Tarjeta de Video", current = "Standard VGA", upgrade = "S3 Trio64", price = 200, stat = "display"},
-        {name = "Tarjeta de Sonido", current = "Sound Blaster 16", upgrade = "Sound Blaster AWE32", price = 180, stat = "sound"},
-        {name = "Monitor", current = "14\" CRT", upgrade = "15\" CRT", price = 250, stat = "monitor"},
+    self.upgradeTiers = {
+        cpu = {
+            {from = "Pentium 75MHz", to = "Pentium 100MHz", price = 49},
+            {from = "Pentium 100MHz", to = "Pentium 133MHz", price = 99},
+            {from = "Pentium 133MHz", to = "Pentium 200MHz", price = 189},
+            {from = "Pentium 200MHz", to = "Pentium MMX 233", price = 349},
+        },
+        ram = {
+            {from = "16 MB", to = "32 MB", price = 29},
+            {from = "32 MB", to = "64 MB", price = 59},
+            {from = "64 MB", to = "128 MB", price = 109},
+            {from = "128 MB", to = "256 MB", price = 199},
+        },
+        disk = {
+            {from = "850 MB", to = "1.2 GB", price = 35},
+            {from = "1.2 GB", to = "2.1 GB", price = 69},
+            {from = "2.1 GB", to = "4.3 GB", price = 119},
+            {from = "4.3 GB", to = "8.4 GB", price = 199},
+        },
+        display = {
+            {from = "Standard VGA", to = "S3 Trio64", price = 79},
+            {from = "S3 Trio64", to = "S3 ViRGE", price = 149},
+            {from = "S3 ViRGE", to = "3dfx Banshee", price = 249},
+            {from = "3dfx Banshee", to = "Voodoo 3 3000", price = 399},
+        },
+        cooling = {
+            {from = "Disipador basico", to = "Ventilador activo", price = 25},
+            {from = "Ventilador activo", to = "Cooler Turbo", price = 59},
+            {from = "Cooler Turbo", to = "Refrigeracion liquida", price = 99},
+            {from = "Refrigeracion liquida", to = "Sistema custom", price = 179},
+        },
+        monitor = {
+            {from = '14" CRT', to = '15" SVGA', price = 59},
+            {from = '15" SVGA', to = '17" CRT', price = 119},
+            {from = '17" CRT', to = '19" Trinitron', price = 219},
+            {from = '19" Trinitron', to = '21" TFT', price = 379},
+        },
     }
+
+    self.upgradeLevels = {
+        cpu = 0, ram = 0, disk = 0, display = 0, cooling = 0, monitor = 0,
+    }
+
+    self.upgrades = self:getVisibleUpgrades()
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
@@ -63,6 +108,28 @@ function Explorer.new(x, y)
     end
 
     return self
+end
+
+function Explorer:getVisibleUpgrades()
+    local visible = {}
+    local names = {cpu = "Procesador", ram = "Memoria RAM", disk = "Disco Duro", display = "Placa de Video", cooling = "Refrigeracion", monitor = "Monitor"}
+    for stat, tiers in pairs(self.upgradeTiers) do
+        local level = self.upgradeLevels[stat] or 0
+        if level < #tiers then
+            local tier = tiers[level + 1]
+            table.insert(visible, {
+                name = names[stat],
+                current = tier.from,
+                upgrade = tier.to,
+                price = tier.price,
+                stat = stat,
+                purchased = false,
+                tier = level + 1,
+            })
+        end
+    end
+    table.sort(visible, function(a, b) return a.price < b.price end)
+    return visible
 end
 
 function Explorer:toggleVisible()
@@ -312,7 +379,7 @@ end
 
 function Explorer:drawUpgradesPage(x, y, w, h)
     love.graphics.setColor(W95.text)
-    love.graphics.printf("Tienda de Upgrades - Microsoft", x, y, w, "center")
+    love.graphics.printf("Tienda de Hardware - PC Shop", x, y, w, "center")
 
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(x + 10, y + 20, x + w - 10, y + 20)
@@ -324,71 +391,72 @@ function Explorer:drawUpgradesPage(x, y, w, h)
     love.graphics.setColor(W95.green)
     love.graphics.printf("Su dinero: " .. moneyStr, x, y + 24, w, "center")
 
-    love.graphics.setColor(W95.text)
-    love.graphics.printf("Mejore su PC con los mejores componentes", x, y + 40, w, "center")
+    if #self.upgrades == 0 then
+        love.graphics.setColor(W95.text)
+        love.graphics.printf("¡Todos los componentes al maximo!", x, y + 60, w, "center")
+        love.graphics.setColor(W95.green)
+        love.graphics.printf("Su PC esta completamente upgrades.", x, y + 80, w, "center")
+    else
+        love.graphics.setColor(W95.text)
+        love.graphics.printf("Mejore su PC - Componentes disponibles:", x, y + 40, w, "center")
 
-    local tableX = x + 10
-    local tableY = y + 58
-    local colW = {120, 110, 110, 70, 80}
-    local rowH = 22
+        local tableX = x + 10
+        local tableY = y + 56
+        local colW = {100, 100, 100, 65, 80}
+        local rowH = 24
 
-    love.graphics.setColor(W95.highlight)
-    love.graphics.rectangle("fill", tableX, tableY, w - 20, rowH)
+        love.graphics.setColor(W95.highlight)
+        love.graphics.rectangle("fill", tableX, tableY, w - 20, rowH)
 
-    love.graphics.setColor(W95.highlightText)
-    local headers = {"Componente", "Actual", "Upgrade", "Precio", "Comprar"}
-    local hx = tableX + 4
-    for i, header in ipairs(headers) do
-        love.graphics.print(header, hx, tableY + 5)
-        hx = hx + colW[i]
-    end
-
-    for i, upg in ipairs(self.upgrades) do
-        local ry = tableY + rowH + (i - 1) * rowH
-        local isEven = i % 2 == 0
-
-        if isEven then
-            love.graphics.setColor({0.92, 0.92, 0.92})
-            love.graphics.rectangle("fill", tableX, ry, w - 20, rowH)
+        love.graphics.setColor(W95.highlightText)
+        local headers = {"Componente", "Actual", "Upgrade", "Precio", "Comprar"}
+        local hx = tableX + 4
+        for i, header in ipairs(headers) do
+            love.graphics.print(header, hx, tableY + 6)
+            hx = hx + colW[i]
         end
 
-        love.graphics.setColor(W95.text)
-        local rx = tableX + 4
-        love.graphics.print(upg.name, rx, ry + 5)
-        rx = rx + colW[1]
-        love.graphics.setColor(upg.purchased and W95.green or W95.textDim)
-        love.graphics.print(upg.current, rx, ry + 5)
-        rx = rx + colW[2]
-        love.graphics.setColor({0, 0.5, 0})
-        love.graphics.print(upg.upgrade, rx, ry + 5)
-        rx = rx + colW[3]
-        love.graphics.setColor(upg.purchased and W95.green or {0.8, 0, 0})
-        love.graphics.print(upg.purchased and "Comprado" or ("$" .. upg.price), rx, ry + 5)
-        rx = rx + colW[4]
+        for i, upg in ipairs(self.upgrades) do
+            local ry = tableY + rowH + (i - 1) * rowH
+            local isEven = i % 2 == 0
 
-        local btnW = 56
-        local btnH = 18
-        local btnX = rx
-        local btnY = ry + 2
+            if isEven then
+                love.graphics.setColor({0.92, 0.92, 0.92})
+                love.graphics.rectangle("fill", tableX, ry, w - 20, rowH)
+            end
 
-        if upg.purchased then
-            love.graphics.setColor(W95.green)
-            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
-            love.graphics.setColor(W95.white)
-            love.graphics.printf("OK", btnX, btnY + 3, btnW, "center")
-        else
+            love.graphics.setColor(W95.text)
+            local rx = tableX + 4
+            love.graphics.print(upg.name, rx, ry + 6)
+            rx = rx + colW[1]
+            love.graphics.setColor(W95.textDim)
+            love.graphics.print(upg.current, rx, ry + 6)
+            rx = rx + colW[2]
+            love.graphics.setColor({0, 0.5, 0})
+            love.graphics.print(upg.upgrade, rx, ry + 6)
+            rx = rx + colW[3]
+            love.graphics.setColor({0.8, 0, 0})
+            love.graphics.print("$" .. upg.price, rx, ry + 6)
+            rx = rx + colW[4]
+
+            local btnW = 56
+            local btnH = 18
+            local btnX = rx
+            local btnY = ry + 3
+
             local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
+            local canBuy = self.trabajoRef and self.trabajoRef.money >= upg.price
             love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
             love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
             self:drawBevel(btnX, btnY, btnW, btnH)
-            love.graphics.setColor(W95.text)
+            love.graphics.setColor(canBuy and W95.text or W95.textDim)
             love.graphics.printf("Comprar", btnX, btnY + 3, btnW, "center")
             table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "buy", index = i})
         end
-    end
 
-    love.graphics.setColor(W95.borderDark)
-    love.graphics.line(x + 10, tableY + rowH + #self.upgrades * rowH + 4, x + w - 10, tableY + rowH + #self.upgrades * rowH + 4)
+        love.graphics.setColor(W95.borderDark)
+        love.graphics.line(x + 10, tableY + rowH + #self.upgrades * rowH + 4, x + w - 10, tableY + rowH + #self.upgrades * rowH + 4)
+    end
 
     if self.purchaseMsgTimer and self.purchaseMsgTimer > 0 and self.purchaseMessage then
         love.graphics.setColor(W95.highlight)
@@ -396,7 +464,7 @@ function Explorer:drawUpgradesPage(x, y, w, h)
     end
 
     love.graphics.setColor(W95.textDim)
-    love.graphics.printf("Precios sujetos a cambio sin previo aviso.", x, y + h - 20, w, "center")
+    love.graphics.printf("Precios en dolares. Impuestos no incluidos.", x, y + h - 20, w, "center")
 end
 
 function Explorer:handleClick(x, y, button)
@@ -414,14 +482,27 @@ function Explorer:handleClick(x, y, button)
                     if self.trabajoRef.money >= upg.price and not upg.purchased then
                         self.trabajoRef.money = self.trabajoRef.money - upg.price
                         upg.purchased = true
-                        upg.current = upg.upgrade
-                        self.purchaseMessage = upg.name .. " comprado!"
+                        self.upgradeLevels[upg.stat] = (self.upgradeLevels[upg.stat] or 0) + 1
+                        self.purchaseMessage = upg.name .. " mejorado a " .. upg.upgrade .. "!"
                         self.purchaseMsgTimer = 2.0
+                        if self.pcStatsRef then
+                            if upg.stat == "cpu" then self.pcStatsRef.cpu = upg.upgrade end
+                            if upg.stat == "ram" then
+                                self.pcStatsRef.ram = upg.upgrade
+                                local num = upg.upgrade:match("(%d+)")
+                                if num then self.pcStatsRef.ramNum = tonumber(num) end
+                            end
+                            if upg.stat == "disk" then self.pcStatsRef.disk = upg.upgrade .. " HDD" end
+                            if upg.stat == "display" then self.pcStatsRef.display = upg.upgrade end
+                            if upg.stat == "cooling" then self.pcStatsRef.cooling = upg.upgrade end
+                            if upg.stat == "monitor" then self.pcStatsRef.monitor = upg.upgrade end
+                        end
+                        self.upgrades = self:getVisibleUpgrades()
                     elseif upg.purchased then
                         self.purchaseMessage = "Ya tienes este upgrade."
                         self.purchaseMsgTimer = 2.0
                     else
-                        self.purchaseMessage = "Dinero insuficiente."
+                        self.purchaseMessage = "Dinero insuficiente. Necesitas $" .. upg.price
                         self.purchaseMsgTimer = 2.0
                     end
                 end
@@ -433,6 +514,22 @@ function Explorer:handleClick(x, y, button)
                     self.loadTimer = 0
                 elseif btn.label == "Actualizar" then
                     self:navigateTo(self.currentPage)
+                end
+            elseif btn.action == "buymusic" then
+                local song = self.musicSongs[btn.index]
+                if song and self.trabajoRef and not song.purchased then
+                    if self.trabajoRef.money >= song.price then
+                        self.trabajoRef.money = self.trabajoRef.money - song.price
+                        song.purchased = true
+                        self.purchaseMessage = song.name .. " comprado!"
+                        self.purchaseMsgTimer = 2.0
+                        if self.winampRef and song.file then
+                            self.winampRef:addSong(song.name, song.file)
+                        end
+                    else
+                        self.purchaseMessage = "Dinero insuficiente."
+                        self.purchaseMsgTimer = 2.0
+                    end
                 end
             end
             return true
@@ -470,28 +567,32 @@ function Explorer:drawMusicPage(x, y, w, h)
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(x + 10, y + 20, x + w - 10, y + 20)
 
-    love.graphics.setColor(W95.text)
-    love.graphics.printf("Descargue la mejor musica para su PC", x, y + 28, w, "center")
+    local moneyStr = "$0"
+    if self.trabajoRef then
+        moneyStr = "$" .. self.trabajoRef.money
+    end
+    love.graphics.setColor(W95.green)
+    love.graphics.printf("Su dinero: " .. moneyStr, x, y + 24, w, "center")
 
-    local songs = {
-        {name = "Nirvana - Smells Like Teen Spirit", price = 5},
-        {name = "RHCP - Under the Bridge", price = 5},
-        {name = "Green Day - Basket Case", price = 5},
-        {name = "Oasis - Wonderwall", price = 8},
-        {name = "Blur - Song 2", price = 8},
-    }
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Descargue la mejor musica para su PC", x, y + 40, w, "center")
 
     local tableX = x + 20
-    local tableY = y + 50
-    local rowH = 24
+    local tableY = y + 58
+    local colW = {200, 70, 80}
+    local rowH = 22
 
     love.graphics.setColor(W95.highlight)
     love.graphics.rectangle("fill", tableX, tableY, w - 40, rowH)
     love.graphics.setColor(W95.highlightText)
-    love.graphics.print("Cancion", tableX + 8, tableY + 6)
-    love.graphics.print("Precio", tableX + w - 120, tableY + 6)
+    local headers = {"Cancion", "Precio", "Comprar"}
+    local hx = tableX + 4
+    for i, header in ipairs(headers) do
+        love.graphics.print(header, hx, tableY + 5)
+        hx = hx + colW[i]
+    end
 
-    for i, song in ipairs(songs) do
+    for i, song in ipairs(self.musicSongs) do
         local ry = tableY + rowH + (i - 1) * rowH
         local isEven = i % 2 == 0
 
@@ -501,27 +602,49 @@ function Explorer:drawMusicPage(x, y, w, h)
         end
 
         love.graphics.setColor(W95.text)
-        love.graphics.print(song.name, tableX + 8, ry + 6)
-        love.graphics.setColor({0.8, 0, 0})
-        love.graphics.print("$" .. song.price, tableX + w - 120, ry + 6)
+        love.graphics.print(song.name, tableX + 4, ry + 5)
 
+        local rx = tableX + colW[1]
+        if song.purchased then
+            love.graphics.setColor(W95.green)
+            love.graphics.print("Comprado", rx, ry + 5)
+        else
+            love.graphics.setColor({0.8, 0, 0})
+            love.graphics.print("$" .. song.price, rx, ry + 5)
+        end
+
+        rx = rx + colW[2]
         local btnW = 56
         local btnH = 18
-        local btnX = tableX + w - 80
-        local btnY = ry + 3
-        local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
-        love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
-        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
-        self:drawBevel(btnX, btnY, btnW, btnH)
-        love.graphics.setColor(W95.text)
-        love.graphics.printf("Comprar", btnX, btnY + 3, btnW, "center")
+        local btnX = rx
+        local btnY = ry + 2
+
+        if song.purchased then
+            love.graphics.setColor(W95.green)
+            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+            love.graphics.setColor(W95.white)
+            love.graphics.printf("OK", btnX, btnY + 3, btnW, "center")
+        else
+            local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
+            love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
+            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+            self:drawBevel(btnX, btnY, btnW, btnH)
+            love.graphics.setColor(W95.text)
+            love.graphics.printf("Comprar", btnX, btnY + 3, btnW, "center")
+            table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "buymusic", index = i})
+        end
     end
 
     love.graphics.setColor(W95.borderDark)
-    love.graphics.line(x + 20, tableY + rowH + #songs * rowH + 4, x + w - 20, tableY + rowH + #songs * rowH + 4)
+    love.graphics.line(x + 20, tableY + rowH + #self.musicSongs * rowH + 4, x + w - 20, tableY + rowH + #self.musicSongs * rowH + 4)
+
+    if self.purchaseMsgTimer and self.purchaseMsgTimer > 0 and self.purchaseMessage then
+        love.graphics.setColor(W95.highlight)
+        love.graphics.printf(self.purchaseMessage, x, y + h - 38, w, "center")
+    end
 
     love.graphics.setColor(W95.textDim)
-    love.graphics.printf("Musica en formato digital. Compatible con Winamp.", x, y + h - 20, w, "center")
+    love.graphics.printf("Las canciones se agregan a Winamp despues de comprarlas.", x, y + h - 20, w, "center")
 end
 
 function Explorer:drawWallpaperPage(x, y, w, h)

@@ -297,4 +297,14 @@ function Winamp:mousemoved(x, y)
     self.window:mousemoved(x, y)
 end
 
+function Winamp:addSong(title, file)
+    table.insert(self.playlist, {title = title, duration = 0, file = file})
+    local index = #self.playlist
+    local ok, src = pcall(love.audio.newSource, "assets/sounds/" .. file, "stream")
+    if ok then
+        src:setVolume(self.volume)
+        self:setSource(index, src)
+    end
+end
+
 return Winamp

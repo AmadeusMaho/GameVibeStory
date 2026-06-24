@@ -6,8 +6,12 @@ local NotepadClass = require("src.notepad")
 local TrabajoClass = require("src.trabajo")
 local EmailClass = require("src.email")
 local RecycleBinClass = require("src.recyclebin")
+local PersonalClass = require("src.personal")
+local AchievementsClass = require("src.achievements")
 
 local gameState = "boot"
+local bsodTimer = 0
+local bsodActive = false
 local bootSound = nil
 local clickSound = nil
 local startupSound = nil
@@ -23,6 +27,19 @@ local notepad = nil
 local trabajo = nil
 local email = nil
 local recyclebin = nil
+local personal = nil
+local achievements = nil
+
+local pcStats = {
+    cpu = "Intel Pentium 75MHz",
+    ram = "16 MB",
+    ramNum = 16,
+    disk = "850 MB HDD",
+    display = "Standard PCI Graphics Adapter (VGA)",
+    cooling = "Disipador basico",
+    bios = "American Megatrends  12/01/94",
+    os = "Microsoft Windows 95  4.00.950",
+}
 
 local bootLines = {
     {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
@@ -30,9 +47,13 @@ local bootLines = {
     {text = "", x = 80, y = 60, color = {0.8, 0.8, 0.8}},
     {text = "BCN SIT 1989-1994 Special UC612C", x = 80, y = 80, color = {0.8, 0.8, 0.8}},
     {text = "SIT Rehab(tm) XX 115", x = 80, y = 100, color = {0.8, 0.8, 0.8}},
-    {text = "Checking RAM  :  12000K OK", x = 80, y = 120, color = {0.8, 0.8, 0.8}},
-    {text = "", x = 80, y = 140, color = {0.8, 0.8, 0.8}},
-    {text = "WAIT...", x = 80, y = 160, color = {0.8, 0.8, 0.8}},
+    {text = "CPU: " .. pcStats.cpu, x = 80, y = 120, color = {0.8, 0.8, 0.8}},
+    {text = "RAM: Checking " .. pcStats.ram .. " ... OK", x = 80, y = 140, color = {0.8, 0.8, 0.8}},
+    {text = "HDD: " .. pcStats.disk, x = 80, y = 160, color = {0.8, 0.8, 0.8}},
+    {text = "Video: " .. pcStats.display, x = 80, y = 180, color = {0.8, 0.8, 0.8}},
+    {text = "Cooling: " .. pcStats.cooling, x = 80, y = 200, color = {0.8, 0.8, 0.8}},
+    {text = "", x = 80, y = 220, color = {0.8, 0.8, 0.8}},
+    {text = "WAIT...", x = 80, y = 240, color = {0.8, 0.8, 0.8}},
 }
 local bottomLines = {
     "Press DEL to enter SETUP , ESC to skip memory test",
@@ -67,9 +88,12 @@ local desktopIcons = {
     {label = "Winamp", icon = "winamp", x = 40, y = 240},
     {label = "Trabajo", icon = "trabajo", x = 40, y = 340, iconScale = 1.4},
     {label = "Correo", icon = "email", x = 140, y = 40, iconScale = 1.4},
-    {label = "Notepad", icon = "text", x = 140, y = 140},
-    {label = "Papelera", icon = "recyclebin", x = 140, y = 240},
+    {label = "Objetivos", icon = "text", x = 140, y = 140},
+    {label = "Logros", icon = "achievements", x = 140, y = 240},
+    {label = "Papelera", icon = "recyclebin", x = 240, y = 40},
 }
+local personalIcon = {label = "Personal", icon = "staff", x = 240, y = 240}
+local downloadIcon = {label = "WinOptimizer", icon = "download", x = 340, y = 40}
 local W95 = {
     bg = {0.75, 0.75, 0.75},
     titleActive = {0.0, 0.0, 0.5},
@@ -90,6 +114,44 @@ function playClick()
         clickSound:stop()
         clickSound:play()
     end
+end
+
+function triggerMalware()
+    bsodActive = true
+    bsodTimer = 5.0
+    gameState = "bsod"
+    if trabajo then
+        local loss = math.floor(trabajo.money * (0.3 + math.random() * 0.3))
+        trabajo.money = math.max(0, trabajo.money - loss)
+    end
+end
+
+function drawBSOD()
+    local w, h = love.graphics.getDimensions()
+    love.graphics.setColor(0, 0, 0.5)
+    love.graphics.rectangle("fill", 0, 0, w, h)
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.setFont(love.graphics.newFont(16))
+    love.graphics.printf("Windows", 0, h * 0.15, w, "center")
+    love.graphics.setFont(love.graphics.newFont(12))
+    love.graphics.printf("Un error irrecoverable ha occurrido.", 0, h * 0.25, w, "center")
+    love.graphics.printf("Se ha producido un error y Windows", 0, h * 0.30, w, "center")
+    love.graphics.printf("ha de cerrarse para evitar danos al equipo.", 0, h * 0.33, w, "center")
+    love.graphics.printf("")
+    love.graphics.printf("ERROR: 0E : 016F : BFF9B3D4", 0, h * 0.40, w, "center")
+    love.graphics.printf(" KERNEL32.DLL", 0, h * 0.43, w, "center")
+    love.graphics.printf("")
+    love.graphics.printf("* Presione cualquier tecla para terminar", 0, h * 0.52, w, "center")
+    love.graphics.printf("  la sesion actual.", 0, h * 0.55, w, "center")
+    love.graphics.printf("")
+    love.graphics.printf("* Reinicie el equipo. Presione F5", 0, h * 0.62, w, "center")
+    love.graphics.printf("  para iniciar el Modo a prueba de errores.", 0, h * 0.65, w, "center")
+    love.graphics.printf("")
+    love.graphics.setFont(love.graphics.newFont(10))
+    love.graphics.printf("Informacion de depuracion:", 0, h * 0.75, w, "center")
+    love.graphics.printf("  Filtros=00000001 Dispositivo=00000000", 0, h * 0.78, w, "center")
+    love.graphics.printf("  Carga de la direccion de comandos no disponible", 0, h * 0.81, w, "center")
 end
 
 function openApp(appId)
@@ -135,6 +197,18 @@ function openApp(appId)
         elseif not recyclebin.window.visible then
             recyclebin:toggleVisible()
         end
+    elseif appId == "personal" and personal then
+        if personal.window.visible and personal.window.minimized then
+            personal.window.minimized = false
+        elseif not personal.window.visible then
+            personal:toggleVisible()
+        end
+    elseif appId == "achievements" and achievements then
+        if achievements.window.visible and achievements.window.minimized then
+            achievements.window.minimized = false
+        elseif not achievements.window.visible then
+            achievements:toggleVisible()
+        end
     end
     updateTaskbar()
 end
@@ -154,13 +228,66 @@ function closeApp(appId)
         email.window.visible = false
     elseif appId == "recyclebin" and recyclebin then
         recyclebin.window.visible = false
+    elseif appId == "personal" and personal then
+        personal.window.visible = false
+    elseif appId == "achievements" and achievements then
+        achievements.window.visible = false
     end
     updateTaskbar()
+end
+
+local windowOrder = {"winamp", "mypc", "explorer", "notepad", "trabajo", "email", "recyclebin", "personal", "achievements"}
+
+local function bringToFront(appId)
+    for i, id in ipairs(windowOrder) do
+        if id == appId then
+            table.remove(windowOrder, i)
+            table.insert(windowOrder, appId)
+            break
+        end
+    end
+end
+
+function getNextCascadePosition(w, h)
+    local cascadeOffset = 24
+    local screenW, screenH = love.graphics.getDimensions()
+    local taskbarH = 40
+    local visibleWindows = {}
+
+    local apps = {winamp, mypc, explorer, trabajo, email, notepad, recyclebin, personal, achievements}
+    for _, app in ipairs(apps) do
+        if app and app.window.visible and not app.window.minimized then
+            table.insert(visibleWindows, {
+                x = app.window.x,
+                y = app.window.y,
+                w = app.window.w,
+                h = app.window.h,
+            })
+        end
+    end
+
+    if #visibleWindows == 0 then
+        return 80, 60
+    end
+
+    local lastWin = visibleWindows[#visibleWindows]
+    local newX = lastWin.x + cascadeOffset
+    local newY = lastWin.y + cascadeOffset
+
+    if newX + w > screenW - 10 then
+        newX = 80
+    end
+    if newY + h > screenH - taskbarH - 10 then
+        newY = 60
+    end
+
+    return newX, newY
 end
 
 function toggleApp(appId)
     if appId == "winamp" and winamp then
         if not winamp.window.visible then
+            winamp.window.x, winamp.window.y = getNextCascadePosition(winamp.window.w, winamp.window.h)
             winamp:toggleVisible()
         elseif winamp.window.minimized then
             winamp.window.minimized = false
@@ -169,6 +296,7 @@ function toggleApp(appId)
         end
     elseif appId == "mypc" and mypc then
         if not mypc.window.visible then
+            mypc.window.x, mypc.window.y = getNextCascadePosition(mypc.window.w, mypc.window.h)
             mypc:toggleVisible()
         elseif mypc.window.minimized then
             mypc.window.minimized = false
@@ -177,6 +305,7 @@ function toggleApp(appId)
         end
     elseif appId == "explorer" and explorer then
         if not explorer.window.visible then
+            explorer.window.x, explorer.window.y = getNextCascadePosition(explorer.window.w, explorer.window.h)
             explorer:toggleVisible()
         elseif explorer.window.minimized then
             explorer.window.minimized = false
@@ -185,6 +314,7 @@ function toggleApp(appId)
         end
     elseif appId == "notepad" and notepad then
         if not notepad.window.visible then
+            notepad.window.x, notepad.window.y = getNextCascadePosition(notepad.window.w, notepad.window.h)
             notepad:toggleVisible()
         elseif notepad.window.minimized then
             notepad.window.minimized = false
@@ -193,6 +323,7 @@ function toggleApp(appId)
         end
     elseif appId == "trabajo" and trabajo then
         if not trabajo.window.visible then
+            trabajo.window.x, trabajo.window.y = getNextCascadePosition(trabajo.window.w, trabajo.window.h)
             trabajo:toggleVisible()
         elseif trabajo.window.minimized then
             trabajo.window.minimized = false
@@ -201,6 +332,7 @@ function toggleApp(appId)
         end
     elseif appId == "email" and email then
         if not email.window.visible then
+            email.window.x, email.window.y = getNextCascadePosition(email.window.w, email.window.h)
             email:toggleVisible()
         elseif email.window.minimized then
             email.window.minimized = false
@@ -209,11 +341,30 @@ function toggleApp(appId)
         end
     elseif appId == "recyclebin" and recyclebin then
         if not recyclebin.window.visible then
+            recyclebin.window.x, recyclebin.window.y = getNextCascadePosition(recyclebin.window.w, recyclebin.window.h)
             recyclebin:toggleVisible()
         elseif recyclebin.window.minimized then
             recyclebin.window.minimized = false
         else
             recyclebin.window.minimized = true
+        end
+    elseif appId == "personal" and personal then
+        if not personal.window.visible then
+            personal.window.x, personal.window.y = getNextCascadePosition(personal.window.w, personal.window.h)
+            personal:toggleVisible()
+        elseif personal.window.minimized then
+            personal.window.minimized = false
+        else
+            personal.window.minimized = true
+        end
+    elseif appId == "achievements" and achievements then
+        if not achievements.window.visible then
+            achievements.window.x, achievements.window.y = getNextCascadePosition(achievements.window.w, achievements.window.h)
+            achievements:toggleVisible()
+        elseif achievements.window.minimized then
+            achievements.window.minimized = false
+        else
+            achievements.window.minimized = true
         end
     end
     updateTaskbar()
@@ -240,13 +391,43 @@ function updateTaskbar()
         table.insert(taskbarApps, {id = "recyclebin", label = "Papelera"})
     end
     if notepad and notepad.window.visible then
-        table.insert(taskbarApps, {id = "notepad", label = "Bloc de notas"})
+        table.insert(taskbarApps, {id = "notepad", label = "Objetivos"})
+    end
+    if personal and personal.window.visible then
+        table.insert(taskbarApps, {id = "personal", label = "Personal"})
+    end
+    if achievements and achievements.window.visible then
+        table.insert(taskbarApps, {id = "achievements", label = "Logros"})
     end
 end
 
 function love.load()
     love.graphics.setBackgroundColor(0, 0, 0)
     love.graphics.setDefaultFilter("nearest", "nearest")
+
+    bootLines = {
+        {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
+        {text = "             AMIBIOS (C)1994 American Megatrends Inc..", x = 80, y = 40, color = {0.8, 0.8, 0.8}},
+        {text = "", x = 80, y = 60, color = {0.8, 0.8, 0.8}},
+        {text = "BCN SIT 1989-1994 Special UC612C", x = 80, y = 80, color = {0.8, 0.8, 0.8}},
+        {text = "SIT Rehab(tm) XX 115", x = 80, y = 100, color = {0.8, 0.8, 0.8}},
+        {text = "CPU: " .. pcStats.cpu, x = 80, y = 120, color = {0.8, 0.8, 0.8}},
+        {text = "RAM: Checking " .. pcStats.ram .. " ... OK", x = 80, y = 140, color = {0.8, 0.8, 0.8}},
+        {text = "HDD: " .. pcStats.disk, x = 80, y = 160, color = {0.8, 0.8, 0.8}},
+        {text = "Video: " .. pcStats.display, x = 80, y = 180, color = {0.8, 0.8, 0.8}},
+        {text = "Cooling: " .. pcStats.cooling, x = 80, y = 200, color = {0.8, 0.8, 0.8}},
+        {text = "", x = 80, y = 220, color = {0.8, 0.8, 0.8}},
+        {text = "WAIT...", x = 80, y = 240, color = {0.8, 0.8, 0.8}},
+    }
+    bootLineIndex = 0
+    bootCharIndex = 0
+    bootDone = false
+    bootTimerAccum = 0
+    showAllLines = false
+    showBottom = false
+    countdownActive = false
+    countdownValue = 3
+    countdownTimer = 0
 
     local ok, snd = pcall(love.audio.newSource, "assets/sounds/start.wav", "static")
     if ok then
@@ -288,6 +469,12 @@ function love.load()
     if ok12 then iconImages["recyclebin"] = img12 end
     local ok13, img13 = pcall(love.graphics.newImage, "assets/sprites/taskbaricon.png")
     if ok13 then iconImages["taskbar"] = img13 end
+    local ok14, img14 = pcall(love.graphics.newImage, "assets/sprites/staff.png")
+    if ok14 then iconImages["staff"] = img14 end
+    local ok15, img15 = pcall(love.graphics.newImage, "assets/sprites/achievements.png")
+    if ok15 then iconImages["achievements"] = img15 end
+    local ok16, img16 = pcall(love.graphics.newImage, "assets/sprites/download1.png")
+    if ok16 then iconImages["download"] = img16 end
 
     local ok8, snd8 = pcall(love.audio.newSource, "assets/sounds/songw95_1.wav", "stream")
     if ok8 then
@@ -331,11 +518,13 @@ function love.load()
     end
 
     mypc = MyPCClass.new(120, 80)
+    mypc.pcStats = pcStats
     mypc.window.onClose = function()
         updateTaskbar()
     end
 
     trabajo = TrabajoClass.new(250, 120)
+    trabajo.pcStatsRef = pcStats
     trabajo.window.onClose = function()
         updateTaskbar()
     end
@@ -345,6 +534,8 @@ function love.load()
 
     explorer = ExplorerClass.new(80, 60)
     explorer.trabajoRef = trabajo
+    explorer.pcStatsRef = pcStats
+    explorer.winampRef = winamp
     explorer.window.onClose = function()
         updateTaskbar()
     end
@@ -354,6 +545,7 @@ function love.load()
     notepad = NotepadClass.new(150, 100)
     notepad.trabajoRef = trabajo
     notepad.explorerRef = explorer
+    notepad.emailRef = email
     notepad.window.onClose = function()
         updateTaskbar()
     end
@@ -361,6 +553,8 @@ function love.load()
     email = EmailClass.new(180, 90)
     email.trabajoRef = trabajo
     email.notepadRef = notepad
+    trabajo.emailRef = email
+    trabajo.explorerRef = explorer
     email.window.onClose = function()
         updateTaskbar()
     end
@@ -369,9 +563,43 @@ function love.load()
     recyclebin.window.onClose = function()
         updateTaskbar()
     end
+
+    personal = PersonalClass.new(200, 100)
+    personal.trabajoRef = trabajo
+    personal.window.onClose = function()
+        updateTaskbar()
+    end
+
+    achievements = AchievementsClass.new(160, 80)
+    achievements.trabajoRef = trabajo
+    achievements.explorerRef = explorer
+    achievements.personalRef = personal
+    trabajo.achievementsRef = achievements
+    personal.achievementsRef = achievements
+    achievements.window.onClose = function()
+        updateTaskbar()
+    end
 end
 
 function love.update(dt)
+    if gameState == "bsod" then
+        bsodTimer = bsodTimer - dt
+        if bsodTimer <= 0 then
+            bsodActive = false
+            gameState = "boot"
+            bootLineIndex = 0
+            bootCharIndex = 0
+            bootDone = false
+            bootTimerAccum = 0
+            showAllLines = false
+            showBottom = false
+            countdownActive = false
+            countdownValue = 3
+            countdownTimer = 0
+        end
+        return
+    end
+
     if gameState == "boot" then
         bootTimerAccum = bootTimerAccum + dt
 
@@ -427,6 +655,10 @@ function love.update(dt)
                 if countdownValue <= 0 then
                     gameState = "desktop"
                     if startupSound then startupSound:play() end
+                    if email then
+                        email.window.visible = true
+                        updateTaskbar()
+                    end
                 end
             end
         end
@@ -439,6 +671,8 @@ function love.update(dt)
     if trabajo then trabajo:update(dt) end
     if email then email:update(dt) end
     if recyclebin then recyclebin:update(dt) end
+    if personal then personal:update(dt) end
+    if achievements then achievements:update(dt) end
 end
 
 function drawAMIBIOSLogo(x, y)
@@ -530,6 +764,20 @@ function drawDesktop()
         end
     end
 
+    if notepad and notepad.personalReady then
+        drawDesktopIcon(personalIcon, mx, my)
+        if mx >= personalIcon.x and mx <= personalIcon.x + 90 and my >= personalIcon.y and my <= personalIcon.y + 90 then
+            CursorManager.set("link")
+        end
+    end
+
+    if email and email.downloadIconActive then
+        drawDesktopIcon(downloadIcon, mx, my)
+        if mx >= downloadIcon.x and mx <= downloadIcon.x + 90 and my >= downloadIcon.y and my <= downloadIcon.y + 90 then
+            CursorManager.set("link")
+        end
+    end
+
     local taskY = winH - taskH
     love.graphics.setColor(W95.bg)
     love.graphics.rectangle("fill", 0, taskY, winW, taskH)
@@ -561,9 +809,9 @@ function drawDesktop()
     if iconImages["taskbar"] then
         local img = iconImages["taskbar"]
         local imgW, imgH = img:getDimensions()
-        local iconScale = math.min(14 / imgW, 14 / imgH)
+        local iconScale = math.min(16 / imgW, 16 / imgH)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(img, 6, taskY + (taskH - 14 * iconScale) / 2, 0, iconScale, iconScale)
+        love.graphics.draw(img, 5, taskY + (taskH - 16 * iconScale) / 2, 0, iconScale, iconScale)
         love.graphics.setColor(W95.fieldText)
         love.graphics.print("Start", 22, taskY + 12)
     else
@@ -588,6 +836,10 @@ function drawDesktop()
             isActive = trabajo.window.visible and not trabajo.window.minimized
         elseif app.id == "notepad" and notepad then
             isActive = notepad.window.visible and not notepad.window.minimized
+        elseif app.id == "personal" and personal then
+            isActive = personal.window.visible and not personal.window.minimized
+        elseif app.id == "achievements" and achievements then
+            isActive = achievements.window.visible and not achievements.window.minimized
         end
         local hovered = mx >= tx and mx <= tx + taskItemW - 4 and my >= taskY + 2 and my <= taskY + taskH - 2
 
@@ -671,8 +923,10 @@ function drawDesktop()
             {label = "Winamp", action = "winamp"},
             {label = "Trabajo Freelance", action = "trabajo"},
             {label = "Correo", action = "email"},
+            {label = "Personal", action = "personal"},
+            {label = "Logros", action = "achievements"},
             {label = "Papelera", action = "recyclebin"},
-            {label = "Bloc de notas", action = "notepad"},
+            {label = "Objetivos", action = "notepad"},
             {label = "---", action = "none"},
             {label = "Shut Down...", action = "quit"},
         }
@@ -736,10 +990,8 @@ function love.draw()
             love.graphics.print(bottomLines[2], 80, 1045)
         end
 
-        if countdownActive and countdownValue > 0 then
-            love.graphics.setColor(0.8, 0.8, 0.8)
-            love.graphics.print("Iniciando en " .. countdownValue .. "...", 80, 200)
-        end
+    elseif gameState == "bsod" then
+        drawBSOD()
 
     elseif gameState == "desktop" then
         drawDesktop()
@@ -758,33 +1010,23 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(mainCanvas, -pad, -pad)
     love.graphics.setShader()
-    if gameState == "desktop" and winamp then
-        local mx, my = love.mouse.getPosition()
-        winamp:draw(mx, my)
-    end
-    if gameState == "desktop" and mypc then
-        local mx, my = love.mouse.getPosition()
-        mypc:draw(mx, my)
-    end
-    if gameState == "desktop" and explorer then
-        local mx, my = love.mouse.getPosition()
-        explorer:draw(mx, my)
-    end
-    if gameState == "desktop" and notepad then
-        local mx, my = love.mouse.getPosition()
-        notepad:draw(mx, my)
-    end
-    if gameState == "desktop" and trabajo then
-        local mx, my = love.mouse.getPosition()
-        trabajo:draw(mx, my)
-    end
-    if gameState == "desktop" and email then
-        local mx, my = love.mouse.getPosition()
-        email:draw(mx, my)
-    end
-    if gameState == "desktop" and recyclebin then
-        local mx, my = love.mouse.getPosition()
-        recyclebin:draw(mx, my)
+    if gameState == "desktop" then
+        local appDrawMap = {
+            winamp = winamp, mypc = mypc, explorer = explorer,
+            notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
+            personal = personal, achievements = achievements,
+        }
+        for _, id in ipairs(windowOrder) do
+            local app = appDrawMap[id]
+            if app then
+                local mx, my = love.mouse.getPosition()
+                app:draw(mx, my)
+            end
+        end
+        if achievements then
+            achievements:drawNotifications()
+            achievements:drawComboHud()
+        end
     end
     CursorManager.draw()
 end
@@ -795,33 +1037,19 @@ function love.mousepressed(x, y, button)
     if gameState == "boot" then
         return
     elseif gameState == "desktop" then
-        if mypc and mypc.window.visible and not mypc.window.minimized and mypc:hitTest(x, y) then
-            mypc:mousepressed(x, y, button)
-            return
-        end
-        if explorer and explorer.window.visible and not explorer.window.minimized and explorer:hitTest(x, y) then
-            explorer:mousepressed(x, y, button)
-            return
-        end
-        if notepad and notepad.window.visible and not notepad.window.minimized and notepad:hitTest(x, y) then
-            notepad:mousepressed(x, y, button)
-            return
-        end
-        if winamp and winamp.window.visible and not winamp.window.minimized and winamp:hitTest(x, y) then
-            winamp:mousepressed(x, y, button)
-            return
-        end
-        if trabajo and trabajo.window.visible and not trabajo.window.minimized and trabajo:hitTest(x, y) then
-            trabajo:mousepressed(x, y, button)
-            return
-        end
-        if email and email.window.visible and not email.window.minimized and email:hitTest(x, y) then
-            email:mousepressed(x, y, button)
-            return
-        end
-        if recyclebin and recyclebin.window.visible and not recyclebin.window.minimized and recyclebin:hitTest(x, y) then
-            recyclebin:mousepressed(x, y, button)
-            return
+        local appMap = {
+            mypc = mypc, explorer = explorer, notepad = notepad,
+            winamp = winamp, trabajo = trabajo, email = email, recyclebin = recyclebin,
+            personal = personal, achievements = achievements,
+        }
+        for i = #windowOrder, 1, -1 do
+            local id = windowOrder[i]
+            local app = appMap[id]
+            if app and app.window.visible and not app.window.minimized and app:hitTest(x, y) then
+                bringToFront(id)
+                app:mousepressed(x, y, button)
+                return
+            end
         end
 
         playClick()
@@ -853,10 +1081,14 @@ function love.mousepressed(x, y, button)
                 elseif clickedItem == 5 then
                     toggleApp("email")
                 elseif clickedItem == 6 then
-                    toggleApp("recyclebin")
+                    toggleApp("personal")
                 elseif clickedItem == 7 then
-                    toggleApp("notepad")
+                    toggleApp("achievements")
+                elseif clickedItem == 8 then
+                    toggleApp("recyclebin")
                 elseif clickedItem == 9 then
+                    toggleApp("notepad")
+                elseif clickedItem == 11 then
                     love.event.quit()
                 end
                 startMenuOpen = false
@@ -894,36 +1126,68 @@ function love.mousepressed(x, y, button)
                     toggleApp("recyclebin")
                 elseif icon.icon == "text" then
                     toggleApp("notepad")
+                elseif icon.icon == "achievements" then
+                    toggleApp("achievements")
                 end
                 end
                 lastClickTime = currentTime
                 break
             end
         end
+
+        if notepad and notepad.personalReady then
+            if x >= personalIcon.x and x <= personalIcon.x + 90 and y >= personalIcon.y and y <= personalIcon.y + 90 then
+                local currentTime = love.timer.getTime()
+                if currentTime - lastClickTime <= doubleClickTime then
+                    toggleApp("personal")
+                end
+                lastClickTime = currentTime
+            end
+        end
+
+        if email and email.downloadIconActive then
+            if x >= downloadIcon.x and x <= downloadIcon.x + 90 and y >= downloadIcon.y and y <= downloadIcon.y + 90 then
+                local currentTime = love.timer.getTime()
+                if currentTime - lastClickTime <= doubleClickTime then
+                    triggerMalware()
+                end
+                lastClickTime = currentTime
+            end
+        end
     end
 end
 
 function love.mousereleased(x, y, button)
-    if winamp then winamp:mousereleased(x, y, button) end
-    if mypc then mypc:mousereleased(x, y, button) end
-    if explorer then explorer:mousereleased(x, y, button) end
-    if notepad then notepad:mousereleased(x, y, button) end
-    if trabajo then trabajo:mousereleased(x, y, button) end
-    if email then email:mousereleased(x, y, button) end
-    if recyclebin then recyclebin:mousereleased(x, y, button) end
+    local appMap = {
+        winamp = winamp, mypc = mypc, explorer = explorer,
+        notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
+        personal = personal, achievements = achievements,
+    }
+    for _, id in ipairs(windowOrder) do
+        local app = appMap[id]
+        if app then app:mousereleased(x, y, button) end
+    end
 end
 
 function love.mousemoved(x, y)
-    if winamp then winamp:mousemoved(x, y) end
-    if mypc then mypc:mousemoved(x, y) end
-    if explorer then explorer:mousemoved(x, y) end
-    if notepad then notepad:mousemoved(x, y) end
-    if trabajo then trabajo:mousemoved(x, y) end
-    if email then email:mousemoved(x, y) end
-    if recyclebin then recyclebin:mousemoved(x, y) end
+    local appMap = {
+        winamp = winamp, mypc = mypc, explorer = explorer,
+        notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
+        personal = personal, achievements = achievements,
+    }
+    for _, id in ipairs(windowOrder) do
+        local app = appMap[id]
+        if app then app:mousemoved(x, y) end
+    end
 end
 
 function love.keypressed(key)
+end
+
+function love.wheelmoved(x, y)
+    if gameState == "desktop" and email then
+        email:wheelmoved(x, y)
+    end
 end
 
 function love.textinput(text)

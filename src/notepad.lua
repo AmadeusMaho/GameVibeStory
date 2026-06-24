@@ -16,22 +16,25 @@ local W95 = {
     fieldBg = {1, 1, 1},
     highlight = {0, 0, 0.5},
     highlightText = {1, 1, 1},
-    menuBg = {0.75, 0.75, 0.75},
+    green = {0, 0.5, 0},
 }
 
 function Notepad.new(x, y)
     local self = setmetatable({}, Notepad)
-    self.window = WindowManager.new("Sin titulo - Bloc de notas", x or 150, y or 100, 500, 380)
+    self.window = WindowManager.new("Objetivos", x or 150, y or 100, 420, 320)
 
-    self.text = "=== OBJETIVOS ===\n\n[ ] Genera $100\n[ ] Compra tu primer upgrade\n[ ] Mejora el procesador\n[ ] Alcanza $500\n[ ] Completa todas las mejoras\n[ ] Responde 3 correos de trabajo\n[ ] Elimina 3 correos maliciosos\n[ ] Elimina todos los correos\n\n\n(Selecciona los objetivos completados)"
-    self.scrollY = 0
-    self.cursorPos = #self.text
     self.trabajoRef = nil
     self.explorerRef = nil
-    self.emailJobsAccepted = 0
-    self.malwareDownloaded = 0
-    self.emailsDeleted = 0
-    self.malwareDeleted = 0
+    self.emailRef = nil
+    self.personalUnlocked = false
+
+    self.objectives = {
+        {id = "money20", text = "Genera $20", done = false, shown = true},
+        {id = "firstUpgrade", text = "Compra tu primer upgrade", done = false, shown = false},
+        {id = "firstProject", text = "Termina un proyecto exitosamente", done = false, shown = false},
+        {id = "work20", text = "Trabaja 20 veces", done = false, shown = false},
+        {id = "money200", text = "Genera $200 en total", done = false, shown = false},
+    }
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
@@ -49,6 +52,66 @@ function Notepad:toggleVisible()
 end
 
 function Notepad:update(dt)
+    if not self.trabajoRef then return end
+
+    local money = self.trabajoRef.totalEarned or 0
+    local hasUpgrade = false
+    if self.explorerRef then
+        for stat, level in pairs(self.explorerRef.upgradeLevels) do
+            if level > 0 then
+                hasUpgrade = true
+                break
+            end
+        end
+    end
+    local tasksDone = self.trabajoRef.tasksCompleted or 0
+    local hasCompletedProject = self.trabajoRef.completedProjects and self.trabajoRef.completedProjects > 0
+
+    for i, obj in ipairs(self.objectives) do
+        if not obj.done then
+            if obj.id == "money20" and money >= 20 then
+                obj.done = true
+                self:unlockNext(i)
+            elseif obj.id == "firstUpgrade" and hasUpgrade then
+                obj.done = true
+                self:unlockNext(i)
+            elseif obj.id == "firstProject" and hasCompletedProject then
+                obj.done = true
+                self:unlockNext(i)
+                if self.emailRef and not self.personalEmailSent then
+                    self.personalEmailSent = true
+                    self.emailRef:addEmailToInbox({
+                        subject = "Nuevo: Departamento de Personal",
+                        sender = "admin@empresa.com",
+                        type = "news",
+                        body = "Estimado freelancer:\n\nFelicidades por completar\nsu primer proyecto!\n\nAhora puede contratar personal\npara que trabajen por usted.\n\nNuevo icono disponible:\n'Personal' en el escritorio.\n\nSus empleados generaran\ndinero automaticamente.\n\nSaludos cordiales.",
+                    })
+                end
+            elseif obj.id == "work20" and tasksDone >= 20 then
+                obj.done = true
+                self:unlockNext(i)
+                if self.emailRef and not self.personalUnlocked then
+                    self.personalUnlocked = true
+                    self.emailRef:addEmailToInbox({
+                        subject = "Nuevo: Departamento de Personal",
+                        sender = "admin@empresa.com",
+                        type = "personal_unlock",
+                        body = "Estimado freelancer:\n\nHa completado 20 tareas!\nAhora puede contratar personal\npara que trabajen por usted.\n\nDescargue la aplicacion\n'Personal' desde este correo.\n\nSus empleados generaran\ndinero automaticamente.\n\nSaludos cordiales.",
+                    })
+                end
+            elseif obj.id == "money200" and money >= 200 then
+                obj.done = true
+                self:unlockNext(i)
+            end
+        end
+    end
+end
+
+function Notepad:unlockNext(currentIndex)
+    local nextObj = self.objectives[currentIndex + 1]
+    if nextObj then
+        nextObj.shown = true
+    end
 end
 
 function Notepad:drawContent(cx, cy, cw, ch)
@@ -58,112 +121,46 @@ function Notepad:drawContent(cx, cy, cw, ch)
     local smallFont = love.graphics.newFont(11)
     love.graphics.setFont(smallFont)
 
-    local menuH = 18
-    love.graphics.setColor(W95.menuBg)
-    love.graphics.rectangle("fill", cx, cy, cw, menuH)
-
-    local menuItems = {"Archivo", "Edicion", "Formato", "Ayuda"}
-    local mx_off = cx + 4
-    for _, item in ipairs(menuItems) do
-        local iw = smallFont:getWidth(item) + 12
-        love.graphics.setColor(W95.text)
-        love.graphics.print(item, mx_off, cy + 3)
-        mx_off = mx_off + iw
-    end
-
-    local contentY = cy + menuH
-    local contentH = ch - menuH
-
     love.graphics.setColor(W95.fieldBg)
-    love.graphics.rectangle("fill", cx, contentY, cw, contentH)
-    self:drawInset(cx, contentY, cw, contentH)
+    love.graphics.rectangle("fill", cx, cy, cw, ch)
+    self:drawInset(cx, cy, cw, ch)
 
-    love.graphics.setScissor(cx + 2, contentY + 2, cw - 4, contentH - 4)
+    love.graphics.setScissor(cx + 2, cy + 2, cw - 4, ch - 4)
 
     local money = 0
-    local hasUpgrade = false
-    local cpuUpgraded = false
-    local allUpgrades = false
-
     if self.trabajoRef then
-        money = self.trabajoRef.money
-    end
-    if self.explorerRef then
-        local purchased = 0
-        for _, upg in ipairs(self.explorerRef.upgrades) do
-            if upg.purchased then
-                purchased = purchased + 1
-                hasUpgrade = true
-                if upg.stat == "cpu" then cpuUpgraded = true end
-            end
-        end
-        if purchased >= #self.explorerRef.upgrades then
-            allUpgrades = true
-        end
+        money = self.trabajoRef.totalEarned or 0
     end
 
-    local objectives = {
-        {text = "Genera $100", done = money >= 100},
-        {text = "Compra tu primer upgrade", done = hasUpgrade},
-        {text = "Mejora el procesador", done = cpuUpgraded},
-        {text = "Alcanza $500", done = money >= 500},
-        {text = "Completa todas las mejoras", done = allUpgrades},
-        {text = "Responde 3 correos de trabajo (" .. (self.emailJobsAccepted or 0) .. "/3)", done = (self.emailJobsAccepted or 0) >= 3},
-        {text = "Elimina 3 correos maliciosos (" .. (self.malwareDeleted or 0) .. "/3)", done = (self.malwareDeleted or 0) >= 3},
-        {text = "Elimina todos los correos", done = false},
-    }
+    local y = cy + 16
+    local lineH = 22
 
-    local lines = {"=== OBJETIVOS ===", ""}
-    for _, obj in ipairs(objectives) do
-        local check = obj.done and "[X]" or "[ ]"
-        table.insert(lines, check .. " " .. obj.text)
-    end
-    table.insert(lines, "")
-    table.insert(lines, "")
-    table.insert(lines, "(Selecciona los objetivos completados)")
-    table.insert(lines, "")
-    table.insert(lines, "Dinero actual: $" .. money)
+    love.graphics.setColor(W95.highlight)
+    love.graphics.printf("=== OBJETIVOS ===", cx, y, cw, "center")
+    y = y + lineH + 6
 
-    local lineH = 14
-    local padX = 6
-    local padY = 4
-
-    for i, line in ipairs(lines) do
-        local ly = contentY + padY + (i - 1) * lineH - self.scrollY
-        if ly + lineH > contentY and ly < contentY + contentH then
-            if line:match("%[X%]") then
-                love.graphics.setColor(W95.green or {0, 0.5, 0})
-            elseif line:match("OBJETIVOS") then
-                love.graphics.setColor(W95.highlight)
+    for _, obj in ipairs(self.objectives) do
+        if obj.shown then
+            local check = obj.done and "[X]" or "[ ]"
+            if obj.done then
+                love.graphics.setColor(W95.green)
             else
                 love.graphics.setColor(W95.text)
             end
-            love.graphics.print(line, cx + padX, ly)
+            love.graphics.print("  " .. check .. "  " .. obj.text, cx + 16, y)
+            y = y + lineH
         end
     end
 
-    local cursorLine = 1
-    local cursorCol = self.cursorPos
-    for i = 1, #lines do
-        if cursorCol > #lines[i] + 1 then
-            cursorCol = cursorCol - #lines[i] - 1
-            cursorLine = i + 1
-        else
-            cursorLine = i
-            break
-        end
-    end
+    y = y + 12
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(cx + 16, y, cx + cw - 16, y)
+    y = y + 10
 
-    local cursorX = cx + padX + smallFont:getWidth(string.sub(lines[cursorLine] or "", 1, cursorCol - 1))
-    local cursorY = contentY + padY + (cursorLine - 1) * lineH - self.scrollY
-
-    if math.floor(love.timer.getTime() * 2) % 2 == 0 then
-        love.graphics.setColor(W95.text)
-        love.graphics.rectangle("fill", cursorX, cursorY, 2, lineH)
-    end
+    love.graphics.setColor(W95.textDim)
+    love.graphics.print("  Dinero total: $" .. money, cx + 16, y)
 
     love.graphics.setScissor()
-
     love.graphics.setFont(prevFont)
 end
 
@@ -177,44 +174,6 @@ function Notepad:drawInset(x, y, w, h)
 end
 
 function Notepad:handleClick(x, y, button)
-    if button == 1 then
-        local cx, cy, cw, ch = self.window:getContentArea()
-        local prevFont = love.graphics.getFont()
-        local smallFont = love.graphics.newFont(11)
-
-        if y >= cy + 18 and y <= cy + ch then
-            local lines = {}
-            for line in self.text:gmatch("[^\n]*") do
-                table.insert(lines, line)
-            end
-
-            local lineH = 14
-            local padY = 4
-            local clickLine = math.floor((y - cy - 18 + self.scrollY - padY) / lineH) + 1
-
-            if clickLine >= 1 and clickLine <= #lines then
-                local lineText = lines[clickLine] or ""
-                local clickX = x - cx - 6
-
-                local col = 0
-                for c = 1, #lineText do
-                    local charW = smallFont:getWidth(lineText:sub(c, c))
-                    if clickX < charW / 2 then
-                        col = c - 1
-                        break
-                    end
-                    clickX = clickX - charW
-                    col = c
-                end
-
-                self.cursorPos = 0
-                for i = 1, clickLine - 1 do
-                    self.cursorPos = self.cursorPos + #lines[i] + 1
-                end
-                self.cursorPos = self.cursorPos + col
-            end
-        end
-    end
     return true
 end
 

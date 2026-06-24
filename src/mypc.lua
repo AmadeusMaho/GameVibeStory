@@ -33,15 +33,7 @@ function MyPC.new(x, y)
         {label = "Perf. del sistema", id = "performance"},
     }
 
-    self.pcStats = {
-        os = "Microsoft Windows 95  4.00.950",
-        cpu = "Intel Pentium 75MHz",
-        ram = "16 MB",
-        disk = "850 MB HDD",
-        display = "Standard PCI Graphics Adapter (VGA)",
-        bios = "American Megatrends  12/01/94",
-    }
-
+    self.pcStats = nil
     self.upgradesRef = nil
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
@@ -167,29 +159,28 @@ function MyPC:drawGeneralTab(x, y, w, h)
     love.graphics.setColor(W95.textDim)
     love.graphics.print("Copyright (c) 1981-1995 Microsoft Corp.", x + 68, y + 28)
 
-    local stats = {
-        {label = "Versión:", value = self.pcStats.os},
-        {label = "Procesador:", value = self.pcStats.cpu},
-        {label = "Memoria:", value = self.pcStats.ram},
-        {label = "Disco:", value = self.pcStats.disk},
-        {label = "Pantalla:", value = self.pcStats.display},
-        {label = "BIOS:", value = self.pcStats.bios},
+    local ps = self.pcStats or {
+        os = "Microsoft Windows 95  4.00.950",
+        cpu = "Intel Pentium 75MHz",
+        ram = "16 MB",
+        disk = "850 MB HDD",
+        display = "Standard PCI Graphics Adapter (VGA)",
+        bios = "American Megatrends  12/01/94",
     }
 
-    if self.upgradesRef then
-        for _, upg in ipairs(self.upgradesRef) do
-            if upg.purchased then
-                if upg.stat == "cpu" then stats[2].value = upg.upgrade end
-                if upg.stat == "ram" then stats[3].value = upg.upgrade end
-                if upg.stat == "disk" then stats[4].value = upg.upgrade end
-                if upg.stat == "display" then stats[5].value = upg.upgrade end
-            end
-        end
-    end
+    local stats = {
+        {label = "Version:", value = ps.os},
+        {label = "Procesador:", value = ps.cpu},
+        {label = "Memoria:", value = ps.ram},
+        {label = "Disco:", value = ps.disk},
+        {label = "Pantalla:", value = ps.display},
+        {label = "Refrigeracion:", value = ps.sound or "Disipador basico"},
+        {label = "BIOS:", value = ps.bios},
+    }
 
     local sysInfoY = y + 70
     for i, pair in ipairs(stats) do
-        local ly = sysInfoY + (i - 1) * 22
+        local ly = sysInfoY + (i - 1) * 20
         love.graphics.setColor(W95.text)
         love.graphics.print(pair.label, x + 8, ly)
 
@@ -212,17 +203,9 @@ function MyPC:drawDevicesTab(x, y, w, h)
     love.graphics.rectangle("fill", x, y, w, h - 8)
     self:drawInset(x, y, w, h - 8)
 
-    local displayDevice = "Standard PCI Graphics Adapter (VGA)"
-    local soundDevice = "Sound Blaster 16"
-
-    if self.upgradesRef then
-        for _, upg in ipairs(self.upgradesRef) do
-            if upg.purchased then
-                if upg.stat == "display" then displayDevice = upg.upgrade end
-                if upg.stat == "sound" then soundDevice = upg.upgrade end
-            end
-        end
-    end
+    local ps = self.pcStats or {}
+    local displayDevice = ps.display or "Standard PCI Graphics Adapter (VGA)"
+    local soundDevice = ps.sound or "Disipador basico"
 
     local devices = {
         {name = "Dispositivo de sistema", icon = ">"},
@@ -233,7 +216,7 @@ function MyPC:drawDevicesTab(x, y, w, h)
         {name = "  IDE DISK DRIVE", icon = ""},
         {name = "Dispositivos de pantalla", icon = ">"},
         {name = "  " .. displayDevice, icon = ""},
-        {name = "Dispositivos de sonido", icon = ">"},
+        {name = "Sistema de refrigeracion", icon = ">"},
         {name = "  " .. soundDevice, icon = ""},
         {name = "Puertos (COM y LPT)", icon = ">"},
         {name = "  Puerto de comunicaciones (COM1)", icon = ""},
@@ -257,13 +240,8 @@ function MyPC:drawPerformanceTab(x, y, w, h)
     love.graphics.setFont(smallFont)
 
     local totalMB = 16
-    if self.upgradesRef then
-        for _, upg in ipairs(self.upgradesRef) do
-            if upg.purchased and upg.stat == "ram" then
-                local num = upg.upgrade:match("(%d+)")
-                if num then totalMB = tonumber(num) end
-            end
-        end
+    if self.pcStats and self.pcStats.ramNum then
+        totalMB = self.pcStats.ramNum
     end
 
     love.graphics.setColor(W95.text)
