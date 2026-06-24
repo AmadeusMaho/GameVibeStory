@@ -28,6 +28,8 @@ function Winamp.new(x, y)
     self.volume = 0.7
     self.shuffle = false
     self.music = nil
+    self.titleFont = love.graphics.newFont(14)
+    self.smallFont = love.graphics.newFont(11)
 
     self.playlist = {
         {title = "The man who sold the world - Nirvana", duration = 0, file = "songw95_1.wav"},
@@ -150,11 +152,10 @@ end
 function Winamp:drawContent(cx, cy, cw, ch)
     self.buttons = {}
 
+    local prevFont = love.graphics.getFont()
+
     love.graphics.setColor(WA.panelBg)
     love.graphics.rectangle("fill", cx, cy, cw, ch)
-
-    local titleFont = love.graphics.newFont(14)
-    local smallFont = love.graphics.newFont(11)
 
     love.graphics.setColor(WA.bg)
     love.graphics.rectangle("fill", cx + 5, cy + 5, cw - 10, 24)
@@ -162,11 +163,11 @@ function Winamp:drawContent(cx, cy, cw, ch)
 
     local track = self.playlist[self.selectedTrack]
     local title = track and track.title or "No track"
-    love.graphics.setFont(titleFont)
+    love.graphics.setFont(self.titleFont)
     love.graphics.setColor(WA.textBright)
     love.graphics.printf(title, cx + 10, cy + 8, cw - 20, "center")
 
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     love.graphics.setColor(WA.sliderBg)
     love.graphics.rectangle("fill", cx + 5, cy + 34, cw - 10, 8)
@@ -218,6 +219,8 @@ function Winamp:drawContent(cx, cy, cw, ch)
     local trackInfo = string.format("%d/%d", self.selectedTrack, #self.playlist)
     love.graphics.setColor(WA.textDim)
     love.graphics.printf(trackInfo, cx + 60, shufY + 2, 80, "center")
+
+    love.graphics.setFont(prevFont)
 end
 
 function Winamp:handleClick(x, y, button)

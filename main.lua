@@ -43,6 +43,7 @@ local countdownTimer = 0
 local startMenuOpen = false
 local lastClickTime = 0
 local doubleClickTime = 0.4
+local taskbarApps = {}
 
 local iconImages = {}
 local winampMusic = nil
@@ -71,6 +72,44 @@ function playClick()
     if clickSound then
         clickSound:stop()
         clickSound:play()
+    end
+end
+
+function openApp(appId)
+    if appId == "winamp" and winamp then
+        if winamp.window.visible and winamp.window.minimized then
+            winamp.window.minimized = false
+        elseif not winamp.window.visible then
+            winamp:toggleVisible()
+        end
+    end
+    updateTaskbar()
+end
+
+function closeApp(appId)
+    if appId == "winamp" and winamp then
+        winamp.window.visible = false
+    end
+    updateTaskbar()
+end
+
+function toggleApp(appId)
+    if appId == "winamp" and winamp then
+        if not winamp.window.visible then
+            winamp:toggleVisible()
+        elseif winamp.window.minimized then
+            winamp.window.minimized = false
+        else
+            winamp.window.minimized = true
+        end
+    end
+    updateTaskbar()
+end
+
+function updateTaskbar()
+    taskbarApps = {}
+    if winamp and winamp.window.visible then
+        table.insert(taskbarApps, {id = "winamp", label = "Winamp", icon = "winamp"})
     end
 end
 
@@ -314,6 +353,42 @@ function drawDesktop()
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(94, taskY + 4, 94, taskY + taskH - 5)
 
+    local taskStartX = 96
+    local taskItemW = 120
+    for i, app in ipairs(taskbarApps) do
+        local tx = taskStartX + (i - 1) * taskItemW
+        local isActive = winamp and winamp.window.visible and not winamp.window.minimized
+        local hovered = mx >= tx and mx <= tx + taskItemW - 4 and my >= taskY + 2 and my <= taskY + taskH - 2
+
+        if isActive then
+            love.graphics.setColor(W95.borderDark)
+            love.graphics.rectangle("fill", tx, taskY + 2, taskItemW - 4, taskH - 4)
+            love.graphics.setColor(W95.borderLight)
+            love.graphics.line(tx, taskY + 2, tx + taskItemW - 4, taskY + 2)
+            love.graphics.line(tx, taskY + 2, tx, taskY + taskH - 3)
+            love.graphics.setColor(W95.borderUltra)
+            love.graphics.line(tx + taskItemW - 5, taskY + 3, tx + taskItemW - 5, taskY + taskH - 3)
+            love.graphics.line(tx + 1, taskY + taskH - 3, tx + taskItemW - 5, taskY + taskH - 3)
+        else
+            love.graphics.setColor(hovered and {0.85, 0.85, 0.85} or W95.bg)
+            love.graphics.rectangle("fill", tx, taskY + 2, taskItemW - 4, taskH - 4)
+            love.graphics.setColor(W95.borderLight)
+            love.graphics.line(tx, taskY + 2, tx + taskItemW - 4, taskY + 2)
+            love.graphics.line(tx, taskY + 2, tx, taskY + taskH - 3)
+            love.graphics.setColor(W95.borderUltra)
+            love.graphics.line(tx + taskItemW - 5, taskY + 3, tx + taskItemW - 5, taskY + taskH - 3)
+            love.graphics.line(tx + 1, taskY + taskH - 3, tx + taskItemW - 5, taskY + taskH - 3)
+        end
+
+        if iconImages[app.icon] then
+            love.graphics.setColor(1, 1, 1)
+            local img = iconImages[app.icon]
+            love.graphics.draw(img, tx + 4, taskY + 8, 0, 0.4, 0.4)
+        end
+        love.graphics.setColor(W95.fieldText)
+        love.graphics.printf(app.label, tx + 24, taskY + 12, taskItemW - 28, "left")
+    end
+
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(winW - 135, taskY + 4, winW - 135, taskY + taskH - 5)
     local time = "10/24/95  " .. os.date("%I:%M %p")
@@ -475,8 +550,8 @@ function love.mousepressed(x, y, button)
 
             if x >= menuX and x <= menuX + menuW and y >= menuY and y <= taskY then
                 local clickedItem = math.floor((y - menuY) / 22) + 1
-                if clickedItem == 1 and winamp then
-                    winamp:toggleVisible()
+                if clickedItem == 1 then
+                    toggleApp("winamp")
                 elseif clickedItem == 4 then
                     love.event.quit()
                 end
@@ -487,12 +562,22 @@ function love.mousepressed(x, y, button)
             end
         end
 
+        local taskStartX = 96
+        local taskItemW = 120
+        for i, app in ipairs(taskbarApps) do
+            local tx = taskStartX + (i - 1) * taskItemW
+            if x >= tx and x <= tx + taskItemW - 4 and y >= taskY + 2 and y <= taskY + taskH - 2 then
+                toggleApp(app.id)
+                return
+            end
+        end
+
         for _, icon in ipairs(desktopIcons) do
             if x >= icon.x and x <= icon.x + 90 and y >= icon.y and y <= icon.y + 90 then
                 if icon.icon == "winamp" then
                     local currentTime = love.timer.getTime()
                     if currentTime - lastClickTime <= doubleClickTime then
-                        winamp:toggleVisible()
+                        toggleApp("winamp")
                     end
                     lastClickTime = currentTime
                 end
