@@ -280,6 +280,12 @@ function love.load()
     if ok8 then iconImages["mypc"] = img8 end
     local ok9, img9 = pcall(love.graphics.newImage, "assets/sprites/explorer.png")
     if ok9 then iconImages["explorer"] = img9 end
+    local ok10, img10 = pcall(love.graphics.newImage, "assets/sprites/trabajo.png")
+    if ok10 then iconImages["trabajo"] = img10 end
+    local ok11, img11 = pcall(love.graphics.newImage, "assets/sprites/email.png")
+    if ok11 then iconImages["email"] = img11 end
+    local ok12, img12 = pcall(love.graphics.newImage, "assets/sprites/recyclebin.png")
+    if ok12 then iconImages["recyclebin"] = img12 end
 
     local ok8, snd8 = pcall(love.audio.newSource, "assets/sounds/songw95_1.wav", "stream")
     if ok8 then
@@ -330,6 +336,9 @@ function love.load()
     trabajo = TrabajoClass.new(250, 120)
     trabajo.window.onClose = function()
         updateTaskbar()
+    end
+    trabajo.onWorkDone = function()
+        if email then email:onWorkCompleted() end
     end
 
     explorer = ExplorerClass.new(80, 60)
@@ -471,39 +480,6 @@ function drawDesktopIcon(icon, mx, my)
         local imgW, imgH = img:getDimensions()
         local scale = math.min(iconW / imgW, iconH / imgH)
         love.graphics.draw(img, iconX + (iconW - imgW * scale) / 2, iconY + (iconH - imgH * scale) / 2, 0, scale, scale)
-    elseif icon.icon == "trabajo" then
-        love.graphics.setColor(0.75, 0.75, 0.75)
-        love.graphics.rectangle("fill", iconX, iconY, iconW, iconH, 4, 4)
-        love.graphics.setColor(0, 0, 0.5)
-        love.graphics.rectangle("line", iconX, iconY, iconW, iconH)
-        love.graphics.setColor(0, 0, 0)
-        love.graphics.rectangle("fill", iconX + 10, iconY + 12, iconW - 20, iconH - 24)
-        love.graphics.setColor(0, 0.5, 0)
-        love.graphics.line(iconX + 18, iconY + 22, iconX + 46, iconY + 22)
-        love.graphics.line(iconX + 18, iconY + 30, iconX + 46, iconY + 30)
-        love.graphics.line(iconX + 18, iconY + 38, iconX + 46, iconY + 38)
-        love.graphics.line(iconX + 18, iconY + 46, iconX + 36, iconY + 46)
-    elseif icon.icon == "email" then
-        love.graphics.setColor(0.8, 0.8, 0.2)
-        love.graphics.rectangle("fill", iconX + 6, iconY + 14, iconW - 12, iconH - 24, 2, 2)
-        love.graphics.setColor(0, 0, 0.5)
-        love.graphics.rectangle("line", iconX + 6, iconY + 14, iconW - 12, iconH - 24)
-        love.graphics.setColor(0.8, 0.8, 0.2)
-        love.graphics.line(iconX + 6, iconY + 14, iconX + iconW / 2, iconY + 30)
-        love.graphics.line(iconX + iconW - 6, iconY + 14, iconX + iconW / 2, iconY + 30)
-    elseif icon.icon == "recyclebin" then
-        love.graphics.setColor(0.6, 0.6, 0.6)
-        love.graphics.rectangle("fill", iconX + 14, iconY + 22, iconW - 28, iconH - 28, 2, 2)
-        love.graphics.setColor(0, 0, 0.5)
-        love.graphics.rectangle("line", iconX + 14, iconY + 22, iconW - 28, iconH - 28)
-        love.graphics.setColor(0.5, 0.5, 0.5)
-        love.graphics.rectangle("fill", iconX + 12, iconY + 16, iconW - 24, 8)
-        love.graphics.setColor(0, 0, 0.5)
-        love.graphics.rectangle("line", iconX + 12, iconY + 16, iconW - 24, 8)
-        love.graphics.setColor(0.4, 0.4, 0.4)
-        love.graphics.line(iconX + 24, iconY + 26, iconX + 24, iconY + 46)
-        love.graphics.line(iconX + 32, iconY + 26, iconX + 32, iconY + 46)
-        love.graphics.line(iconX + 40, iconY + 26, iconX + 40, iconY + 46)
     else
         love.graphics.setColor(0.6, 0.6, 0.6)
         love.graphics.rectangle("fill", iconX, iconY, iconW, iconH, 2, 2)

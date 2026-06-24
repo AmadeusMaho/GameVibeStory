@@ -44,6 +44,7 @@ function Trabajo.new(x, y)
     self.cooldownMax = 0.3
     self.level = 1
     self.baseReward = 5
+    self.onWorkDone = nil
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
@@ -75,6 +76,7 @@ function Trabajo:update(dt)
             self.currentTask = nil
             self.taskProgress = 0
             self.cooldown = self.cooldownMax
+            if self.onWorkDone then self.onWorkDone() end
         end
     end
 end

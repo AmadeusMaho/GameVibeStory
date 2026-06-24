@@ -28,7 +28,6 @@ local allEmails = {
         sender = "empleos@trabajo.com",
         type = "job",
         body = "Se requiere digitador con experiencia.\nSalario: $15/hora.\nEnvie su CV a este correo.",
-        reward = 0,
         moneyReward = 15,
     },
     {
@@ -36,14 +35,12 @@ local allEmails = {
         sender = "noticias@tech.com",
         type = "news",
         body = "Intel anuncia el nuevo Pentium Pro\na 200MHz. Disponible en tiendas\na partir del proximo mes.",
-        reward = 0,
     },
     {
-        subject = "¡Ganaste un premio!",
+        subject = "Ganaste un premio!",
         sender = "premio@loteria.com",
         type = "malware",
         body = "Felicidades! Ha ganado $10,000!\nDescargue el archivo adjunto\npara reclamar su premio.",
-        reward = 0,
         moneyLoss = 25,
     },
     {
@@ -51,14 +48,12 @@ local allEmails = {
         sender = "downloads@winamp.com",
         type = "ad",
         body = "Obtenga Winamp GRATIS!\nLa mejor reproductor de musica\npara su PC con Windows 95.",
-        reward = 0,
     },
     {
         subject = "Trabajo nocturno - datos",
         sender = "nightjob@freelance.net",
         type = "job",
         body = "Se busca persona para entrada\nde datos nocturna. $20/hora.\nHorario: 10pm - 6am.",
-        reward = 0,
         moneyReward = 20,
     },
     {
@@ -66,14 +61,12 @@ local allEmails = {
         sender = "security@microsoft.com",
         type = "news",
         body = "Microsoft recomienda instalar\nel parche de seguridad MS95-001.\nDisponible en Windows Update.",
-        reward = 0,
     },
     {
         subject = "Software pirata - gratis",
         sender = "free@warez.com",
         type = "malware",
         body = "Obtenga Office 95 gratis!\nSin licencia requerida.\nDescargue el archivo adjunto.",
-        reward = 0,
         moneyLoss = 30,
     },
     {
@@ -81,14 +74,12 @@ local allEmails = {
         sender = "ofertas@compumail.com",
         type = "ad",
         body = "Disco duro IDE 1.2GB por solo $99!\nOferta por tiempo limitado.\nLlame al 555-0123.",
-        reward = 0,
     },
     {
         subject = "Freelance - traduccion",
         sender = "traduccion@work.com",
         type = "job",
         body = "Se necesita traductor ingles-espanol.\nPago por palabra. Trabajo remoto.\nResponda para mas informacion.",
-        reward = 0,
         moneyReward = 25,
     },
     {
@@ -96,14 +87,12 @@ local allEmails = {
         sender = "bios@ami.com",
         type = "news",
         body = "AMI BIOS ofrece nueva actualizacion\npara mejorar el rendimiento.\nDescargue desde nuestro sitio.",
-        reward = 0,
     },
     {
         subject = "Club de inversionistas",
         sender = "inversiones@vip.com",
         type = "malware",
-        body = "Únase al club de inversionistas\nmas exclusivo del mundo.\nGanancias garantizadas al 300%.",
-        reward = 0,
+        body = "Unase al club de inversionistas\nmas exclusivo del mundo.\nGanancias garantizadas al 300%.",
         moneyLoss = 50,
     },
     {
@@ -111,7 +100,6 @@ local allEmails = {
         sender = "ventas@printers.com",
         type = "ad",
         body = "Impresoras Matriciales desde $49!\nEnvio gratis a todo el pais.\nVisite nuestra tienda en linea.",
-        reward = 0,
     },
 }
 
@@ -128,7 +116,15 @@ function Email.new(x, y)
     self.notepadRef = nil
     self.emailIndex = 1
     self.emailsPerBatch = 3
-    self.readEmails = {}
+    self.pendingApplications = 0
+    self.workSinceApplication = 0
+    self.chimeSound = nil
+
+    local ok, snd = pcall(love.audio.newSource, "assets/sounds/CHIMES.WAV", "static")
+    if ok then
+        self.chimeSound = snd
+        self.chimeSound:setVolume(0.6)
+    end
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
@@ -147,6 +143,13 @@ function Email:toggleVisible()
     self.window.minimized = false
 end
 
+function Email:playChime()
+    if self.chimeSound then
+        self.chimeSound:stop()
+        self.chimeSound:play()
+    end
+end
+
 function Email:loadNextBatch()
     self.inbox = {}
     for i = 1, self.emailsPerBatch do
@@ -161,6 +164,46 @@ function Email:loadNextBatch()
     if #self.inbox > 0 then
         self.selectedIndex = 1
         self.selectedEmail = self.inbox[1]
+    end
+    self:playChime()
+end
+
+function Email:addEmailToInbox(email)
+    email.read = false
+    email.handled = false
+    table.insert(self.inbox, email)
+    if #self.inbox == 1 then
+        self.selectedIndex = 1
+        self.selectedEmail = self.inbox[1]
+    end
+    self:playChime()
+end
+
+function Email:onWorkCompleted()
+    if self.pendingApplications > 0 then
+        self.workSinceApplication = self.workSinceApplication + 1
+        local threshold = 5 + math.random(11)
+        if self.workSinceApplication >= threshold then
+            self.workSinceApplication = 0
+            self.pendingApplications = self.pendingApplications - 1
+            local accepted = math.random() < 0.5
+            if accepted then
+                self:addEmailToInbox({
+                    subject = "CV ACEPTADO - Felicidades!",
+                    sender = "rrhh@empresa.com",
+                    type = "news",
+                    body = "Estimado candidato:\n\nSu CV ha sido aceptado.\nSe le contactara pronto para\nuna entrevista.\n\nSaludos cordiales.",
+                    moneyReward = 50,
+                })
+            else
+                self:addEmailToInbox({
+                    subject = "CV Rechazado",
+                    sender = "rrhh@empresa.com",
+                    type = "news",
+                    body = "Estimado candidato:\n\nLamentamos informarle que\nsu perfil no coincide con\nnuestras necesidades.\n\nLe deseamos exito.",
+                })
+            end
+        end
     end
 end
 
@@ -231,8 +274,8 @@ function Email:drawContent(cx, cy, cw, ch)
     love.graphics.rectangle("fill", cx, listY, listW, listH)
     self:drawInset(cx, listY, listW, listH)
 
-    local colW = {20, 180, 120, cw - 320}
-    local headers = {"", "Asunto", "De", "Tipo"}
+    local colW = {20, cw - 100, 80}
+    local headers = {"", "Asunto", "De"}
     local headerY = listY + 2
 
     love.graphics.setColor(W95.bg)
@@ -268,26 +311,12 @@ function Email:drawContent(cx, cy, cw, ch)
             love.graphics.setColor(email.read and W95.textDim or W95.text)
         end
 
-        local typeColor = W95.text
-        if email.type == "job" then typeColor = W95.green
-        elseif email.type == "malware" then typeColor = W95.red
-        elseif email.type == "ad" then typeColor = W95.yellow
-        elseif email.type == "news" then typeColor = W95.link end
-
         local ex = cx + 6
         love.graphics.print(email.handled and "  " or " * ", ex, ey + 1)
         ex = ex + colW[1]
         love.graphics.print(email.subject, ex, ey + 1)
         ex = ex + colW[2]
         love.graphics.print(email.sender, ex, ey + 1)
-        ex = ex + colW[3]
-        local oldColor = {love.graphics.getColor()}
-        love.graphics.setColor(typeColor)
-        local typeName = email.type == "job" and "Trabajo" or
-            email.type == "malware" and "¡CUIDADO!" or
-            email.type == "ad" and "Anuncio" or "Noticia"
-        love.graphics.print(typeName, ex, ey + 1)
-        love.graphics.setColor(oldColor)
 
         table.insert(self.buttons, {x = cx + 2, y = ey, w = listW - 4, h = 17, action = "select", index = i})
     end
@@ -318,13 +347,7 @@ function Email:drawContent(cx, cy, cw, ch)
         for j, line in ipairs(lines) do
             local ly = contentY + 40 + (j - 1) * lineH
             if ly + lineH < contentY + contentH then
-                if email.type == "malware" then
-                    love.graphics.setColor(W95.red)
-                elseif email.type == "job" then
-                    love.graphics.setColor(W95.green)
-                else
-                    love.graphics.setColor(W95.text)
-                end
+                love.graphics.setColor(W95.text)
                 love.graphics.print(line, cx + 10, ly)
             end
         end
@@ -334,30 +357,17 @@ function Email:drawContent(cx, cy, cw, ch)
             local btnW = 90
             local btnH = 22
 
-            if email.type == "job" then
-                local acceptX = cx + cw - btnW * 2 - 16
-                local mx, my = love.mouse.getPosition()
-                local acceptHov = mx >= acceptX and mx <= acceptX + btnW and my >= btnY and my <= btnY + btnH
-                love.graphics.setColor(acceptHov and {0.85, 0.85, 0.85} or W95.bg)
-                love.graphics.rectangle("fill", acceptX, btnY, btnW, btnH)
-                self:drawBevel(acceptX, btnY, btnW, btnH)
-                love.graphics.setColor(W95.green)
-                love.graphics.printf("Aceptar", acceptX, btnY + 4, btnW, "center")
-                table.insert(self.buttons, {x = acceptX, y = btnY, w = btnW, h = btnH, action = "accept"})
-            elseif email.type == "malware" then
-                local downloadX = cx + cw - btnW * 2 - 16
-                local mx, my = love.mouse.getPosition()
-                local dlHov = mx >= downloadX and mx <= downloadX + btnW and my >= btnY and my <= btnY + btnH
-                love.graphics.setColor(dlHov and {0.85, 0.85, 0.85} or W95.bg)
-                love.graphics.rectangle("fill", downloadX, btnY, btnW, btnH)
-                self:drawBevel(downloadX, btnY, btnW, btnH)
-                love.graphics.setColor(W95.red)
-                love.graphics.printf("Descargar", downloadX, btnY + 4, btnW, "center")
-                table.insert(self.buttons, {x = downloadX, y = btnY, w = btnW, h = btnH, action = "download"})
-            end
+            local actionX = cx + cw - btnW * 2 - 16
+            local mx, my = love.mouse.getPosition()
+            local actionHov = mx >= actionX and mx <= actionX + btnW and my >= btnY and my <= btnY + btnH
+            love.graphics.setColor(actionHov and {0.85, 0.85, 0.85} or W95.bg)
+            love.graphics.rectangle("fill", actionX, btnY, btnW, btnH)
+            self:drawBevel(actionX, btnY, btnW, btnH)
+            love.graphics.setColor(W95.text)
+            love.graphics.printf("Descargar", actionX, btnY + 4, btnW, "center")
+            table.insert(self.buttons, {x = actionX, y = btnY, w = btnW, h = btnH, action = "download"})
 
             local deleteX = cx + cw - btnW - 8
-            local mx, my = love.mouse.getPosition()
             local delHov = mx >= deleteX and mx <= deleteX + btnW and my >= btnY and my <= btnY + btnH
             love.graphics.setColor(delHov and {0.85, 0.85, 0.85} or W95.bg)
             love.graphics.rectangle("fill", deleteX, btnY, btnW, btnH)
@@ -399,22 +409,21 @@ function Email:handleClick(x, y, button)
                 if self.selectedEmail then
                     self.selectedEmail.read = true
                 end
-            elseif btn.action == "accept" and self.selectedEmail and not self.selectedEmail.handled then
-                self.selectedEmail.handled = true
-                if self.selectedEmail.moneyReward and self.trabajoRef then
-                    self.trabajoRef.money = self.trabajoRef.money + self.selectedEmail.moneyReward
-                    self.trabajoRef.totalEarned = self.trabajoRef.totalEarned + self.selectedEmail.moneyReward
-                end
-                if self.notepadRef and self.selectedEmail.type == "job" then
-                    self.notepadRef.emailJobsAccepted = (self.notepadRef.emailJobsAccepted or 0) + 1
-                end
             elseif btn.action == "download" and self.selectedEmail and not self.selectedEmail.handled then
                 self.selectedEmail.handled = true
-                if self.selectedEmail.moneyLoss and self.trabajoRef then
+                if self.selectedEmail.type == "job" and self.selectedEmail.moneyReward and self.trabajoRef then
+                    self.trabajoRef.money = self.trabajoRef.money + self.selectedEmail.moneyReward
+                    self.trabajoRef.totalEarned = self.trabajoRef.totalEarned + self.selectedEmail.moneyReward
+                    self.pendingApplications = self.pendingApplications + 1
+                    self.workSinceApplication = 0
+                    if self.notepadRef then
+                        self.notepadRef.emailJobsAccepted = (self.notepadRef.emailJobsAccepted or 0) + 1
+                    end
+                elseif self.selectedEmail.type == "malware" and self.selectedEmail.moneyLoss and self.trabajoRef then
                     self.trabajoRef.money = math.max(0, self.trabajoRef.money - self.selectedEmail.moneyLoss)
-                end
-                if self.notepadRef then
-                    self.notepadRef.malwareDownloaded = (self.notepadRef.malwareDownloaded or 0) + 1
+                    if self.notepadRef then
+                        self.notepadRef.malwareDownloaded = (self.notepadRef.malwareDownloaded or 0) + 1
+                    end
                 end
             elseif btn.action == "delete" and self.selectedEmail and not self.selectedEmail.handled then
                 self.selectedEmail.handled = true
