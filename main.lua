@@ -210,24 +210,19 @@ function drawDesktopIcon(icon, mx, my)
     local iconW = 64
     local iconH = 64
 
-    if icon.icon == "winamp" then
-        love.graphics.setColor(0.1, 0.1, 0.1)
-        love.graphics.rectangle("fill", iconX, iconY, iconW, iconH, 4, 4)
-        love.graphics.setColor(0, 0.8, 0)
-        love.graphics.rectangle("fill", iconX + 8, iconY + 8, 16, 16, 2, 2)
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.printf("W", iconX + 4, iconY + 26, iconW - 8, "center")
-    elseif iconImages[icon.icon] then
-        love.graphics.setColor(1, 1, 1)
-        local img = iconImages[icon.icon]
-        local imgW, imgH = img:getDimensions()
-        local scale = math.min(iconW / imgW, iconH / imgH)
-        love.graphics.draw(img, iconX + (iconW - imgW * scale) / 2, iconY + (iconH - imgH * scale) / 2, 0, scale, scale)
-    end
-
     if hovered then
         love.graphics.setColor(0, 0, 0.8)
-        love.graphics.rectangle("fill", icon.x, icon.y + 68, 90, 20)
+        love.graphics.rectangle("fill", icon.x, icon.y, 90, 88)
+        love.graphics.setColor(0, 0, 0.5)
+        love.graphics.rectangle("line", icon.x, icon.y, 90, 88)
+    end
+
+    love.graphics.setColor(0.6, 0.6, 0.6)
+    love.graphics.rectangle("fill", iconX, iconY, iconW, iconH, 2, 2)
+    love.graphics.setColor(0.4, 0.4, 0.4)
+    love.graphics.rectangle("line", iconX, iconY, iconW, iconH)
+
+    if hovered then
         love.graphics.setColor(1, 1, 1)
     else
         love.graphics.setColor(1, 1, 1)
@@ -297,7 +292,7 @@ function drawDesktop()
 
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(winW - 135, taskY + 4, winW - 135, taskY + taskH - 5)
-    local time = os.date("%H:%M")
+    local time = "10/24/95  " .. os.date("%I:%M %p")
     love.graphics.setColor(W95.borderLight)
     love.graphics.line(winW - 132, taskY + 4, winW - 132, taskY + taskH - 5)
     love.graphics.setColor(W95.bg)
