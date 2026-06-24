@@ -1,4 +1,5 @@
 local CursorManager = require("src.cursor")
+local WinampClass = require("src.winamp")
 
 local gameState = "boot"
 local bootSound = nil
@@ -41,8 +42,6 @@ local countdownTimer = 0
 
 local startMenuOpen = false
 local lastClickTime = 0
-local lastClickX = 0
-local lastClickY = 0
 local doubleClickTime = 0.4
 
 local iconImages = {}
@@ -128,12 +127,9 @@ function love.load()
 
     CursorManager.init()
 
-    local okW, winampMod = pcall(require, "src.winamp")
-    if okW then
-        winamp = winampMod.new(200, 150)
-        if winampMusic then
-            winamp:setMusic(winampMusic)
-        end
+    winamp = WinampClass.new(200, 150)
+    if winampMusic then
+        winamp:setMusic(winampMusic)
     end
 end
 
@@ -476,7 +472,7 @@ function love.mousepressed(x, y, button)
 
             if x >= menuX and x <= menuX + menuW and y >= menuY and y <= taskY then
                 local clickedItem = math.floor((y - menuY) / 22) + 1
-                if clickedItem == 1 then
+                if clickedItem == 1 and winamp then
                     winamp:toggleVisible()
                 elseif clickedItem == 4 then
                     love.event.quit()
@@ -490,15 +486,12 @@ function love.mousepressed(x, y, button)
 
         for _, icon in ipairs(desktopIcons) do
             if x >= icon.x and x <= icon.x + 90 and y >= icon.y and y <= icon.y + 90 then
-                local currentTime = love.timer.getTime()
-                local distX = math.abs(x - lastClickX)
-                local distY = math.abs(y - lastClickY)
-                local isDoubleClick = (currentTime - lastClickTime) <= doubleClickTime and distX < 30 and distY < 30
-                lastClickTime = currentTime
-                lastClickX = x
-                lastClickY = y
-                if isDoubleClick and icon.icon == "winamp" then
-                    winamp:toggleVisible()
+                if icon.icon == "winamp" then
+                    local currentTime = love.timer.getTime()
+                    if currentTime - lastClickTime <= doubleClickTime then
+                        winamp:toggleVisible()
+                    end
+                    lastClickTime = currentTime
                 end
                 break
             end
