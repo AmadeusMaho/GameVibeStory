@@ -65,8 +65,8 @@ local desktopIcons = {
     {label = "Mi PC", icon = "mypc", x = 40, y = 40},
     {label = "Internet Explorer", icon = "explorer", x = 40, y = 140},
     {label = "Winamp", icon = "winamp", x = 40, y = 240},
-    {label = "Trabajo", icon = "trabajo", x = 40, y = 340},
-    {label = "Correo", icon = "email", x = 140, y = 40},
+    {label = "Trabajo", icon = "trabajo", x = 40, y = 340, iconScale = 1.4},
+    {label = "Correo", icon = "email", x = 140, y = 40, iconScale = 1.4},
     {label = "Notepad", icon = "text", x = 140, y = 140},
     {label = "Papelera", icon = "recyclebin", x = 140, y = 240},
 }
@@ -478,7 +478,7 @@ function drawDesktopIcon(icon, mx, my)
         love.graphics.setColor(1, 1, 1)
         local img = iconImages[icon.icon]
         local imgW, imgH = img:getDimensions()
-        local scale = math.min(iconW / imgW, iconH / imgH)
+        local scale = math.min(iconW / imgW, iconH / imgH) * (icon.iconScale or 1)
         love.graphics.draw(img, iconX + (iconW - imgW * scale) / 2, iconY + (iconH - imgH * scale) / 2, 0, scale, scale)
     else
         love.graphics.setColor(0.6, 0.6, 0.6)
