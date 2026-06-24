@@ -268,7 +268,6 @@ function Email:drawContent(cx, cy, cw, ch)
             love.graphics.setColor(email.read and W95.textDim or W95.text)
         end
 
-        local icon = email.handled and "  " or (email.read and " * " :rep(1) or " * ")
         local typeColor = W95.text
         if email.type == "job" then typeColor = W95.green
         elseif email.type == "malware" then typeColor = W95.red
