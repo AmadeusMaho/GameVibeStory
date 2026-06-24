@@ -27,13 +27,10 @@ function Winamp.new(x, y)
     self.seekPos = 0
     self.volume = 0.7
     self.shuffle = false
+    self.music = nil
 
     self.playlist = {
-        {title = "Mori Calliope - Go-Getters", duration = 195},
-        {title = "CircusP - Goodbye", duration = 204},
-        {title = "AmaLee - Siren", duration = 242},
-        {title = "Crusher-P - Echo", duration = 230},
-        {title = "MB3 - Silent City", duration = 243},
+        {title = "Windows 95 Song", duration = 0, file = "songw95_1.wav"},
     }
     self.selectedTrack = 1
     self.buttons = {}
@@ -48,7 +45,16 @@ function Winamp.new(x, y)
     return self
 end
 
+function Winamp:setMusic(source)
+    self.music = source
+    if source then
+        self.totalTime = source:getDuration()
+        self.playlist[1].duration = self.totalTime
+    end
+end
+
 function Winamp:formatTime(seconds)
+    if seconds < 0 then seconds = 0 end
     local mins = math.floor(seconds / 60)
     local secs = math.floor(seconds % 60)
     return string.format("%d:%02d", mins, secs)
@@ -61,11 +67,8 @@ end
 
 function Winamp:update(dt)
     if not self.window.visible then return end
-    if self.playing then
-        self.currentTime = self.currentTime + dt
-        if self.currentTime >= self.totalTime then
-            self:nextTrack()
-        end
+    if self.playing and self.music then
+        self.currentTime = self.music:tell()
         if self.totalTime > 0 then
             self.seekPos = self.currentTime / self.totalTime
         end
@@ -73,27 +76,33 @@ function Winamp:update(dt)
 end
 
 function Winamp:nextTrack()
-    if self.shuffle then
-        self.selectedTrack = love.math.random(1, #self.playlist)
-    elseif self.selectedTrack < #self.playlist then
+    if self.selectedTrack < #self.playlist then
         self.selectedTrack = self.selectedTrack + 1
     else
-        self.playing = false
-        self.currentTime = 0
-        self.seekPos = 0
-        return
+        self.selectedTrack = 1
     end
     self.currentTime = 0
-    self.totalTime = self.playlist[self.selectedTrack].duration
+    self.seekPos = 0
+    if self.music then
+        self.totalTime = self.music:getDuration()
+        self.playlist[self.selectedTrack].duration = self.totalTime
+    end
 end
 
 function Winamp:prevTrack()
     if self.currentTime > 3 then
+        if self.music then
+            self.music:seek(0)
+        end
         self.currentTime = 0
     elseif self.selectedTrack > 1 then
         self.selectedTrack = self.selectedTrack - 1
         self.currentTime = 0
-        self.totalTime = self.playlist[self.selectedTrack].duration
+        self.seekPos = 0
+        if self.music then
+            self.totalTime = self.music:getDuration()
+            self.playlist[self.selectedTrack].duration = self.totalTime
+        end
     end
 end
 
@@ -191,23 +200,46 @@ function Winamp:handleClick(x, y, button)
     for _, btn in ipairs(self.buttons) do
         if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
             if btn.action == ">" then
-                self.playing = true
-                if self.totalTime == 0 and self.playlist[self.selectedTrack] then
-                    self.totalTime = self.playlist[self.selectedTrack].duration
+                if self.music then
+                    if not self.playing then
+                        self.music:play()
+                        self.playing = true
+                    else
+                        self.music:pause()
+                        self.playing = false
+                    end
                 end
             elseif btn.action == "[]" then
+                if self.music then
+                    self.music:stop()
+                end
                 self.playing = false
                 self.currentTime = 0
                 self.seekPos = 0
             elseif btn.action == ">|" then
+                if self.music then
+                    self.music:stop()
+                end
                 self:nextTrack()
+                if self.music and self.playing then
+                    self.music:play()
+                end
             elseif btn.action == "|<" then
+                if self.music then
+                    self.music:stop()
+                end
                 self:prevTrack()
+                if self.music and self.playing then
+                    self.music:play()
+                end
             elseif btn.action == "shuffle" then
                 self.shuffle = not self.shuffle
             elseif btn.action == "volume" then
                 local relX = x - btn.x
                 self.volume = math.max(0, math.min(1, relX / btn.w))
+                if self.music then
+                    self.music:setVolume(self.volume)
+                end
             end
             return true
         end

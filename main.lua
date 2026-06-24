@@ -41,8 +41,11 @@ local countdownValue = 3
 local countdownTimer = 0
 
 local startMenuOpen = false
+local lastClickTime = 0
+local doubleClickTime = 0.3
 
 local iconImages = {}
+local winampMusic = nil
 
 local desktopIcons = {
     {label = "Winamp", icon = "winamp", x = 40, y = 40},
@@ -104,6 +107,12 @@ function love.load()
     local ok7, img7 = pcall(love.graphics.newImage, "assets/sprites/winamp.png")
     if ok7 then iconImages["winamp"] = img7 end
 
+    local ok8, snd8 = pcall(love.audio.newSource, "assets/sounds/songw95_1.wav", "stream")
+    if ok8 then
+        winampMusic = snd8
+        winampMusic:setVolume(0.7)
+    end
+
     local okShader, s = pcall(love.graphics.newShader, "assets/shaders/crt.glsl")
     if okShader then shader = s end
 
@@ -118,6 +127,9 @@ function love.load()
 
     CursorManager.init()
     winamp = Winamp.new(200, 150)
+    if winampMusic then
+        winamp:setMusic(winampMusic)
+    end
 end
 
 function love.update(dt)
@@ -407,15 +419,16 @@ function love.draw()
 
     elseif gameState == "desktop" then
         drawDesktop()
-        if winamp then
-            local mx, my = love.mouse.getPosition()
-            winamp:draw(mx, my)
-        end
 
     end
 
     love.graphics.pop()
     love.graphics.setCanvas()
+
+    if gameState == "desktop" and winamp then
+        local mx, my = love.mouse.getPosition()
+        winamp:draw(mx, my)
+    end
 
     if shader then
         shader:send("screen_size", {w, h})
@@ -438,6 +451,10 @@ function love.mousepressed(x, y, button)
         if winamp and winamp:mousepressed(x, y, button) then
             return
         end
+
+        local currentTime = love.timer.getTime()
+        local isDoubleClick = (currentTime - lastClickTime) < doubleClickTime
+        lastClickTime = currentTime
 
         playClick()
         local winH = love.graphics.getHeight()
@@ -481,8 +498,10 @@ function love.mousepressed(x, y, button)
 
         for _, icon in ipairs(desktopIcons) do
             if x >= icon.x and x <= icon.x + 90 and y >= icon.y and y <= icon.y + 90 then
-                if icon.icon == "winamp" then
-                    if winamp then winamp:toggleVisible() end
+                if isDoubleClick then
+                    if icon.icon == "winamp" then
+                        if winamp then winamp:toggleVisible() end
+                    end
                 end
                 break
             end
