@@ -425,11 +425,6 @@ function love.draw()
     love.graphics.pop()
     love.graphics.setCanvas()
 
-    if gameState == "desktop" and winamp then
-        local mx, my = love.mouse.getPosition()
-        winamp:draw(mx, my)
-    end
-
     if shader then
         shader:send("screen_size", {w, h})
         shader:send("time", love.timer.getTime())
@@ -439,6 +434,10 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(mainCanvas, -pad, -pad)
     love.graphics.setShader()
+    if gameState == "desktop" and winamp then
+        local mx, my = love.mouse.getPosition()
+        winamp:draw(mx, my)
+    end
     CursorManager.draw()
 
     love.graphics.setColor(1, 1, 0)
