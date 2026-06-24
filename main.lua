@@ -41,6 +41,8 @@ local countdownValue = 3
 local countdownTimer = 0
 
 local startMenuOpen = false
+local lastClickTime = 0
+local doubleClickTime = 0.4
 
 local iconImages = {}
 local winampMusic = nil
@@ -488,7 +490,11 @@ function love.mousepressed(x, y, button)
         for _, icon in ipairs(desktopIcons) do
             if x >= icon.x and x <= icon.x + 90 and y >= icon.y and y <= icon.y + 90 then
                 if icon.icon == "winamp" then
-                    winamp:toggleVisible()
+                    local currentTime = love.timer.getTime()
+                    if currentTime - lastClickTime <= doubleClickTime then
+                        winamp:toggleVisible()
+                    end
+                    lastClickTime = currentTime
                 end
                 break
             end

@@ -58,9 +58,9 @@ function WindowManager:drawTitleBar()
     love.graphics.setColor(W95.titleText)
     love.graphics.printf(self.title, self.x + 4, self.y + 3, self.w - 4 - (btnSize + 2) * 3, "left")
 
-    local closeX = self.x + self.w - btnSize - 2
-    local minX = closeX - btnSize - 2
-    local maxX = minX - btnSize - 2
+    local minX = self.x + 2
+    local maxX = minX + btnSize + 2
+    local closeX = maxX + btnSize + 2
 
     local mx, my = love.mouse.getPosition()
 

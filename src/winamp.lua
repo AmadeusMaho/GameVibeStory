@@ -30,7 +30,7 @@ function Winamp.new(x, y)
     self.music = nil
 
     self.playlist = {
-        {title = "Windows 95 Song", duration = 0, file = "songw95_1.wav"},
+        {title = "The man who sold the world - Nirvana", duration = 0, file = "songw95_1.wav"},
     }
     self.selectedTrack = 1
     self.buttons = {}
@@ -124,12 +124,27 @@ function Winamp:drawBorder(x, y, w, h, inset)
     end
 end
 
-function Winamp:drawButton(x, y, w, h, label, hovered)
-    love.graphics.setColor(hovered and WA.buttonHover or WA.buttonBg)
-    love.graphics.rectangle("fill", x, y, w, h)
-    self:drawBorder(x, y, w, h, true)
-    love.graphics.setColor(WA.text)
-    love.graphics.printf(label, x, y + (h - 12) / 2, w, "center")
+function Winamp:drawTransportIcon(x, y, w, h, icon)
+    local cx = x + w / 2
+    local cy = y + h / 2
+
+    if icon == "prev" then
+        love.graphics.setColor(WA.text)
+        love.graphics.polygon("fill", cx - 8, cy - 6, cx - 8, cy + 6, cx - 14, cy)
+        love.graphics.rectangle("fill", cx - 4, cy - 6, 3, 12)
+        love.graphics.polygon("fill", cx + 2, cy - 6, cx + 2, cy + 6, cx + 10, cy)
+    elseif icon == "play" then
+        love.graphics.setColor(WA.text)
+        love.graphics.polygon("fill", cx - 4, cy - 7, cx - 4, cy + 7, cx + 7, cy)
+    elseif icon == "stop" then
+        love.graphics.setColor(WA.text)
+        love.graphics.rectangle("fill", cx - 5, cy - 5, 10, 10)
+    elseif icon == "next" then
+        love.graphics.setColor(WA.text)
+        love.graphics.polygon("fill", cx + 8, cy - 6, cx + 8, cy + 6, cx + 14, cy)
+        love.graphics.rectangle("fill", cx + 1, cy - 6, 3, 12)
+        love.graphics.polygon("fill", cx - 2, cy - 6, cx - 2, cy + 6, cx - 10, cy)
+    end
 end
 
 function Winamp:drawContent(cx, cy, cw, ch)
@@ -157,19 +172,22 @@ function Winamp:drawContent(cx, cy, cw, ch)
     love.graphics.setColor(WA.text)
     love.graphics.printf(timeStr, cx + 5, cy + 42, cw - 10, "right")
 
-    local btnY = cy + 60
-    local btnH = 20
-    local btnW = 45
-    local btnGap = 5
-    local btns = {"|<", ">", ">|", "[]"}
-    local startX = cx + (cw - (#btns * (btnW + btnGap) - btnGap)) / 2
+    local btnY = cy + 58
+    local btnH = 22
+    local btnW = 36
+    local btnGap = 4
+    local icons = {"prev", "play", "stop", "next"}
+    local startX = cx + (cw - (#icons * (btnW + btnGap) - btnGap)) / 2
 
-    for i, label in ipairs(btns) do
+    for i, icon in ipairs(icons) do
         local bx = startX + (i - 1) * (btnW + btnGap)
         local mx, my = love.mouse.getPosition()
         local hov = mx >= bx and mx <= bx + btnW and my >= btnY and my <= btnY + btnH
-        self:drawButton(bx, btnY, btnW, btnH, label, hov)
-        table.insert(self.buttons, {x = bx, y = btnY, w = btnW, h = btnH, action = label})
+        love.graphics.setColor(hov and WA.buttonHover or WA.buttonBg)
+        love.graphics.rectangle("fill", bx, btnY, btnW, btnH)
+        self:drawBorder(bx, btnY, btnW, btnH, true)
+        self:drawTransportIcon(bx, btnY, btnW, btnH, icon)
+        table.insert(self.buttons, {x = bx, y = btnY, w = btnW, h = btnH, action = icon})
     end
 
     local shufX = cx + 5
@@ -199,7 +217,7 @@ end
 function Winamp:handleClick(x, y, button)
     for _, btn in ipairs(self.buttons) do
         if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-            if btn.action == ">" then
+            if btn.action == "play" then
                 if self.music then
                     if not self.playing then
                         self.music:play()
@@ -209,14 +227,14 @@ function Winamp:handleClick(x, y, button)
                         self.playing = false
                     end
                 end
-            elseif btn.action == "[]" then
+            elseif btn.action == "stop" then
                 if self.music then
                     self.music:stop()
                 end
                 self.playing = false
                 self.currentTime = 0
                 self.seekPos = 0
-            elseif btn.action == ">|" then
+            elseif btn.action == "next" then
                 if self.music then
                     self.music:stop()
                 end
@@ -224,7 +242,7 @@ function Winamp:handleClick(x, y, button)
                 if self.music and self.playing then
                     self.music:play()
                 end
-            elseif btn.action == "|<" then
+            elseif btn.action == "prev" then
                 if self.music then
                     self.music:stop()
                 end
