@@ -42,7 +42,9 @@ local countdownTimer = 0
 
 local startMenuOpen = false
 local lastClickTime = 0
-local doubleClickTime = 0.3
+local lastClickX = 0
+local lastClickY = 0
+local doubleClickTime = 0.4
 
 local iconImages = {}
 local winampMusic = nil
@@ -69,7 +71,7 @@ local W95 = {
 
 function playClick()
     if clickSound then
-        clickSound:setPosition(0)
+        clickSound:stop()
         clickSound:play()
     end
 end
@@ -455,8 +457,12 @@ function love.mousepressed(x, y, button)
         end
 
         local currentTime = love.timer.getTime()
-        local isDoubleClick = (currentTime - lastClickTime) < doubleClickTime
+        local distX = math.abs(x - lastClickX)
+        local distY = math.abs(y - lastClickY)
+        local isDoubleClick = (currentTime - lastClickTime) <= doubleClickTime and distX < 30 and distY < 30
         lastClickTime = currentTime
+        lastClickX = x
+        lastClickY = y
 
         playClick()
         local winH = love.graphics.getHeight()
