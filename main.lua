@@ -1,6 +1,7 @@
 local CursorManager = require("src.cursor")
 local WinampClass = require("src.winamp")
 local MyPCClass = require("src.mypc")
+local ExplorerClass = require("src.explorer")
 
 local gameState = "boot"
 local bootSound = nil
@@ -13,6 +14,7 @@ local CURVATURE = 0.02
 local mainCanvas = nil
 local winamp = nil
 local mypc = nil
+local explorer = nil
 
 local bootLines = {
     {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
@@ -53,9 +55,10 @@ local winampMusic = nil
 
 local desktopIcons = {
     {label = "Mi PC", icon = "mypc", x = 40, y = 40},
-    {label = "Winamp", icon = "winamp", x = 40, y = 140},
-    {label = "Recycle Bin", icon = "trash", x = 40, y = 240},
-    {label = "Notepad", icon = "text", x = 40, y = 340},
+    {label = "Internet Explorer", icon = "explorer", x = 40, y = 140},
+    {label = "Winamp", icon = "winamp", x = 40, y = 240},
+    {label = "Recycle Bin", icon = "trash", x = 40, y = 340},
+    {label = "Notepad", icon = "text", x = 40, y = 440},
 }
 local W95 = {
     bg = {0.75, 0.75, 0.75},
@@ -92,6 +95,12 @@ function openApp(appId)
         elseif not mypc.window.visible then
             mypc:toggleVisible()
         end
+    elseif appId == "explorer" and explorer then
+        if explorer.window.visible and explorer.window.minimized then
+            explorer.window.minimized = false
+        elseif not explorer.window.visible then
+            explorer:toggleVisible()
+        end
     end
     updateTaskbar()
 end
@@ -101,6 +110,8 @@ function closeApp(appId)
         winamp.window.visible = false
     elseif appId == "mypc" and mypc then
         mypc.window.visible = false
+    elseif appId == "explorer" and explorer then
+        explorer.window.visible = false
     end
     updateTaskbar()
 end
@@ -122,6 +133,14 @@ function toggleApp(appId)
         else
             mypc.window.minimized = true
         end
+    elseif appId == "explorer" and explorer then
+        if not explorer.window.visible then
+            explorer:toggleVisible()
+        elseif explorer.window.minimized then
+            explorer.window.minimized = false
+        else
+            explorer.window.minimized = true
+        end
     end
     updateTaskbar()
 end
@@ -133,6 +152,9 @@ function updateTaskbar()
     end
     if mypc and mypc.window.visible then
         table.insert(taskbarApps, {id = "mypc", label = "Mi PC"})
+    end
+    if explorer and explorer.window.visible then
+        table.insert(taskbarApps, {id = "explorer", label = "Internet Explorer"})
     end
 end
 
@@ -170,6 +192,8 @@ function love.load()
     if ok7 then iconImages["winamp"] = img7 end
     local ok8, img8 = pcall(love.graphics.newImage, "assets/sprites/mypc.png")
     if ok8 then iconImages["mypc"] = img8 end
+    local ok9, img9 = pcall(love.graphics.newImage, "assets/sprites/explorer.png")
+    if ok9 then iconImages["explorer"] = img9 end
 
     local ok8, snd8 = pcall(love.audio.newSource, "assets/sounds/songw95_1.wav", "stream")
     if ok8 then
@@ -214,6 +238,11 @@ function love.load()
 
     mypc = MyPCClass.new(120, 80)
     mypc.window.onClose = function()
+        updateTaskbar()
+    end
+
+    explorer = ExplorerClass.new(80, 60)
+    explorer.window.onClose = function()
         updateTaskbar()
     end
 end
@@ -281,6 +310,7 @@ function love.update(dt)
 
     if winamp then winamp:update(dt) end
     if mypc then mypc:update(dt) end
+    if explorer then explorer:update(dt) end
 end
 
 function drawAMIBIOSLogo(x, y)
@@ -366,6 +396,9 @@ function drawDesktop()
         CursorManager.set("link")
     end
     if mypc and mypc.window.visible and mypc:hitTest(mx, my) then
+        CursorManager.set("link")
+    end
+    if explorer and explorer.window.visible and explorer:hitTest(mx, my) then
         CursorManager.set("link")
     end
 
@@ -464,6 +497,7 @@ function drawDesktop()
 
         local menuItems = {
             {label = "Mi PC", action = "mypc"},
+            {label = "Internet Explorer", action = "explorer"},
             {label = "Winamp", action = "winamp"},
             {label = "Notepad", action = "none"},
             {label = "---", action = "none"},
@@ -559,6 +593,10 @@ function love.draw()
         local mx, my = love.mouse.getPosition()
         mypc:draw(mx, my)
     end
+    if gameState == "desktop" and explorer then
+        local mx, my = love.mouse.getPosition()
+        explorer:draw(mx, my)
+    end
     CursorManager.draw()
 end
 
@@ -570,6 +608,10 @@ function love.mousepressed(x, y, button)
     elseif gameState == "desktop" then
         if mypc and mypc.window.visible and not mypc.window.minimized and mypc:hitTest(x, y) then
             mypc:mousepressed(x, y, button)
+            return
+        end
+        if explorer and explorer.window.visible and not explorer.window.minimized and explorer:hitTest(x, y) then
+            explorer:mousepressed(x, y, button)
             return
         end
         if winamp and winamp.window.visible and not winamp.window.minimized and winamp:hitTest(x, y) then
@@ -598,8 +640,10 @@ function love.mousepressed(x, y, button)
                 if clickedItem == 1 then
                     toggleApp("mypc")
                 elseif clickedItem == 2 then
+                    toggleApp("explorer")
+                elseif clickedItem == 3 then
                     toggleApp("winamp")
-                elseif clickedItem == 5 then
+                elseif clickedItem == 6 then
                     love.event.quit()
                 end
                 startMenuOpen = false
@@ -627,6 +671,8 @@ function love.mousepressed(x, y, button)
                         toggleApp("winamp")
                     elseif icon.icon == "mypc" then
                         toggleApp("mypc")
+                    elseif icon.icon == "explorer" then
+                        toggleApp("explorer")
                     end
                 end
                 lastClickTime = currentTime
@@ -639,11 +685,13 @@ end
 function love.mousereleased(x, y, button)
     if winamp then winamp:mousereleased(x, y, button) end
     if mypc then mypc:mousereleased(x, y, button) end
+    if explorer then explorer:mousereleased(x, y, button) end
 end
 
 function love.mousemoved(x, y)
     if winamp then winamp:mousemoved(x, y) end
     if mypc then mypc:mousemoved(x, y) end
+    if explorer then explorer:mousemoved(x, y) end
 end
 
 function love.keypressed(key)
