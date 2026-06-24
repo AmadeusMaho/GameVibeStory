@@ -69,7 +69,7 @@ local W95 = {
 
 function playClick()
     if clickSound then
-        clickSound:stop()
+        clickSound:setPosition(0)
         clickSound:play()
     end
 end
@@ -448,8 +448,10 @@ function love.mousepressed(x, y, button)
     if gameState == "boot" then
         return
     elseif gameState == "desktop" then
-        if winamp and winamp:mousepressed(x, y, button) then
-            return
+        if winamp and winamp.window.visible and not winamp.window.minimized and winamp:hitTest(x, y) then
+            if winamp:mousepressed(x, y, button) then
+                return
+            end
         end
 
         local currentTime = love.timer.getTime()
