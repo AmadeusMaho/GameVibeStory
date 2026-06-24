@@ -44,12 +44,6 @@ function Winamp.new(x, y)
     self.window.onMousePressed = function(_, x, y, button)
         return self:handleClick(x, y, button)
     end
-    self.window.onMouseReleased = function(_, x, y, button)
-        self:handleRelease(x, y, button)
-    end
-    self.window.onMouseMoved = function(_, x, y)
-        self:handleMove(x, y)
-    end
 
     return self
 end
@@ -93,6 +87,16 @@ function Winamp:nextTrack()
     self.totalTime = self.playlist[self.selectedTrack].duration
 end
 
+function Winamp:prevTrack()
+    if self.currentTime > 3 then
+        self.currentTime = 0
+    elseif self.selectedTrack > 1 then
+        self.selectedTrack = self.selectedTrack - 1
+        self.currentTime = 0
+        self.totalTime = self.playlist[self.selectedTrack].duration
+    end
+end
+
 function Winamp:drawBorder(x, y, w, h, inset)
     if inset then
         love.graphics.setColor(WA.borderDark)
@@ -126,29 +130,29 @@ function Winamp:drawContent(cx, cy, cw, ch)
     love.graphics.rectangle("fill", cx, cy, cw, ch)
 
     love.graphics.setColor(WA.bg)
-    love.graphics.rectangle("fill", cx + 5, cy + 5, cw - 10, 24)
-    self:drawBorder(cx + 5, cy + 5, cw - 10, 24, true)
+    love.graphics.rectangle("fill", cx + 5, cy + 5, cw - 10, 20)
+    self:drawBorder(cx + 5, cy + 5, cw - 10, 20, true)
 
     local track = self.playlist[self.selectedTrack]
     local title = track and track.title or "No track"
     love.graphics.setColor(WA.textBright)
-    love.graphics.printf(title, cx + 10, cy + 12, cw - 20, "center")
+    love.graphics.printf(title, cx + 10, cy + 10, cw - 20, "center")
 
     love.graphics.setColor(WA.sliderBg)
-    love.graphics.rectangle("fill", cx + 5, cy + 35, cw - 10, 8)
+    love.graphics.rectangle("fill", cx + 5, cy + 30, cw - 10, 8)
     love.graphics.setColor(WA.sliderFill)
-    love.graphics.rectangle("fill", cx + 5, cy + 35, (cw - 10) * self.seekPos, 8)
-    self:drawBorder(cx + 5, cy + 35, cw - 10, 8, true)
+    love.graphics.rectangle("fill", cx + 5, cy + 30, (cw - 10) * self.seekPos, 8)
+    self:drawBorder(cx + 5, cy + 30, cw - 10, 8, true)
 
     local timeStr = self:formatTime(self.currentTime) .. " / " .. self:formatTime(self.totalTime)
     love.graphics.setColor(WA.text)
-    love.graphics.printf(timeStr, cx + 5, cy + 47, cw - 10, "right")
+    love.graphics.printf(timeStr, cx + 5, cy + 42, cw - 10, "right")
 
-    local btnY = cy + 65
+    local btnY = cy + 60
     local btnH = 20
-    local btnW = 40
+    local btnW = 45
     local btnGap = 5
-    local btns = {">", "[]", ">|"}
+    local btns = {"|<", ">", ">|", "[]"}
     local startX = cx + (cw - (#btns * (btnW + btnGap) - btnGap)) / 2
 
     for i, label in ipairs(btns) do
@@ -160,23 +164,23 @@ function Winamp:drawContent(cx, cy, cw, ch)
     end
 
     local shufX = cx + 5
-    local shufY = cy + 93
+    local shufY = cy + 90
     local mx, my = love.mouse.getPosition()
-    local shufHov = mx >= shufX and mx <= shufX + 50 and my >= shufY and my <= shufY + 14
+    local shufHov = mx >= shufX and mx <= shufX + 55 and my >= shufY and my <= shufY + 14
     love.graphics.setColor(self.shuffle and WA.textBright or WA.textDim)
-    love.graphics.rectangle("fill", shufX, shufY, 50, 14)
+    love.graphics.rectangle("fill", shufX, shufY, 55, 14)
     love.graphics.setColor(self.shuffle and WA.text or WA.textDim)
-    love.graphics.printf("SHUFFLE", shufX, shufY, 50, "center")
-    table.insert(self.buttons, {x = shufX, y = shufY, w = 50, h = 14, action = "shuffle"})
+    love.graphics.printf("SHUFFLE", shufX, shufY, 55, "center")
+    table.insert(self.buttons, {x = shufX, y = shufY, w = 55, h = 14, action = "shuffle"})
 
-    local volX = cx + cw - 100
+    local volX = cx + cw - 105
     love.graphics.setColor(WA.textDim)
     love.graphics.print("VOL", volX, shufY + 1)
     love.graphics.setColor(WA.sliderBg)
-    love.graphics.rectangle("fill", volX + 28, shufY + 2, 65, 10)
+    love.graphics.rectangle("fill", volX + 28, shufY + 2, 70, 10)
     love.graphics.setColor(WA.sliderFill)
-    love.graphics.rectangle("fill", volX + 28, shufY + 2, 65 * self.volume, 10)
-    table.insert(self.buttons, {x = volX + 28, y = shufY, w = 65, h = 14, action = "volume"})
+    love.graphics.rectangle("fill", volX + 28, shufY + 2, 70 * self.volume, 10)
+    table.insert(self.buttons, {x = volX + 28, y = shufY, w = 70, h = 14, action = "volume"})
 
     local trackInfo = string.format("%d/%d", self.selectedTrack, #self.playlist)
     love.graphics.setColor(WA.textDim)
@@ -197,6 +201,8 @@ function Winamp:handleClick(x, y, button)
                 self.seekPos = 0
             elseif btn.action == ">|" then
                 self:nextTrack()
+            elseif btn.action == "|<" then
+                self:prevTrack()
             elseif btn.action == "shuffle" then
                 self.shuffle = not self.shuffle
             elseif btn.action == "volume" then
@@ -207,12 +213,6 @@ function Winamp:handleClick(x, y, button)
         end
     end
     return true
-end
-
-function Winamp:handleRelease(x, y, button)
-end
-
-function Winamp:handleMove(x, y)
 end
 
 function Winamp:draw(mx, my)
