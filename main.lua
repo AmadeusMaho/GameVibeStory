@@ -1,8 +1,6 @@
-local Game = require("src.game")
-local UI = require("src.ui")
 local CursorManager = require("src.cursor")
+local Winamp = require("src.winamp")
 
-local game
 local gameState = "boot"
 local bootSound = nil
 local clickSound = nil
@@ -12,6 +10,7 @@ local desktopBg = nil
 local shader = nil
 local CURVATURE = 0.02
 local mainCanvas = nil
+local winamp = nil
 
 local bootLines = {
     {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
@@ -46,7 +45,7 @@ local startMenuOpen = false
 local iconImages = {}
 
 local desktopIcons = {
-    {label = "Studio Empire", icon = "game", x = 40, y = 40},
+    {label = "Winamp", icon = "winamp", x = 40, y = 40},
     {label = "Recycle Bin", icon = "trash", x = 40, y = 140},
     {label = "Notepad", icon = "text", x = 40, y = 240},
 }
@@ -115,13 +114,8 @@ function love.load()
     love.graphics.setFont(font)
     bootFont = font
 
-    game = Game.new()
-    UI.init()
-    UI.onClose = function()
-        gameState = "desktop"
-        CursorManager.show(true)
-    end
     CursorManager.init()
+    winamp = Winamp.new(200, 150)
 end
 
 function love.update(dt)
@@ -183,10 +177,9 @@ function love.update(dt)
                 end
             end
         end
-
-    elseif gameState == "play" then
-        game:update(dt)
     end
+
+    if winamp then winamp:update(dt) end
 end
 
 function drawAMIBIOSLogo(x, y)
@@ -217,11 +210,13 @@ function drawDesktopIcon(icon, mx, my)
     local iconW = 64
     local iconH = 64
 
-    if icon.icon == "game" then
-        love.graphics.setColor(0, 0.5, 0)
+    if icon.icon == "winamp" then
+        love.graphics.setColor(0.1, 0.1, 0.1)
         love.graphics.rectangle("fill", iconX, iconY, iconW, iconH, 4, 4)
+        love.graphics.setColor(0, 0.8, 0)
+        love.graphics.rectangle("fill", iconX + 8, iconY + 8, 16, 16, 2, 2)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.printf("SE", iconX, iconY + 24, iconW, "center")
+        love.graphics.printf("W", iconX + 4, iconY + 26, iconW - 8, "center")
     elseif iconImages[icon.icon] then
         love.graphics.setColor(1, 1, 1)
         local img = iconImages[icon.icon]
@@ -263,6 +258,10 @@ function drawDesktop()
         end
     end
 
+    if winamp and winamp.visible and winamp:hitTest(mx, my) then
+        CursorManager.set("link")
+    end
+
     local taskY = winH - taskH
     love.graphics.setColor(W95.bg)
     love.graphics.rectangle("fill", 0, taskY, winW, taskH)
@@ -296,22 +295,6 @@ function drawDesktop()
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(94, taskY + 4, 94, taskY + taskH - 5)
 
-    local taskBtnX = 100
-    local taskBtnW = 160
-    love.graphics.setColor(W95.bg)
-    love.graphics.rectangle("fill", taskBtnX, taskY + 2, taskBtnW, taskH - 4)
-    love.graphics.setColor(W95.borderDark)
-    love.graphics.line(taskBtnX, taskY + 2, taskBtnX + taskBtnW, taskY + 2)
-    love.graphics.line(taskBtnX, taskY + 2, taskBtnX, taskY + taskH - 3)
-    love.graphics.setColor(W95.borderLight)
-    love.graphics.line(taskBtnX + taskBtnW - 1, taskY + 3, taskBtnX + taskBtnW - 1, taskY + taskH - 3)
-    love.graphics.line(taskBtnX + 1, taskY + taskH - 3, taskBtnX + taskBtnW - 1, taskY + taskH - 3)
-    love.graphics.setColor(W95.fieldText)
-    love.graphics.print("Studio Empire", taskBtnX + 8, taskY + 12)
-
-    love.graphics.setColor(W95.borderDark)
-    love.graphics.line(264, taskY + 4, 264, taskY + taskH - 5)
-
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(winW - 135, taskY + 4, winW - 135, taskY + taskH - 5)
     local time = os.date("%H:%M")
@@ -340,11 +323,10 @@ function drawDesktop()
         love.graphics.rectangle("line", menuX, menuY, menuX + menuW, menuY)
         love.graphics.setColor(W95.borderDark)
         love.graphics.rectangle("line", menuX + menuW, menuY, menuX + menuW, menuY + menuH)
-        love.graphics.rectangle("line", menuX, menuY + menuH, menuX + menuW, menuY + menuH)
         love.graphics.rectangle("line", menuX, menuY, menuX, menuY + menuH)
 
         local menuItems = {
-            {label = "Studio Empire", action = "game"},
+            {label = "Winamp", action = "winamp"},
             {label = "Notepad", action = "none"},
             {label = "---", action = "none"},
             {label = "Shut Down...", action = "quit"},
@@ -371,6 +353,27 @@ function drawDesktop()
 
         love.graphics.setColor(W95.borderUltra)
         love.graphics.rectangle("line", menuX, menuY, menuW, menuH)
+
+        love.graphics.setColor(W95.bg)
+        love.graphics.rectangle("fill", 0, taskY, winW, taskH)
+        love.graphics.setColor(W95.borderLight)
+        love.graphics.line(0, taskY, winW, taskY)
+        love.graphics.setColor(W95.borderUltra)
+        love.graphics.line(0, taskY + 1, winW, taskY + 1)
+
+        love.graphics.setColor(W95.bg)
+        love.graphics.rectangle("fill", 2, taskY + 2, 88, taskH - 4)
+        love.graphics.setColor(W95.borderLight)
+        love.graphics.line(2, taskY + 2, 89, taskY + 2)
+        love.graphics.line(2, taskY + 2, 2, taskY + taskH - 3)
+        love.graphics.setColor(W95.borderUltra)
+        love.graphics.line(89, taskY + 3, 89, taskY + taskH - 3)
+        love.graphics.line(3, taskY + taskH - 3, 89, taskY + taskH - 3)
+        love.graphics.setColor(W95.fieldText)
+        love.graphics.print("Start", 20, taskY + 12)
+
+        love.graphics.setColor(W95.borderDark)
+        love.graphics.line(94, taskY + 4, 94, taskY + taskH - 5)
     end
 end
 
@@ -419,19 +422,18 @@ function love.draw()
 
     elseif gameState == "desktop" then
         drawDesktop()
+        if winamp then
+            local mx, my = love.mouse.getPosition()
+            winamp:draw(mx, my)
+        end
 
-    elseif gameState == "play" then
-        love.graphics.pop()
-        love.graphics.setCanvas()
-        UI.draw(game, shader, CURVATURE)
-        CursorManager.draw()
-        return
     end
 
     love.graphics.pop()
     love.graphics.setCanvas()
 
     if shader then
+        shader:send("screen_size", {w, h})
         shader:send("time", love.timer.getTime())
         shader:send("curvature", CURVATURE)
         love.graphics.setShader(shader)
@@ -448,6 +450,10 @@ function love.mousepressed(x, y, button)
     if gameState == "boot" then
         return
     elseif gameState == "desktop" then
+        if winamp and winamp:mousepressed(x, y, button) then
+            return
+        end
+
         playClick()
         local winH = love.graphics.getHeight()
         local taskH = 40
@@ -463,7 +469,7 @@ function love.mousepressed(x, y, button)
             local menuY = winH - taskH - 180
             local menuW = 180
             local menuItems = {
-                {action = "game"},
+                {action = "winamp"},
                 {action = "none"},
                 {action = "none"},
                 {action = "quit"},
@@ -473,8 +479,8 @@ function love.mousepressed(x, y, button)
                 for i, item in ipairs(menuItems) do
                     local itemY = menuY + (i - 1) * 25
                     if y >= itemY and y <= itemY + 23 then
-                        if item.action == "game" then
-                            gameState = "play"
+                        if item.action == "winamp" then
+                            if winamp then winamp:toggleVisible() end
                             startMenuOpen = false
                         elseif item.action == "quit" then
                             love.event.quit()
@@ -490,38 +496,25 @@ function love.mousepressed(x, y, button)
 
         for _, icon in ipairs(desktopIcons) do
             if x >= icon.x and x <= icon.x + 90 and y >= icon.y and y <= icon.y + 90 then
-                if icon.icon == "game" then
-                    gameState = "play"
+                if icon.icon == "winamp" then
+                    if winamp then winamp:toggleVisible() end
                 end
                 break
             end
         end
-    elseif gameState == "play" then
-        UI.mousepressed(x, y, button, game)
     end
 end
 
 function love.mousereleased(x, y, button)
-    if gameState == "play" then
-        UI.mousereleased(x, y, button, game)
-    end
+    if winamp then winamp:mousereleased(x, y, button) end
+end
+
+function love.mousemoved(x, y)
+    if winamp then winamp:mousemoved(x, y) end
 end
 
 function love.keypressed(key)
-    if gameState == "boot" then
-        return
-    elseif gameState == "play" then
-        if key == "escape" then
-            gameState = "desktop"
-            CursorManager.show(true)
-        else
-            UI.keypressed(key, game)
-        end
-    end
 end
 
 function love.textinput(text)
-    if gameState == "play" then
-        UI.textinput(text)
-    end
 end

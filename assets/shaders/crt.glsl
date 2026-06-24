@@ -1,3 +1,4 @@
+extern vec2 screen_size;
 extern float time;
 extern float curvature;
 
@@ -12,6 +13,9 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen_coords) {
     
     vec4 pixel = Texel(tex, distorted);
     
+    float scanline = sin(distorted.y * screen_size.y * 3.0) * 0.04;
+    pixel.rgb -= scanline;
+
     float flicker = 0.999 + 0.001 * sin(time * 6.0);
     pixel.rgb *= flicker;
     
