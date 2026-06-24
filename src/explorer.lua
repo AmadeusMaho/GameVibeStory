@@ -24,6 +24,7 @@ local W95 = {
     statusBar = {0.75, 0.75, 0.75},
     favBg = {0.75, 0.75, 0.75},
     favHover = {0, 0, 0.8},
+    green = {0, 0.5, 0},
 }
 
 function Explorer.new(x, y)
@@ -35,6 +36,7 @@ function Explorer.new(x, y)
     self.loadTimer = 0
     self.loadDuration = 1.2
     self.selectedFav = 1
+    self.trabajoRef = nil
 
     self.favorites = {
         {label = "Tienda", page = "upgrades"},
@@ -73,6 +75,9 @@ function Explorer:update(dt)
             self.loading = false
             self.loadTimer = 0
         end
+    end
+    if self.purchaseMsgTimer and self.purchaseMsgTimer > 0 then
+        self.purchaseMsgTimer = self.purchaseMsgTimer - dt
     end
 end
 
@@ -306,11 +311,18 @@ function Explorer:drawUpgradesPage(x, y, w, h)
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(x + 10, y + 20, x + w - 10, y + 20)
 
+    local moneyStr = "$0"
+    if self.trabajoRef then
+        moneyStr = "$" .. self.trabajoRef.money
+    end
+    love.graphics.setColor(W95.green)
+    love.graphics.printf("Su dinero: " .. moneyStr, x, y + 24, w, "center")
+
     love.graphics.setColor(W95.text)
-    love.graphics.printf("Mejore su PC con los mejores componentes", x, y + 28, w, "center")
+    love.graphics.printf("Mejore su PC con los mejores componentes", x, y + 40, w, "center")
 
     local tableX = x + 10
-    local tableY = y + 52
+    local tableY = y + 58
     local colW = {120, 110, 110, 70, 80}
     local rowH = 22
 
@@ -338,33 +350,44 @@ function Explorer:drawUpgradesPage(x, y, w, h)
         local rx = tableX + 4
         love.graphics.print(upg.name, rx, ry + 5)
         rx = rx + colW[1]
-        love.graphics.setColor(W95.textDim)
+        love.graphics.setColor(upg.purchased and W95.green or W95.textDim)
         love.graphics.print(upg.current, rx, ry + 5)
         rx = rx + colW[2]
         love.graphics.setColor({0, 0.5, 0})
         love.graphics.print(upg.upgrade, rx, ry + 5)
         rx = rx + colW[3]
-        love.graphics.setColor({0.8, 0, 0})
-        love.graphics.print("$" .. upg.price, rx, ry + 5)
+        love.graphics.setColor(upg.purchased and W95.green or {0.8, 0, 0})
+        love.graphics.print(upg.purchased and "Comprado" or ("$" .. upg.price), rx, ry + 5)
         rx = rx + colW[4]
 
         local btnW = 56
         local btnH = 18
         local btnX = rx
         local btnY = ry + 2
-        local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
 
-        love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
-        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
-        self:drawBevel(btnX, btnY, btnW, btnH)
-        love.graphics.setColor(W95.text)
-        love.graphics.printf("Comprar", btnX, btnY + 3, btnW, "center")
-
-        table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "buy", index = i})
+        if upg.purchased then
+            love.graphics.setColor(W95.green)
+            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+            love.graphics.setColor(W95.white)
+            love.graphics.printf("OK", btnX, btnY + 3, btnW, "center")
+        else
+            local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
+            love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
+            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+            self:drawBevel(btnX, btnY, btnW, btnH)
+            love.graphics.setColor(W95.text)
+            love.graphics.printf("Comprar", btnX, btnY + 3, btnW, "center")
+            table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "buy", index = i})
+        end
     end
 
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(x + 10, tableY + rowH + #self.upgrades * rowH + 4, x + w - 10, tableY + rowH + #self.upgrades * rowH + 4)
+
+    if self.purchaseMsgTimer and self.purchaseMsgTimer > 0 and self.purchaseMessage then
+        love.graphics.setColor(W95.highlight)
+        love.graphics.printf(self.purchaseMessage, x, y + h - 38, w, "center")
+    end
 
     love.graphics.setColor(W95.textDim)
     love.graphics.printf("Precios sujetos a cambio sin previo aviso.", x, y + h - 20, w, "center")
@@ -380,7 +403,22 @@ function Explorer:handleClick(x, y, button)
                     self:navigateTo(btn.page)
                 end
             elseif btn.action == "buy" then
-                -- Placeholder for upgrade logic
+                local upg = self.upgrades[btn.index]
+                if upg and self.trabajoRef then
+                    if self.trabajoRef.money >= upg.price and not upg.purchased then
+                        self.trabajoRef.money = self.trabajoRef.money - upg.price
+                        upg.purchased = true
+                        upg.current = upg.upgrade
+                        self.purchaseMessage = upg.name .. " comprado!"
+                        self.purchaseMsgTimer = 2.0
+                    elseif upg.purchased then
+                        self.purchaseMessage = "Ya tienes este upgrade."
+                        self.purchaseMsgTimer = 2.0
+                    else
+                        self.purchaseMessage = "Dinero insuficiente."
+                        self.purchaseMsgTimer = 2.0
+                    end
+                end
             elseif btn.action == "tb" then
                 if btn.label == "Inicio" then
                     self:navigateTo("home")

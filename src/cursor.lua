@@ -33,8 +33,15 @@ function CursorManager.draw()
     local img = cursorImages[currentCursor]
     if img then
         local mx, my = love.mouse.getPosition()
+        local scale = 0.75
+        local ox, oy = 0, 0
+        if currentCursor == "normal" then
+            ox, oy = 1, 1
+        elseif currentCursor == "link" then
+            ox, oy = 4, 1
+        end
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(img, mx, my, 0, 0.75, 0.75, 0, 0)
+        love.graphics.draw(img, mx - ox * scale, my - oy * scale, 0, scale, scale)
     end
 end
 

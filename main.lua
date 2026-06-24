@@ -3,6 +3,7 @@ local WinampClass = require("src.winamp")
 local MyPCClass = require("src.mypc")
 local ExplorerClass = require("src.explorer")
 local NotepadClass = require("src.notepad")
+local TrabajoClass = require("src.trabajo")
 
 local gameState = "boot"
 local bootSound = nil
@@ -17,6 +18,7 @@ local winamp = nil
 local mypc = nil
 local explorer = nil
 local notepad = nil
+local trabajo = nil
 
 local bootLines = {
     {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
@@ -59,7 +61,7 @@ local desktopIcons = {
     {label = "Mi PC", icon = "mypc", x = 40, y = 40},
     {label = "Internet Explorer", icon = "explorer", x = 40, y = 140},
     {label = "Winamp", icon = "winamp", x = 40, y = 240},
-    {label = "Recycle Bin", icon = "trash", x = 40, y = 340},
+    {label = "Trabajo", icon = "trabajo", x = 40, y = 340},
     {label = "Notepad", icon = "text", x = 40, y = 440},
 }
 local W95 = {
@@ -109,6 +111,12 @@ function openApp(appId)
         elseif not notepad.window.visible then
             notepad:toggleVisible()
         end
+    elseif appId == "trabajo" and trabajo then
+        if trabajo.window.visible and trabajo.window.minimized then
+            trabajo.window.minimized = false
+        elseif not trabajo.window.visible then
+            trabajo:toggleVisible()
+        end
     end
     updateTaskbar()
 end
@@ -122,6 +130,8 @@ function closeApp(appId)
         explorer.window.visible = false
     elseif appId == "notepad" and notepad then
         notepad.window.visible = false
+    elseif appId == "trabajo" and trabajo then
+        trabajo.window.visible = false
     end
     updateTaskbar()
 end
@@ -159,6 +169,14 @@ function toggleApp(appId)
         else
             notepad.window.minimized = true
         end
+    elseif appId == "trabajo" and trabajo then
+        if not trabajo.window.visible then
+            trabajo:toggleVisible()
+        elseif trabajo.window.minimized then
+            trabajo.window.minimized = false
+        else
+            trabajo.window.minimized = true
+        end
     end
     updateTaskbar()
 end
@@ -173,6 +191,9 @@ function updateTaskbar()
     end
     if explorer and explorer.window.visible then
         table.insert(taskbarApps, {id = "explorer", label = "Internet Explorer"})
+    end
+    if trabajo and trabajo.window.visible then
+        table.insert(taskbarApps, {id = "trabajo", label = "Trabajo"})
     end
     if notepad and notepad.window.visible then
         table.insert(taskbarApps, {id = "notepad", label = "Bloc de notas"})
@@ -262,12 +283,22 @@ function love.load()
         updateTaskbar()
     end
 
+    trabajo = TrabajoClass.new(250, 120)
+    trabajo.window.onClose = function()
+        updateTaskbar()
+    end
+
     explorer = ExplorerClass.new(80, 60)
+    explorer.trabajoRef = trabajo
     explorer.window.onClose = function()
         updateTaskbar()
     end
 
+    mypc.upgradesRef = explorer.upgrades
+
     notepad = NotepadClass.new(150, 100)
+    notepad.trabajoRef = trabajo
+    notepad.explorerRef = explorer
     notepad.window.onClose = function()
         updateTaskbar()
     end
@@ -338,6 +369,7 @@ function love.update(dt)
     if mypc then mypc:update(dt) end
     if explorer then explorer:update(dt) end
     if notepad then notepad:update(dt) end
+    if trabajo then trabajo:update(dt) end
 end
 
 function drawAMIBIOSLogo(x, y)
@@ -381,6 +413,18 @@ function drawDesktopIcon(icon, mx, my)
         local imgW, imgH = img:getDimensions()
         local scale = math.min(iconW / imgW, iconH / imgH)
         love.graphics.draw(img, iconX + (iconW - imgW * scale) / 2, iconY + (iconH - imgH * scale) / 2, 0, scale, scale)
+    elseif icon.icon == "trabajo" then
+        love.graphics.setColor(0.75, 0.75, 0.75)
+        love.graphics.rectangle("fill", iconX, iconY, iconW, iconH, 4, 4)
+        love.graphics.setColor(0, 0, 0.5)
+        love.graphics.rectangle("line", iconX, iconY, iconW, iconH)
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.rectangle("fill", iconX + 10, iconY + 12, iconW - 20, iconH - 24)
+        love.graphics.setColor(0, 0.5, 0)
+        love.graphics.line(iconX + 18, iconY + 22, iconX + 46, iconY + 22)
+        love.graphics.line(iconX + 18, iconY + 30, iconX + 46, iconY + 30)
+        love.graphics.line(iconX + 18, iconY + 38, iconX + 46, iconY + 38)
+        love.graphics.line(iconX + 18, iconY + 46, iconX + 36, iconY + 46)
     else
         love.graphics.setColor(0.6, 0.6, 0.6)
         love.graphics.rectangle("fill", iconX, iconY, iconW, iconH, 2, 2)
@@ -417,19 +461,6 @@ function drawDesktop()
         if mx >= icon.x and mx <= icon.x + 90 and my >= icon.y and my <= icon.y + 90 then
             CursorManager.set("link")
         end
-    end
-
-    if winamp and winamp.visible and winamp:hitTest(mx, my) then
-        CursorManager.set("link")
-    end
-    if mypc and mypc.window.visible and mypc:hitTest(mx, my) then
-        CursorManager.set("link")
-    end
-    if explorer and explorer.window.visible and explorer:hitTest(mx, my) then
-        CursorManager.set("link")
-    end
-    if notepad and notepad.window.visible and notepad:hitTest(mx, my) then
-        CursorManager.set("link")
     end
 
     local taskY = winH - taskH
@@ -469,7 +500,18 @@ function drawDesktop()
     local taskItemW = 120
     for i, app in ipairs(taskbarApps) do
         local tx = taskStartX + (i - 1) * taskItemW
-        local isActive = winamp and winamp.window.visible and not winamp.window.minimized
+        local isActive = false
+        if app.id == "winamp" and winamp then
+            isActive = winamp.window.visible and not winamp.window.minimized
+        elseif app.id == "mypc" and mypc then
+            isActive = mypc.window.visible and not mypc.window.minimized
+        elseif app.id == "explorer" and explorer then
+            isActive = explorer.window.visible and not explorer.window.minimized
+        elseif app.id == "trabajo" and trabajo then
+            isActive = trabajo.window.visible and not trabajo.window.minimized
+        elseif app.id == "notepad" and notepad then
+            isActive = notepad.window.visible and not notepad.window.minimized
+        end
         local hovered = mx >= tx and mx <= tx + taskItemW - 4 and my >= taskY + 2 and my <= taskY + taskH - 2
 
         if isActive then
@@ -493,25 +535,46 @@ function drawDesktop()
 
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(winW - 135, taskY + 4, winW - 135, taskY + taskH - 5)
+
     local time = "10/24/95  " .. os.date("%I:%M %p")
+    local moneyStr = "$0"
+    if trabajo then
+        moneyStr = "$" .. trabajo.money
+    end
+    local moneyW = 70
     love.graphics.setColor(W95.borderLight)
     love.graphics.line(winW - 132, taskY + 4, winW - 132, taskY + taskH - 5)
     love.graphics.setColor(W95.bg)
-    love.graphics.rectangle("fill", winW - 130, taskY + 4, 126, taskH - 8)
+    love.graphics.rectangle("fill", winW - 130, taskY + 4, moneyW, taskH - 8)
     love.graphics.setColor(W95.borderLight)
-    love.graphics.line(winW - 130, taskY + 4, winW - 5, taskY + 4)
+    love.graphics.line(winW - 130, taskY + 4, winW - 130 + moneyW - 1, taskY + 4)
     love.graphics.line(winW - 130, taskY + 4, winW - 130, taskY + taskH - 5)
     love.graphics.setColor(W95.borderUltra)
-    love.graphics.line(winW - 5, taskY + 5, winW - 5, taskY + taskH - 5)
-    love.graphics.line(winW - 129, taskY + taskH - 5, winW - 5, taskY + taskH - 5)
+    love.graphics.line(winW - 130 + moneyW - 1, taskY + 5, winW - 130 + moneyW - 1, taskY + taskH - 5)
+    love.graphics.line(winW - 129, taskY + taskH - 5, winW - 130 + moneyW - 2, taskY + taskH - 5)
+    love.graphics.setColor({0, 0.5, 0})
+    love.graphics.printf(moneyStr, winW - 126, taskY + 12, moneyW - 8, "left")
+
+    local timeX = winW - 130 + moneyW + 2
+    local timeW = winW - timeX - 5
+    love.graphics.setColor(W95.borderLight)
+    love.graphics.line(timeX, taskY + 4, timeX, taskY + taskH - 5)
+    love.graphics.setColor(W95.bg)
+    love.graphics.rectangle("fill", timeX + 2, taskY + 4, timeW - 2, taskH - 8)
+    love.graphics.setColor(W95.borderLight)
+    love.graphics.line(timeX + 2, taskY + 4, timeX + timeW - 1, taskY + 4)
+    love.graphics.line(timeX + 2, taskY + 4, timeX + 2, taskY + taskH - 5)
+    love.graphics.setColor(W95.borderUltra)
+    love.graphics.line(timeX + timeW - 1, taskY + 5, timeX + timeW - 1, taskY + taskH - 5)
+    love.graphics.line(timeX + 3, taskY + taskH - 5, timeX + timeW - 1, taskY + taskH - 5)
     love.graphics.setColor(W95.fieldText)
-    love.graphics.printf(time, winW - 125, taskY + 12, 110, "right")
+    love.graphics.printf(time, timeX + 6, taskY + 12, timeW - 10, "right")
 
     if startMenuOpen then
         local menuX = 2
-        local menuY = taskY - 110
+        local menuY = taskY - 132
         local menuW = 160
-        local menuH = 110
+        local menuH = 132
 
         love.graphics.setColor(W95.bg)
         love.graphics.rectangle("fill", menuX, menuY, menuW, menuH)
@@ -529,6 +592,7 @@ function drawDesktop()
             {label = "Mi PC", action = "mypc"},
             {label = "Internet Explorer", action = "explorer"},
             {label = "Winamp", action = "winamp"},
+            {label = "Trabajo Freelance", action = "trabajo"},
             {label = "Bloc de notas", action = "notepad"},
             {label = "---", action = "none"},
             {label = "Shut Down...", action = "quit"},
@@ -631,6 +695,10 @@ function love.draw()
         local mx, my = love.mouse.getPosition()
         notepad:draw(mx, my)
     end
+    if gameState == "desktop" and trabajo then
+        local mx, my = love.mouse.getPosition()
+        trabajo:draw(mx, my)
+    end
     CursorManager.draw()
 end
 
@@ -654,6 +722,10 @@ function love.mousepressed(x, y, button)
         end
         if winamp and winamp.window.visible and not winamp.window.minimized and winamp:hitTest(x, y) then
             winamp:mousepressed(x, y, button)
+            return
+        end
+        if trabajo and trabajo.window.visible and not trabajo.window.minimized and trabajo:hitTest(x, y) then
+            trabajo:mousepressed(x, y, button)
             return
         end
 
@@ -682,8 +754,10 @@ function love.mousepressed(x, y, button)
                 elseif clickedItem == 3 then
                     toggleApp("winamp")
                 elseif clickedItem == 4 then
+                    toggleApp("trabajo")
+                elseif clickedItem == 5 then
                     toggleApp("notepad")
-                elseif clickedItem == 6 then
+                elseif clickedItem == 7 then
                     love.event.quit()
                 end
                 startMenuOpen = false
@@ -707,15 +781,17 @@ function love.mousepressed(x, y, button)
             if x >= icon.x and x <= icon.x + 90 and y >= icon.y and y <= icon.y + 90 then
                 local currentTime = love.timer.getTime()
                 if currentTime - lastClickTime <= doubleClickTime then
-                    if icon.icon == "winamp" then
-                        toggleApp("winamp")
-                    elseif icon.icon == "mypc" then
-                        toggleApp("mypc")
-                    elseif icon.icon == "explorer" then
-                        toggleApp("explorer")
-                    elseif icon.icon == "text" then
-                        toggleApp("notepad")
-                    end
+                if icon.icon == "winamp" then
+                    toggleApp("winamp")
+                elseif icon.icon == "mypc" then
+                    toggleApp("mypc")
+                elseif icon.icon == "explorer" then
+                    toggleApp("explorer")
+                elseif icon.icon == "trabajo" then
+                    toggleApp("trabajo")
+                elseif icon.icon == "text" then
+                    toggleApp("notepad")
+                end
                 end
                 lastClickTime = currentTime
                 break
@@ -729,6 +805,7 @@ function love.mousereleased(x, y, button)
     if mypc then mypc:mousereleased(x, y, button) end
     if explorer then explorer:mousereleased(x, y, button) end
     if notepad then notepad:mousereleased(x, y, button) end
+    if trabajo then trabajo:mousereleased(x, y, button) end
 end
 
 function love.mousemoved(x, y)
@@ -736,6 +813,7 @@ function love.mousemoved(x, y)
     if mypc then mypc:mousemoved(x, y) end
     if explorer then explorer:mousemoved(x, y) end
     if notepad then notepad:mousemoved(x, y) end
+    if trabajo then trabajo:mousemoved(x, y) end
 end
 
 function love.keypressed(key)

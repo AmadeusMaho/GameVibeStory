@@ -51,29 +51,27 @@ end
 function WindowManager:getTitleBarButtons()
     local btnSize = self.titleH - 4
     local btnY = self.y + 2
-    local closeX = self.x + self.w - btnSize - 2
-    local maxX = closeX - btnSize - 2
-    local minX = maxX - btnSize - 2
+    local pad = 2
+    local closeX = self.x + self.w - btnSize - pad
+    local maxX = closeX - btnSize - pad
+    local minX = maxX - btnSize - pad
     return {
         {x = minX, y = btnY, w = btnSize, h = btnSize, action = "minimize"},
         {x = maxX, y = btnY, w = btnSize, h = btnSize, action = "fullscreen"},
         {x = closeX, y = btnY, w = btnSize, h = btnSize, action = "close"},
-    }, btnSize, btnY, minX, maxX, closeX
+    }
 end
 
 function WindowManager:drawTitleBar()
+    self.buttons = self:getTitleBarButtons()
+
     local btnSize = self.titleH - 4
-    local btnY = self.y + 2
 
     love.graphics.setColor(self.active and W95.titleActive or W95.titleInactive)
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.titleH)
 
     love.graphics.setColor(W95.titleText)
     love.graphics.printf(self.title, self.x + 4, self.y + 3, self.w - 4 - (btnSize + 2) * 3, "left")
-
-    local closeX = self.x + self.w - btnSize - 2
-    local maxX = closeX - btnSize - 2
-    local minX = maxX - btnSize - 2
 
     local function drawBtn(bx, by)
         love.graphics.setColor(W95.buttonBg)
@@ -86,23 +84,21 @@ function WindowManager:drawTitleBar()
         love.graphics.line(bx, by + btnSize, bx + btnSize, by + btnSize)
     end
 
-    drawBtn(minX, btnY)
-    love.graphics.setColor(W95.buttonText)
-    love.graphics.setLineWidth(1)
-    love.graphics.line(minX + 3, btnY + btnSize - 4, minX + btnSize - 3, btnY + btnSize - 4)
+    for _, btn in ipairs(self.buttons) do
+        drawBtn(btn.x, btn.y)
 
-    drawBtn(maxX, btnY)
-    love.graphics.setColor(W95.buttonText)
-    love.graphics.setLineWidth(1)
-    love.graphics.rectangle("line", maxX + 3, btnY + 3, btnSize - 6, btnSize - 6)
+        love.graphics.setColor(W95.buttonText)
+        love.graphics.setLineWidth(1)
 
-    drawBtn(closeX, btnY)
-    love.graphics.setColor(W95.buttonText)
-    love.graphics.setLineWidth(1)
-    love.graphics.line(closeX + 4, btnY + 4, closeX + btnSize - 4, btnY + btnSize - 4)
-    love.graphics.line(closeX + btnSize - 4, btnY + 4, closeX + 4, btnY + btnSize - 4)
-
-    self.buttons = self:getTitleBarButtons()
+        if btn.action == "minimize" then
+            love.graphics.line(btn.x + 3, btn.y + btnSize - 4, btn.x + btnSize - 3, btn.y + btnSize - 4)
+        elseif btn.action == "fullscreen" then
+            love.graphics.rectangle("line", btn.x + 3, btn.y + 3, btnSize - 6, btnSize - 6)
+        elseif btn.action == "close" then
+            love.graphics.line(btn.x + 4, btn.y + 4, btn.x + btnSize - 4, btn.y + btnSize - 4)
+            love.graphics.line(btn.x + btnSize - 4, btn.y + 4, btn.x + 4, btn.y + btnSize - 4)
+        end
+    end
 end
 
 function WindowManager:drawFrame()

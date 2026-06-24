@@ -42,6 +42,8 @@ function MyPC.new(x, y)
         bios = "American Megatrends  12/01/94",
     }
 
+    self.upgradesRef = nil
+
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
     end
@@ -165,28 +167,37 @@ function MyPC:drawGeneralTab(x, y, w, h)
     love.graphics.setColor(W95.textDim)
     love.graphics.print("Copyright (c) 1981-1995 Microsoft Corp.", x + 68, y + 28)
 
-    local sysInfoY = y + 70
-    love.graphics.setColor(W95.text)
-
-    local labels = {
-        {"Versión:", self.pcStats.os},
-        {"Procesador:", self.pcStats.cpu},
-        {"Memoria:", self.pcStats.ram},
-        {"Disco:", self.pcStats.disk},
-        {"Pantalla:", self.pcStats.display},
-        {"BIOS:", self.pcStats.bios},
+    local stats = {
+        {label = "Versión:", value = self.pcStats.os},
+        {label = "Procesador:", value = self.pcStats.cpu},
+        {label = "Memoria:", value = self.pcStats.ram},
+        {label = "Disco:", value = self.pcStats.disk},
+        {label = "Pantalla:", value = self.pcStats.display},
+        {label = "BIOS:", value = self.pcStats.bios},
     }
 
-    for i, pair in ipairs(labels) do
+    if self.upgradesRef then
+        for _, upg in ipairs(self.upgradesRef) do
+            if upg.purchased then
+                if upg.stat == "cpu" then stats[2].value = upg.upgrade end
+                if upg.stat == "ram" then stats[3].value = upg.upgrade end
+                if upg.stat == "disk" then stats[4].value = upg.upgrade end
+                if upg.stat == "display" then stats[5].value = upg.upgrade end
+            end
+        end
+    end
+
+    local sysInfoY = y + 70
+    for i, pair in ipairs(stats) do
         local ly = sysInfoY + (i - 1) * 22
         love.graphics.setColor(W95.text)
-        love.graphics.print(pair[1], x + 8, ly)
+        love.graphics.print(pair.label, x + 8, ly)
 
         love.graphics.setColor(W95.fieldBg)
         love.graphics.rectangle("fill", x + 100, ly - 2, w - 108, 18)
         self:drawInset(x + 100, ly - 2, w - 108, 18)
         love.graphics.setColor(W95.text)
-        love.graphics.print(pair[2], x + 106, ly)
+        love.graphics.print(pair.value, x + 106, ly)
     end
 
     love.graphics.setFont(prevFont)
@@ -201,6 +212,18 @@ function MyPC:drawDevicesTab(x, y, w, h)
     love.graphics.rectangle("fill", x, y, w, h - 8)
     self:drawInset(x, y, w, h - 8)
 
+    local displayDevice = "Standard PCI Graphics Adapter (VGA)"
+    local soundDevice = "Sound Blaster 16"
+
+    if self.upgradesRef then
+        for _, upg in ipairs(self.upgradesRef) do
+            if upg.purchased then
+                if upg.stat == "display" then displayDevice = upg.upgrade end
+                if upg.stat == "sound" then soundDevice = upg.upgrade end
+            end
+        end
+    end
+
     local devices = {
         {name = "Dispositivo de sistema", icon = ">"},
         {name = "  PC compatible con Intel", icon = ""},
@@ -209,9 +232,9 @@ function MyPC:drawDevicesTab(x, y, w, h)
         {name = "  Controlador de disquete", icon = ""},
         {name = "  IDE DISK DRIVE", icon = ""},
         {name = "Dispositivos de pantalla", icon = ">"},
-        {name = "  Standard PCI Graphics Adapter (VGA)", icon = ""},
+        {name = "  " .. displayDevice, icon = ""},
         {name = "Dispositivos de sonido", icon = ">"},
-        {name = "  Sound Blaster 16", icon = ""},
+        {name = "  " .. soundDevice, icon = ""},
         {name = "Puertos (COM y LPT)", icon = ">"},
         {name = "  Puerto de comunicaciones (COM1)", icon = ""},
         {name = "  Puerto de impresora (LPT1)", icon = ""},
@@ -233,6 +256,16 @@ function MyPC:drawPerformanceTab(x, y, w, h)
     local smallFont = love.graphics.newFont(11)
     love.graphics.setFont(smallFont)
 
+    local totalMB = 16
+    if self.upgradesRef then
+        for _, upg in ipairs(self.upgradesRef) do
+            if upg.purchased and upg.stat == "ram" then
+                local num = upg.upgrade:match("(%d+)")
+                if num then totalMB = tonumber(num) end
+            end
+        end
+    end
+
     love.graphics.setColor(W95.text)
     love.graphics.print("Memoria del sistema:", x + 8, y + 8)
 
@@ -245,8 +278,7 @@ function MyPC:drawPerformanceTab(x, y, w, h)
     love.graphics.rectangle("fill", barX, barY, barW, barH)
     self:drawInset(barX, barY, barW, barH)
 
-    local usedMB = 8
-    local totalMB = 16
+    local usedMB = math.floor(totalMB / 2)
     local usedW = (usedMB / totalMB) * (barW - 4)
     love.graphics.setColor(0, 0, 0.5)
     love.graphics.rectangle("fill", barX + 2, barY + 2, usedW, barH - 4)

@@ -23,9 +23,11 @@ function Notepad.new(x, y)
     local self = setmetatable({}, Notepad)
     self.window = WindowManager.new("Sin titulo - Bloc de notas", x or 150, y or 100, 500, 380)
 
-    self.text = "=== OBJETIVOS ===\n\n[ ] Genera $100\n\n\n\n(Selecciona los objetivos completados)"
+    self.text = "=== OBJETIVOS ===\n\n[ ] Genera $100\n[ ] Compra tu primer upgrade\n[ ] Mejora el procesador\n[ ] Alcanza $500\n[ ] Completa todas las mejoras\n\n\n(Selecciona los objetivos completados)"
     self.scrollY = 0
     self.cursorPos = #self.text
+    self.trabajoRef = nil
+    self.explorerRef = nil
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
@@ -74,10 +76,46 @@ function Notepad:drawContent(cx, cy, cw, ch)
 
     love.graphics.setScissor(cx + 2, contentY + 2, cw - 4, contentH - 4)
 
-    local lines = {}
-    for line in self.text:gmatch("[^\n]*") do
-        table.insert(lines, line)
+    local money = 0
+    local hasUpgrade = false
+    local cpuUpgraded = false
+    local allUpgrades = false
+
+    if self.trabajoRef then
+        money = self.trabajoRef.money
     end
+    if self.explorerRef then
+        local purchased = 0
+        for _, upg in ipairs(self.explorerRef.upgrades) do
+            if upg.purchased then
+                purchased = purchased + 1
+                hasUpgrade = true
+                if upg.stat == "cpu" then cpuUpgraded = true end
+            end
+        end
+        if purchased >= #self.explorerRef.upgrades then
+            allUpgrades = true
+        end
+    end
+
+    local objectives = {
+        {text = "Genera $100", done = money >= 100},
+        {text = "Compra tu primer upgrade", done = hasUpgrade},
+        {text = "Mejora el procesador", done = cpuUpgraded},
+        {text = "Alcanza $500", done = money >= 500},
+        {text = "Completa todas las mejoras", done = allUpgrades},
+    }
+
+    local lines = {"=== OBJETIVOS ===", ""}
+    for _, obj in ipairs(objectives) do
+        local check = obj.done and "[X]" or "[ ]"
+        table.insert(lines, check .. " " .. obj.text)
+    end
+    table.insert(lines, "")
+    table.insert(lines, "")
+    table.insert(lines, "(Selecciona los objetivos completados)")
+    table.insert(lines, "")
+    table.insert(lines, "Dinero actual: $" .. money)
 
     local lineH = 14
     local padX = 6
@@ -86,7 +124,13 @@ function Notepad:drawContent(cx, cy, cw, ch)
     for i, line in ipairs(lines) do
         local ly = contentY + padY + (i - 1) * lineH - self.scrollY
         if ly + lineH > contentY and ly < contentY + contentH then
-            love.graphics.setColor(W95.text)
+            if line:match("%[X%]") then
+                love.graphics.setColor(W95.green or {0, 0.5, 0})
+            elseif line:match("OBJETIVOS") then
+                love.graphics.setColor(W95.highlight)
+            else
+                love.graphics.setColor(W95.text)
+            end
             love.graphics.print(line, cx + padX, ly)
         end
     end
