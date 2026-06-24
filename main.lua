@@ -2,6 +2,7 @@ local CursorManager = require("src.cursor")
 local WinampClass = require("src.winamp")
 local MyPCClass = require("src.mypc")
 local ExplorerClass = require("src.explorer")
+local NotepadClass = require("src.notepad")
 
 local gameState = "boot"
 local bootSound = nil
@@ -15,6 +16,7 @@ local mainCanvas = nil
 local winamp = nil
 local mypc = nil
 local explorer = nil
+local notepad = nil
 
 local bootLines = {
     {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
@@ -101,6 +103,12 @@ function openApp(appId)
         elseif not explorer.window.visible then
             explorer:toggleVisible()
         end
+    elseif appId == "notepad" and notepad then
+        if notepad.window.visible and notepad.window.minimized then
+            notepad.window.minimized = false
+        elseif not notepad.window.visible then
+            notepad:toggleVisible()
+        end
     end
     updateTaskbar()
 end
@@ -112,6 +120,8 @@ function closeApp(appId)
         mypc.window.visible = false
     elseif appId == "explorer" and explorer then
         explorer.window.visible = false
+    elseif appId == "notepad" and notepad then
+        notepad.window.visible = false
     end
     updateTaskbar()
 end
@@ -141,6 +151,14 @@ function toggleApp(appId)
         else
             explorer.window.minimized = true
         end
+    elseif appId == "notepad" and notepad then
+        if not notepad.window.visible then
+            notepad:toggleVisible()
+        elseif notepad.window.minimized then
+            notepad.window.minimized = false
+        else
+            notepad.window.minimized = true
+        end
     end
     updateTaskbar()
 end
@@ -155,6 +173,9 @@ function updateTaskbar()
     end
     if explorer and explorer.window.visible then
         table.insert(taskbarApps, {id = "explorer", label = "Internet Explorer"})
+    end
+    if notepad and notepad.window.visible then
+        table.insert(taskbarApps, {id = "notepad", label = "Bloc de notas"})
     end
 end
 
@@ -245,6 +266,11 @@ function love.load()
     explorer.window.onClose = function()
         updateTaskbar()
     end
+
+    notepad = NotepadClass.new(150, 100)
+    notepad.window.onClose = function()
+        updateTaskbar()
+    end
 end
 
 function love.update(dt)
@@ -311,6 +337,7 @@ function love.update(dt)
     if winamp then winamp:update(dt) end
     if mypc then mypc:update(dt) end
     if explorer then explorer:update(dt) end
+    if notepad then notepad:update(dt) end
 end
 
 function drawAMIBIOSLogo(x, y)
@@ -399,6 +426,9 @@ function drawDesktop()
         CursorManager.set("link")
     end
     if explorer and explorer.window.visible and explorer:hitTest(mx, my) then
+        CursorManager.set("link")
+    end
+    if notepad and notepad.window.visible and notepad:hitTest(mx, my) then
         CursorManager.set("link")
     end
 
@@ -499,7 +529,7 @@ function drawDesktop()
             {label = "Mi PC", action = "mypc"},
             {label = "Internet Explorer", action = "explorer"},
             {label = "Winamp", action = "winamp"},
-            {label = "Notepad", action = "none"},
+            {label = "Bloc de notas", action = "notepad"},
             {label = "---", action = "none"},
             {label = "Shut Down...", action = "quit"},
         }
@@ -597,6 +627,10 @@ function love.draw()
         local mx, my = love.mouse.getPosition()
         explorer:draw(mx, my)
     end
+    if gameState == "desktop" and notepad then
+        local mx, my = love.mouse.getPosition()
+        notepad:draw(mx, my)
+    end
     CursorManager.draw()
 end
 
@@ -612,6 +646,10 @@ function love.mousepressed(x, y, button)
         end
         if explorer and explorer.window.visible and not explorer.window.minimized and explorer:hitTest(x, y) then
             explorer:mousepressed(x, y, button)
+            return
+        end
+        if notepad and notepad.window.visible and not notepad.window.minimized and notepad:hitTest(x, y) then
+            notepad:mousepressed(x, y, button)
             return
         end
         if winamp and winamp.window.visible and not winamp.window.minimized and winamp:hitTest(x, y) then
@@ -643,6 +681,8 @@ function love.mousepressed(x, y, button)
                     toggleApp("explorer")
                 elseif clickedItem == 3 then
                     toggleApp("winamp")
+                elseif clickedItem == 4 then
+                    toggleApp("notepad")
                 elseif clickedItem == 6 then
                     love.event.quit()
                 end
@@ -673,6 +713,8 @@ function love.mousepressed(x, y, button)
                         toggleApp("mypc")
                     elseif icon.icon == "explorer" then
                         toggleApp("explorer")
+                    elseif icon.icon == "text" then
+                        toggleApp("notepad")
                     end
                 end
                 lastClickTime = currentTime
@@ -686,12 +728,14 @@ function love.mousereleased(x, y, button)
     if winamp then winamp:mousereleased(x, y, button) end
     if mypc then mypc:mousereleased(x, y, button) end
     if explorer then explorer:mousereleased(x, y, button) end
+    if notepad then notepad:mousereleased(x, y, button) end
 end
 
 function love.mousemoved(x, y)
     if winamp then winamp:mousemoved(x, y) end
     if mypc then mypc:mousemoved(x, y) end
     if explorer then explorer:mousemoved(x, y) end
+    if notepad then notepad:mousemoved(x, y) end
 end
 
 function love.keypressed(key)

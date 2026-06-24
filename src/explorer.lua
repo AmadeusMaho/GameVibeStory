@@ -37,10 +37,9 @@ function Explorer.new(x, y)
     self.selectedFav = 1
 
     self.favorites = {
-        {label = "Pagina de Upgrades", page = "upgrades"},
+        {label = "Tienda", page = "upgrades"},
         {label = "Windows Update", page = "update"},
         {label = "MSN", page = "msn"},
-        {label = "Mi PC", page = "mypc"},
     }
 
     self.upgrades = {
@@ -227,8 +226,6 @@ function Explorer:drawContent(cx, cy, cw, ch)
             self:drawPlaceholderPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20, "Windows Update", "Su sistema esta actualizado.")
         elseif self.currentPage == "msn" then
             self:drawPlaceholderPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20, "MSN", "Bienvenido a MSN.com")
-        elseif self.currentPage == "mypc" then
-            self:drawPlaceholderPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20, "Mi PC", "Acceda a las propiedades de su PC.")
         else
             self:drawHomePage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
         end
