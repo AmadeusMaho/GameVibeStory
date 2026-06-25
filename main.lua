@@ -19,6 +19,7 @@ local clickSound = nil
 local startupSound = nil
 local errorSound = nil
 local biosLogo = nil
+local energyLogo = nil
 local bootFont = nil
 local desktopBg = nil
 local shader = nil
@@ -498,18 +499,18 @@ function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
 
     bootLines = {
-        {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 120, color = {0.8, 0.8, 0.8}},
-        {text = "             AMIBIOS (C)1994 American Megatrends Inc..", x = 80, y = 145, color = {0.8, 0.8, 0.8}},
-        {text = "", x = 80, y = 170, color = {0.8, 0.8, 0.8}},
-        {text = "BCN SIT 1989-1994 Special UC612C", x = 80, y = 195, color = {0.8, 0.8, 0.8}},
-        {text = "SIT Rehab(tm) XX 115", x = 80, y = 220, color = {0.8, 0.8, 0.8}},
-        {text = "CPU: " .. pcStats.cpu, x = 80, y = 245, color = {0.8, 0.8, 0.8}},
-        {text = "RAM: Checking " .. pcStats.ram .. " ... OK", x = 80, y = 270, color = {0.8, 0.8, 0.8}},
-        {text = "HDD: " .. pcStats.disk, x = 80, y = 295, color = {0.8, 0.8, 0.8}},
-        {text = "Video: " .. pcStats.display, x = 80, y = 320, color = {0.8, 0.8, 0.8}},
-        {text = "Cooling: " .. pcStats.cooling, x = 80, y = 345, color = {0.8, 0.8, 0.8}},
-        {text = "", x = 80, y = 370, color = {0.8, 0.8, 0.8}},
-        {text = "WAIT...", x = 80, y = 395, color = {0.8, 0.8, 0.8}},
+        {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 200, color = {0.8, 0.8, 0.8}},
+        {text = "             AMIBIOS (C)1994 American Megatrends Inc..", x = 80, y = 225, color = {0.8, 0.8, 0.8}},
+        {text = "", x = 80, y = 250, color = {0.8, 0.8, 0.8}},
+        {text = "BCN SIT 1989-1994 Special UC612C", x = 80, y = 275, color = {0.8, 0.8, 0.8}},
+        {text = "SIT Rehab(tm) XX 115", x = 80, y = 300, color = {0.8, 0.8, 0.8}},
+        {text = "CPU: " .. pcStats.cpu, x = 80, y = 325, color = {0.8, 0.8, 0.8}},
+        {text = "RAM: Checking " .. pcStats.ram .. " ... OK", x = 80, y = 350, color = {0.8, 0.8, 0.8}},
+        {text = "HDD: " .. pcStats.disk, x = 80, y = 375, color = {0.8, 0.8, 0.8}},
+        {text = "Video: " .. pcStats.display, x = 80, y = 400, color = {0.8, 0.8, 0.8}},
+        {text = "Cooling: " .. pcStats.cooling, x = 80, y = 425, color = {0.8, 0.8, 0.8}},
+        {text = "", x = 80, y = 450, color = {0.8, 0.8, 0.8}},
+        {text = "WAIT...", x = 80, y = 475, color = {0.8, 0.8, 0.8}},
     }
     bootLineIndex = 0
     bootCharIndex = 0
@@ -548,6 +549,9 @@ function love.load()
 
     local okBios, imgBios = pcall(love.graphics.newImage, "assets/sprites/biosiconw95.png")
     if okBios then biosLogo = imgBios end
+
+    local okEnergy, imgEnergy = pcall(love.graphics.newImage, "assets/sprites/energy.png")
+    if okEnergy then energyLogo = imgEnergy end
 
     local ok4, img4 = pcall(love.graphics.newImage, "assets/sprites/bg.jpg")
     if ok4 then desktopBg = img4 end
@@ -794,7 +798,7 @@ end
 function drawAMIBIOSLogo(x, y)
     if biosLogo then
         local imgW, imgH = biosLogo:getDimensions()
-        local scale = math.min(585 / imgW, 156 / imgH)
+        local scale = math.min(702 / imgW, 187 / imgH)
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(biosLogo, x, y, 0, scale, scale)
     else
@@ -806,17 +810,12 @@ function drawAMIBIOSLogo(x, y)
 end
 
 function drawEnergyStar(x, y)
-    love.graphics.setColor(0.8, 0.8, 0)
-    love.graphics.setLineWidth(2)
-    love.graphics.arc("line", "open", x + 30, y + 5, 30, -math.pi * 0.8, -math.pi * 0.2)
-    love.graphics.line(x + 10, y + 30, x + 20, y + 10)
-    love.graphics.line(x + 20, y + 10, x + 25, y + 20)
-    love.graphics.line(x + 25, y + 20, x + 35, y + 5)
-    love.graphics.line(x + 35, y + 5, x + 45, y + 20)
-    love.graphics.line(x + 45, y + 20, x + 50, y + 10)
-    love.graphics.line(x + 50, y + 10, x + 60, y + 30)
-    love.graphics.print("Energy", x + 5, y + 38)
-    love.graphics.setLineWidth(1)
+    if energyLogo then
+        local imgW, imgH = energyLogo:getDimensions()
+        local scale = math.min(70 / imgW, 50 / imgH)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(energyLogo, x, y, 0, scale, scale)
+    end
 end
 
 function drawDesktopIcon(icon, mx, my)
@@ -1086,7 +1085,7 @@ function love.draw()
 
     if gameState == "boot" then
         drawAMIBIOSLogo(80, 10)
-        drawEnergyStar(1680, 10)
+        drawEnergyStar(1680, 30)
         love.graphics.setColor(0.8, 0.8, 0.8)
         love.graphics.setFont(bootFont)
 
