@@ -91,7 +91,7 @@ local componentOrder = {"gpu", "cpu", "ram", "cooling"}
 
 function Trabajo.new(x, y)
     local self = setmetatable({}, Trabajo)
-    self.window = WindowManager.new("Trabajo Freelance", x or 250, y or 120, 460, 400)
+    self.window = WindowManager.new("Trabajo Freelance", x or 250, y or 120, 460, 320)
 
     self.money = 0
     self.totalEarned = 0
@@ -109,12 +109,8 @@ function Trabajo.new(x, y)
     self.achievementsRef = nil
     self.completedProjects = 0
 
-    self.selectedTab = 1
-    self.tabs = {
-        {label = "Trabajo Freelance", id = "freelance"},
-        {label = "Trabajo Particular", id = "particular"},
-    }
-    self.tabUnlocked = false
+    self.particularWindow = WindowManager.new("Trabajo Particular", (x or 250) + 50, (y or 120) + 50, 460, 400)
+    self.particularWindow.minimizeOnly = true
 
     self.activeProject = nil
     self.projectProgress = 0
@@ -138,6 +134,13 @@ function Trabajo.new(x, y)
     end
     self.window.onMousePressed = function(_, x, y, button)
         return self:handleClick(x, y, button)
+    end
+
+    self.particularWindow.onDraw = function(_, cx, cy, cw, ch)
+        self:drawParticularContent(cx, cy, cw, ch)
+    end
+    self.particularWindow.onMousePressed = function(_, x, y, button)
+        return true
     end
 
     self.moneySounds = {}
@@ -240,15 +243,14 @@ function Trabajo:startProject(projectData)
     self.projectReward = projectData.reward
     self.resultMessage = ""
     self.resultTimer = 0
-    self.selectedTab = 2
     self.circles = {}
     self.floatingNumbers = {}
     self.barShake = 0
 
-    self.window.visible = true
-    self.window.minimized = false
-
     self:recalcComponents()
+
+    self.particularWindow.visible = true
+    self.particularWindow.minimized = false
 end
 
 function Trabajo:update(dt)
@@ -442,11 +444,12 @@ function Trabajo:clearProject()
     self.projectDesc = ""
     self.resultMessage = ""
     self.projectCooldown = 3.0
-    self.selectedTab = 1
     self.circles = {}
     self.floatingNumbers = {}
     self.components = {}
     self.barShake = 0
+
+    self.particularWindow.visible = false
 end
 
 function Trabajo:getEarningsPerClick()
@@ -487,56 +490,11 @@ function Trabajo:drawContent(cx, cy, cw, ch)
     local smallFont = love.graphics.newFont(11)
     love.graphics.setFont(smallFont)
 
-    local tabY = cy + 4
-    local tabH = 20
-    local tabStartX = cx + 8
-    local tabW = 120
-
-    for i, tab in ipairs(self.tabs) do
-        local tx = tabStartX + (i - 1) * (tabW + 2)
-        local isActive = (i == self.selectedTab)
-        local isLocked = (i == 2 and not self.tabUnlocked)
-
-        if isLocked then
-            love.graphics.setColor(W95.tabInactive)
-            love.graphics.rectangle("fill", tx, tabY + 4, tabW, tabH - 4)
-            love.graphics.setColor(W95.textDim)
-            love.graphics.printf(tab.label, tx, tabY + 6, tabW, "center")
-        else
-            if isActive then
-                love.graphics.setColor(W95.tabActive)
-                love.graphics.rectangle("fill", tx, tabY, tabW, tabH)
-                love.graphics.setColor(W95.borderLight)
-                love.graphics.line(tx, tabY, tx + tabW, tabY)
-                love.graphics.line(tx, tabY, tx, tabY + tabH)
-                love.graphics.setColor(W95.borderDark)
-                love.graphics.line(tx + tabW, tabY, tx + tabW, tabY + tabH)
-            else
-                love.graphics.setColor(W95.tabInactive)
-                love.graphics.rectangle("fill", tx, tabY + 4, tabW, tabH - 4)
-                love.graphics.setColor(W95.borderLight)
-                love.graphics.line(tx, tabY + 4, tx + tabW, tabY + 4)
-                love.graphics.setColor(W95.borderDark)
-                love.graphics.line(tx + tabW, tabY + 4, tx + tabW, tabY + tabH)
-            end
-            love.graphics.setColor(W95.text)
-            love.graphics.printf(tab.label, tx, tabY + (isActive and 4 or 6), tabW, "center")
-            table.insert(self.buttons, {x = tx, y = tabY, w = tabW, h = tabH, action = "tab", index = i})
-        end
-    end
-
-    local panelY = tabY + tabH + 4
-    local panelH = ch - tabH - 16
-
     love.graphics.setColor(W95.bg)
-    love.graphics.rectangle("fill", cx + 6, panelY, cw - 12, panelH)
-    self:drawBevel(cx + 6, panelY, cw - 12, panelH)
+    love.graphics.rectangle("fill", cx + 6, cy + 4, cw - 12, ch - 8)
+    self:drawBevel(cx + 6, cy + 4, cw - 12, ch - 8)
 
-    if self.selectedTab == 1 or not self.tabUnlocked then
-        self:drawFreelanceTab(cx + 12, panelY + 6, cw - 24, panelH - 12)
-    else
-        self:drawParticularTab(cx + 12, panelY + 6, cw - 24, panelH - 12)
-    end
+    self:drawFreelanceTab(cx + 12, cy + 10, cw - 24, ch - 20)
 
     love.graphics.setFont(prevFont)
 end
@@ -622,6 +580,20 @@ function Trabajo:drawFreelanceTab(x, y, w, h)
         love.graphics.setColor(W95.textDim)
         love.graphics.print("Nivel: " .. self.level, x + 8, y + 156)
     end
+end
+
+function Trabajo:drawParticularContent(cx, cy, cw, ch)
+    local prevFont = love.graphics.getFont()
+    local smallFont = love.graphics.newFont(11)
+    love.graphics.setFont(smallFont)
+
+    love.graphics.setColor(W95.bg)
+    love.graphics.rectangle("fill", cx + 6, cy + 4, cw - 12, ch - 8)
+    self:drawBevel(cx + 6, cy + 4, cw - 12, ch - 8)
+
+    self:drawParticularTab(cx + 12, cy + 10, cw - 24, ch - 20)
+
+    love.graphics.setFont(prevFont)
 end
 
 function Trabajo:drawParticularTab(x, y, w, h)
@@ -796,12 +768,7 @@ function Trabajo:handleClick(x, y, button)
 
     for _, btn in ipairs(self.buttons) do
         if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-            if btn.action == "tab" then
-                if btn.index == 2 and not self.tabUnlocked then
-                    return true
-                end
-                self.selectedTab = btn.index
-            elseif btn.action == "work" and self.cooldown <= 0 and not self.currentTask then
+            if btn.action == "work" and self.cooldown <= 0 and not self.currentTask then
                 self.currentTask = freelanceTasks[math.random(#freelanceTasks)]
                 self.taskProgress = 0
             elseif btn.action == "cancel" then

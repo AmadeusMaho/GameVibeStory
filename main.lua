@@ -301,7 +301,7 @@ function closeApp(appId)
     updateTaskbar()
 end
 
-local windowOrder = {"winamp", "mypc", "explorer", "notepad", "trabajo", "email", "recyclebin", "personal", "achievements"}
+local windowOrder = {"winamp", "mypc", "explorer", "notepad", "trabajo", "particular", "email", "recyclebin", "personal", "achievements"}
 
 local function bringToFront(appId)
     for i, id in ipairs(windowOrder) do
@@ -356,6 +356,10 @@ function closeAllWindows()
             app.window.visible = false
             app.window.minimized = false
         end
+    end
+    if trabajo and trabajo.particularWindow then
+        trabajo.particularWindow.visible = false
+        trabajo.particularWindow.minimized = false
     end
     startMenuOpen = false
     updateTaskbar()
@@ -416,6 +420,16 @@ function toggleApp(appId)
             bringToFront("trabajo")
         else
             trabajo.window.minimized = true
+        end
+    elseif appId == "particular" and trabajo then
+        if not trabajo.particularWindow.visible then
+            trabajo.particularWindow.visible = true
+            bringToFront("particular")
+        elseif trabajo.particularWindow.minimized then
+            trabajo.particularWindow.minimized = false
+            bringToFront("particular")
+        else
+            trabajo.particularWindow.minimized = true
         end
     elseif appId == "email" and email then
         if not email.window.visible then
@@ -478,6 +492,9 @@ function updateTaskbar()
     end
     if trabajo and trabajo.window.visible then
         table.insert(taskbarApps, {id = "trabajo", label = "Trabajo"})
+    end
+    if trabajo and trabajo.particularWindow.visible then
+        table.insert(taskbarApps, {id = "particular", label = "Proyecto"})
     end
     if email and email.window.visible then
         table.insert(taskbarApps, {id = "email", label = "Correo"})
@@ -645,15 +662,33 @@ function love.load()
     trabajo = TrabajoClass.new(250, 120)
     trabajo.pcStatsRef = pcStats
     trabajo.window.onClose = function()
-        if trabajo.activeProject then
-            trabajo.window.visible = true
-            return
-        end
+        updateTaskbar()
+    end
+    trabajo.particularWindow.onClose = function()
         updateTaskbar()
     end
     trabajo.onWorkDone = function()
         if email then email:onWorkCompleted() end
     end
+
+    particularApp = {
+        window = trabajo.particularWindow,
+        hitTest = function(_, mx, my)
+            return trabajo.particularWindow:hitTest(mx, my)
+        end,
+        mousepressed = function(_, x, y, button)
+            return trabajo.particularWindow:mousepressed(x, y, button)
+        end,
+        mousereleased = function(_, x, y, button)
+            trabajo.particularWindow:mousereleased(x, y, button)
+        end,
+        mousemoved = function(_, x, y)
+            trabajo.particularWindow:mousemoved(x, y)
+        end,
+        draw = function(_, mx, my)
+            trabajo.particularWindow:drawFrame()
+        end,
+    }
 
     explorer = ExplorerClass.new(80, 60)
     explorer.trabajoRef = trabajo
@@ -974,6 +1009,8 @@ function drawDesktop()
             isActive = explorer.window.visible and not explorer.window.minimized
         elseif app.id == "trabajo" and trabajo then
             isActive = trabajo.window.visible and not trabajo.window.minimized
+        elseif app.id == "particular" and trabajo then
+            isActive = trabajo.particularWindow.visible and not trabajo.particularWindow.minimized
         elseif app.id == "notepad" and notepad then
             isActive = notepad.window.visible and not notepad.window.minimized
         elseif app.id == "personal" and personal then
@@ -1158,6 +1195,7 @@ function love.draw()
             winamp = winamp, mypc = mypc, explorer = explorer,
             notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
             personal = personal, achievements = achievements,
+            particular = particularApp,
         }
         for _, id in ipairs(windowOrder) do
             local app = appDrawMap[id]
@@ -1199,6 +1237,7 @@ function love.mousepressed(x, y, button)
             mypc = mypc, explorer = explorer, notepad = notepad,
             winamp = winamp, trabajo = trabajo, email = email, recyclebin = recyclebin,
             personal = personal, achievements = achievements,
+            particular = particularApp,
         }
         for i = #windowOrder, 1, -1 do
             local id = windowOrder[i]
@@ -1319,6 +1358,7 @@ function love.mousereleased(x, y, button)
         winamp = winamp, mypc = mypc, explorer = explorer,
         notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
         personal = personal, achievements = achievements,
+        particular = particularApp,
     }
     for _, id in ipairs(windowOrder) do
         local app = appMap[id]
@@ -1331,6 +1371,7 @@ function love.mousemoved(x, y)
         winamp = winamp, mypc = mypc, explorer = explorer,
         notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
         personal = personal, achievements = achievements,
+        particular = particularApp,
     }
     for _, id in ipairs(windowOrder) do
         local app = appMap[id]

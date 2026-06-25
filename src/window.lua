@@ -29,6 +29,7 @@ function WindowManager.new(title, x, y, w, h)
     self.dragOffsetY = 0
     self.minimized = false
     self.fullscreen = false
+    self.minimizeOnly = false
     self.prevX = x
     self.prevY = y
     self.prevW = w
@@ -52,6 +53,12 @@ function WindowManager:getTitleBarButtons()
     local btnSize = self.titleH - 4
     local btnY = self.y + 2
     local pad = 2
+    if self.minimizeOnly then
+        local minX = self.x + self.w - btnSize - pad
+        return {
+            {x = minX, y = btnY, w = btnSize, h = btnSize, action = "minimize"},
+        }
+    end
     local closeX = self.x + self.w - btnSize - pad
     local maxX = closeX - btnSize - pad
     local minX = maxX - btnSize - pad
@@ -71,7 +78,8 @@ function WindowManager:drawTitleBar()
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.titleH)
 
     love.graphics.setColor(W95.titleText)
-    love.graphics.printf(self.title, self.x + 4, self.y + 3, self.w - 4 - (btnSize + 2) * 3, "left")
+    local numBtns = self.minimizeOnly and 1 or 3
+    love.graphics.printf(self.title, self.x + 4, self.y + 3, self.w - 4 - (btnSize + 2) * numBtns, "left")
 
     local function drawBtn(bx, by)
         love.graphics.setColor(W95.buttonBg)
