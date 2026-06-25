@@ -374,13 +374,13 @@ function Trabajo:attackProject(attackIndex)
     if isCrit then
         damage = math.floor(damage * 1.5)
         heatGain = math.floor(heatGain * 1.3)
-        self.lastAttackLog = "CRITICO! " .. damage .. " de dano"
+        self.lastAttackLog = "CRITICO! " .. damage .. " de daño"
         self.critFlash = 0.3
         if self.achievementsRef then
             self.achievementsRef:onCrit()
         end
     else
-        self.lastAttackLog = "Ataque: " .. damage .. " de dano"
+        self.lastAttackLog = "Ataque: " .. damage .. " de daño"
     end
 
     if self.heat >= self.maxHeat then
@@ -866,10 +866,10 @@ function Trabajo:drawTutorial(x, y, w, h)
     local pages = {
         {
             "GPU (Placa de video)",
-            "Fuente principal de dano.",
+            "Fuente principal de daño.",
             "Cada ataque llena la barra",
             "del proyecto. Cuanto mas",
-            "poderosa la GPU, mas dano.",
+            "poderosa la GPU, mas daño.",
         },
         {
             "CPU (Procesador)",

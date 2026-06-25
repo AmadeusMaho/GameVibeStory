@@ -152,7 +152,7 @@ function drawBSOD()
     love.graphics.setFont(love.graphics.newFont(18))
     love.graphics.print("Un error irrecoverable ha occurrido.", margin, h * 0.22)
     love.graphics.print("Se ha producido un error y Windows", margin, h * 0.27)
-    love.graphics.print("ha de cerrarse para evitar danos al equipo.", margin, h * 0.32)
+    love.graphics.print("ha de cerrarse para evitar daño al equipo.", margin, h * 0.32)
     love.graphics.print(" ", margin, h * 0.37)
     love.graphics.print("ERROR: 0E : 016F : BFF9B3D4", margin, h * 0.42)
     love.graphics.print(" KERNEL32.DLL", margin, h * 0.47)
@@ -199,7 +199,7 @@ function drawMalwarePopup()
 
     love.graphics.setColor(0, 0, 0)
     love.graphics.print("Su equipo ha sido infectado por malware.", popupX + 60, popupY + 40)
-    love.graphics.print("Windows va a cerrarse para evitar danos.", popupX + 60, popupY + 60)
+    love.graphics.print("Windows va a cerrarse para evitar daño.", popupX + 60, popupY + 60)
 
     love.graphics.setColor(0.75, 0.75, 0.75)
     love.graphics.rectangle("fill", popupX + popupW - 85, popupY + popupH - 35, 75, 23)
@@ -498,18 +498,18 @@ function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
 
     bootLines = {
-        {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
-        {text = "             AMIBIOS (C)1994 American Megatrends Inc..", x = 80, y = 40, color = {0.8, 0.8, 0.8}},
-        {text = "", x = 80, y = 60, color = {0.8, 0.8, 0.8}},
-        {text = "BCN SIT 1989-1994 Special UC612C", x = 80, y = 80, color = {0.8, 0.8, 0.8}},
-        {text = "SIT Rehab(tm) XX 115", x = 80, y = 100, color = {0.8, 0.8, 0.8}},
-        {text = "CPU: " .. pcStats.cpu, x = 80, y = 120, color = {0.8, 0.8, 0.8}},
-        {text = "RAM: Checking " .. pcStats.ram .. " ... OK", x = 80, y = 140, color = {0.8, 0.8, 0.8}},
-        {text = "HDD: " .. pcStats.disk, x = 80, y = 160, color = {0.8, 0.8, 0.8}},
-        {text = "Video: " .. pcStats.display, x = 80, y = 180, color = {0.8, 0.8, 0.8}},
-        {text = "Cooling: " .. pcStats.cooling, x = 80, y = 200, color = {0.8, 0.8, 0.8}},
-        {text = "", x = 80, y = 220, color = {0.8, 0.8, 0.8}},
-        {text = "WAIT...", x = 80, y = 240, color = {0.8, 0.8, 0.8}},
+        {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 120, color = {0.8, 0.8, 0.8}},
+        {text = "             AMIBIOS (C)1994 American Megatrends Inc..", x = 80, y = 145, color = {0.8, 0.8, 0.8}},
+        {text = "", x = 80, y = 170, color = {0.8, 0.8, 0.8}},
+        {text = "BCN SIT 1989-1994 Special UC612C", x = 80, y = 195, color = {0.8, 0.8, 0.8}},
+        {text = "SIT Rehab(tm) XX 115", x = 80, y = 220, color = {0.8, 0.8, 0.8}},
+        {text = "CPU: " .. pcStats.cpu, x = 80, y = 245, color = {0.8, 0.8, 0.8}},
+        {text = "RAM: Checking " .. pcStats.ram .. " ... OK", x = 80, y = 270, color = {0.8, 0.8, 0.8}},
+        {text = "HDD: " .. pcStats.disk, x = 80, y = 295, color = {0.8, 0.8, 0.8}},
+        {text = "Video: " .. pcStats.display, x = 80, y = 320, color = {0.8, 0.8, 0.8}},
+        {text = "Cooling: " .. pcStats.cooling, x = 80, y = 345, color = {0.8, 0.8, 0.8}},
+        {text = "", x = 80, y = 370, color = {0.8, 0.8, 0.8}},
+        {text = "WAIT...", x = 80, y = 395, color = {0.8, 0.8, 0.8}},
     }
     bootLineIndex = 0
     bootCharIndex = 0
@@ -599,7 +599,8 @@ function love.load()
 
     local font = love.graphics.newFont(16)
     love.graphics.setFont(font)
-    bootFont = font
+    bootFont = love.graphics.newFont(22)
+    love.graphics.setFont(font)
 
     CursorManager.init()
 
@@ -793,14 +794,14 @@ end
 function drawAMIBIOSLogo(x, y)
     if biosLogo then
         local imgW, imgH = biosLogo:getDimensions()
-        local scale = math.min(300 / imgW, 80 / imgH)
+        local scale = math.min(390 / imgW, 104 / imgH)
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(biosLogo, x, y, 0, scale, scale)
     else
         love.graphics.setColor(0.8, 0, 0)
-        love.graphics.polygon("fill", x, y + 24, x + 12, y, x + 24, y + 24)
+        love.graphics.polygon("fill", x, y + 30, x + 15, y, x + 30, y + 30)
         love.graphics.setColor(0.8, 0.8, 0.8)
-        love.graphics.print("AMI", x - 2, y + 28)
+        love.graphics.print("AMI", x - 3, y + 36)
     end
 end
 
