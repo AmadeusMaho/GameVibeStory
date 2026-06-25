@@ -149,6 +149,13 @@ function Trabajo.new(x, y)
         end
     end
 
+    self.circleSound = nil
+    local okCs, sndCs = pcall(love.audio.newSource, "assets/sounds/circlesound.wav", "static")
+    if okCs then
+        sndCs:setVolume(0.5)
+        self.circleSound = sndCs
+    end
+
     return self
 end
 
@@ -237,6 +244,9 @@ function Trabajo:startProject(projectData)
     self.circles = {}
     self.floatingNumbers = {}
     self.barShake = 0
+
+    self.window.visible = true
+    self.window.minimized = false
 
     self:recalcComponents()
 end
@@ -370,6 +380,11 @@ function Trabajo:generateCircle(comp)
     })
 
     comp.vibration = 0.2
+
+    if self.circleSound then
+        self.circleSound:stop()
+        self.circleSound:play()
+    end
 end
 
 function Trabajo:winProject()

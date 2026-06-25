@@ -645,6 +645,10 @@ function love.load()
     trabajo = TrabajoClass.new(250, 120)
     trabajo.pcStatsRef = pcStats
     trabajo.window.onClose = function()
+        if trabajo.activeProject then
+            trabajo.window.visible = true
+            return
+        end
         updateTaskbar()
     end
     trabajo.onWorkDone = function()
