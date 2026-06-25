@@ -1004,14 +1004,6 @@ function Trabajo:drawParticularTab(x, y, w, h)
     end
 end
 
-function Trabajo:getEarningsPerClick()
-    local totalReward = 0
-    for _, task in ipairs(freelanceTasks) do
-        totalReward = totalReward + task.reward
-    end
-    return math.floor(totalReward / #freelanceTasks)
-end
-
 function Trabajo:handleClick(x, y, button)
     if button ~= 1 then return false end
 

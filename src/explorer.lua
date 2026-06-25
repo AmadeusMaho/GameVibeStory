@@ -790,6 +790,7 @@ function Explorer:handleClick(x, y, button)
                             self.upgradeLevels[upg.stat] = (self.upgradeLevels[upg.stat] or 0) + 1
                             self.purchaseMessage = upg.name .. " mejorado a " .. upg.upgrade .. "!"
                             self.purchaseMsgTimer = 2.0
+                            if self.onUpgradePurchased then self.onUpgradePurchased(upg.stat, self.upgradeLevels[upg.stat]) end
                             if self.pcStatsRef then
                                 if upg.stat == "cpu" then self.pcStatsRef.cpu = upg.upgrade end
                                 if upg.stat == "ram" then
