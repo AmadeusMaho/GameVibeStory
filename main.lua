@@ -867,6 +867,7 @@ function love.load()
     explorer.trabajoRef = trabajo
     explorer.pcStatsRef = pcStats
     explorer.winampRef = winamp
+    explorer.iconImagesRef = iconImages
     explorer.window.onClose = function()
         updateTaskbar()
     end

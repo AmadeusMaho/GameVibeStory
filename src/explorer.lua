@@ -551,8 +551,8 @@ function Explorer:drawAppsPage(x, y, w, h)
             love.graphics.setColor(W95.highlight)
             love.graphics.rectangle("fill", cx + 4, cy + 4, cellW - 8, 40)
 
-            if app.icon and iconImages[app.icon] then
-                local img = iconImages[app.icon]
+            if app.icon and self.iconImagesRef and self.iconImagesRef[app.icon] then
+                local img = self.iconImagesRef[app.icon]
                 local imgW, imgH = img:getDimensions()
                 local iconScale = math.min(36 / imgW, 36 / imgH)
                 love.graphics.setColor(1, 1, 1)

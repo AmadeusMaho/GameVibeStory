@@ -322,6 +322,8 @@ function Trabajo:startProject(projectData)
 
     self.resultMessage = ""
     self.resultTimer = 0
+    self.successMessage = ""
+    self.successTimer = 0
     self.malwareLossMessage = ""
     self.malwareLossTimer = 0
     self.circles = {}

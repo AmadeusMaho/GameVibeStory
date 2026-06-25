@@ -85,6 +85,8 @@ function Email.new(x, y)
     self.workSinceLastEmail = 0
     self.emailChance = 0.015
     self.emailBonus = 0
+    self.emailCooldown = 0
+    self.emailCooldownTime = 10
     self.chimeSound = nil
     self.initialized = false
     self.smallFont = love.graphics.newFont(11)
@@ -171,6 +173,10 @@ function Email:onWorkCompleted()
     self.workSinceLastEmail = self.workSinceLastEmail + 1
     self.totalTasksDone = self.totalTasksDone + 1
 
+    if self.emailCooldown > 0 then
+        return
+    end
+
     if not self.malwareSent and self.totalTasksDone >= 15 then
         self.malwareSent = true
         self:addEmailToInbox({
@@ -181,6 +187,7 @@ function Email:onWorkCompleted()
             moneyLoss = 0,
             isDesktopMalware = true,
         })
+        self.emailCooldown = self.emailCooldownTime
         return
     end
 
@@ -193,6 +200,7 @@ function Email:onWorkCompleted()
         self.workSinceLastEmail = 0
         self.emailChance = 0.015
         self.emailBonus = 0
+        self.emailCooldown = self.emailCooldownTime
 
         if self.pendingApplications > 0 then
             self.pendingApplications = self.pendingApplications - 1
@@ -227,6 +235,10 @@ function Email:onWorkCompleted()
 end
 
 function Email:update(dt)
+    if self.emailCooldown > 0 then
+        self.emailCooldown = self.emailCooldown - dt
+    end
+    
     if not self.dayTimer then self.dayTimer = 0 end
     self.dayTimer = self.dayTimer + dt
     if self.dayTimer >= 60 then
