@@ -18,6 +18,7 @@ local bootSound = nil
 local clickSound = nil
 local startupSound = nil
 local errorSound = nil
+local biosLogo = nil
 local bootFont = nil
 local desktopBg = nil
 local shader = nil
@@ -345,6 +346,18 @@ function getNextCascadePosition(w, h)
     return newX, newY
 end
 
+function closeAllWindows()
+    local apps = {winamp, mypc, explorer, notepad, trabajo, email, recyclebin, personal, achievements}
+    for _, app in ipairs(apps) do
+        if app then
+            app.window.visible = false
+            app.window.minimized = false
+        end
+    end
+    startMenuOpen = false
+    updateTaskbar()
+end
+
 function toggleApp(appId)
     if appId == "winamp" and winamp then
         if not winamp.window.visible then
@@ -533,6 +546,9 @@ function love.load()
         errorSound:setVolume(0.6)
     end
 
+    local okBios, imgBios = pcall(love.graphics.newImage, "assets/sprites/biosiconw95.png")
+    if okBios then biosLogo = imgBios end
+
     local ok4, img4 = pcall(love.graphics.newImage, "assets/sprites/bg.jpg")
     if ok4 then desktopBg = img4 end
 
@@ -693,6 +709,7 @@ function love.update(dt)
             countdownTimer = 0
             if email then email.downloadIconActive = false end
             if bootSound then bootSound:stop(); bootSound:play() end
+            closeAllWindows()
         end
         return
     end
@@ -751,10 +768,8 @@ function love.update(dt)
                 countdownValue = countdownValue - 1
                 if countdownValue <= 0 then
                     gameState = "desktop"
-                    if not firstBootDone then
-                        if startupSound then startupSound:play() end
-                        firstBootDone = true
-                    end
+                    if startupSound then startupSound:play() end
+                    firstBootDone = true
                     if email then
                         email.window.visible = true
                         updateTaskbar()
@@ -776,10 +791,17 @@ function love.update(dt)
 end
 
 function drawAMIBIOSLogo(x, y)
-    love.graphics.setColor(0.8, 0, 0)
-    love.graphics.polygon("fill", x, y + 24, x + 12, y, x + 24, y + 24)
-    love.graphics.setColor(0.8, 0.8, 0.8)
-    love.graphics.print("AMI", x - 2, y + 28)
+    if biosLogo then
+        local imgW, imgH = biosLogo:getDimensions()
+        local scale = math.min(300 / imgW, 80 / imgH)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(biosLogo, x, y, 0, scale, scale)
+    else
+        love.graphics.setColor(0.8, 0, 0)
+        love.graphics.polygon("fill", x, y + 24, x + 12, y, x + 24, y + 24)
+        love.graphics.setColor(0.8, 0.8, 0.8)
+        love.graphics.print("AMI", x - 2, y + 28)
+    end
 end
 
 function drawEnergyStar(x, y)

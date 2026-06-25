@@ -205,7 +205,7 @@ function Email:onWorkCompleted()
 
     if self.workSinceApplication >= self.workThreshold then
         self.workSinceApplication = 0
-        self.workThreshold = 1 + math.random(5)
+    self.workThreshold = 1 + math.random(10)
 
         if self.pendingApplications > 0 then
             self.pendingApplications = self.pendingApplications - 1
@@ -496,7 +496,7 @@ function Email:handleClick(x, y, button)
                     self.trabajoRef.totalEarned = self.trabajoRef.totalEarned + self.selectedEmail.moneyReward
                     self.pendingApplications = self.pendingApplications + 1
                     self.workSinceApplication = 0
-    self.workThreshold = 1 + math.random(5)
+    self.workThreshold = 1 + math.random(10)
                     if self.notepadRef then
                         self.notepadRef.emailJobsAccepted = (self.notepadRef.emailJobsAccepted or 0) + 1
                     end
