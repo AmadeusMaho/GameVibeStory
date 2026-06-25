@@ -80,6 +80,7 @@ local lastClickTime = 0
 local doubleClickTime = 0.4
 local taskbarApps = {}
 local winampMusic2 = nil
+local firstBootDone = false
 
 local iconImages = {}
 local winampMusic = nil
@@ -661,6 +662,8 @@ function love.update(dt)
             countdownActive = false
             countdownValue = 3
             countdownTimer = 0
+            if email then email.downloadIconActive = false end
+            if bootSound then bootSound:stop(); bootSound:play() end
         end
         return
     end
@@ -719,7 +722,10 @@ function love.update(dt)
                 countdownValue = countdownValue - 1
                 if countdownValue <= 0 then
                     gameState = "desktop"
-                    if startupSound then startupSound:play() end
+                    if not firstBootDone then
+                        if startupSound then startupSound:play() end
+                        firstBootDone = true
+                    end
                     if email then
                         email.window.visible = true
                         updateTaskbar()
