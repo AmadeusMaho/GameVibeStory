@@ -21,6 +21,7 @@ local errorSound = nil
 local biosLogo = nil
 local energyLogo = nil
 local bootFont = nil
+local defaultFont = nil
 local desktopBg = nil
 local shader = nil
 local CURVATURE = 0.02
@@ -603,6 +604,7 @@ function love.load()
 
     local font = love.graphics.newFont(16)
     love.graphics.setFont(font)
+    defaultFont = font
     bootFont = love.graphics.newFont(22)
     love.graphics.setFont(font)
 
@@ -869,6 +871,7 @@ function drawDesktop()
     local taskH = 40
     local mx, my = love.mouse.getPosition()
 
+    love.graphics.setFont(defaultFont)
     CursorManager.set("normal")
 
     if desktopBg then
