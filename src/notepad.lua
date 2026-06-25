@@ -27,14 +27,19 @@ function Notepad.new(x, y)
     self.explorerRef = nil
     self.emailRef = nil
     self.personalUnlocked = false
+    self.onGoalComplete = nil
 
     self.objectives = {
-        {id = "money20", text = "Genera $20", done = false, shown = true},
-        {id = "firstUpgrade", text = "Compra tu primer upgrade", done = false, shown = false},
+        {id = "work5", text = "Trabaja 5 veces", done = false, shown = true},
+        {id = "money150", text = "Gana $150 en total", done = false, shown = false},
+        {id = "work15", text = "Trabaja 15 veces", done = false, shown = false},
         {id = "firstProject", text = "Termina un proyecto exitosamente", done = false, shown = false},
-        {id = "work20", text = "Trabaja 20 veces", done = false, shown = false},
-        {id = "money200", text = "Genera $200 en total", done = false, shown = false},
+        {id = "money300", text = "Gana $300 en total", done = false, shown = false},
+        {id = "work30", text = "Trabaja 30 veces", done = false, shown = false},
+        {id = "money750", text = "Gana $750 en total", done = false, shown = false},
     }
+
+    self.pendingNotifications = {}
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
@@ -55,56 +60,64 @@ function Notepad:update(dt)
     if not self.trabajoRef then return end
 
     local money = self.trabajoRef.totalEarned or 0
-    local hasUpgrade = false
-    if self.explorerRef then
-        for stat, level in pairs(self.explorerRef.upgradeLevels) do
-            if level > 0 then
-                hasUpgrade = true
-                break
-            end
-        end
-    end
     local tasksDone = self.trabajoRef.tasksCompleted or 0
     local hasCompletedProject = self.trabajoRef.completedProjects and self.trabajoRef.completedProjects > 0
 
     for i, obj in ipairs(self.objectives) do
         if not obj.done then
-            if obj.id == "money20" and money >= 20 then
+            if obj.id == "work5" and tasksDone >= 5 then
                 obj.done = true
                 self:unlockNext(i)
-            elseif obj.id == "firstUpgrade" and hasUpgrade then
+                self:addNotification("Objetivo Completado!", obj.text)
+                if self.onGoalComplete then self.onGoalComplete(obj.id, i) end
+            elseif obj.id == "money150" and money >= 150 then
                 obj.done = true
                 self:unlockNext(i)
+                self:addNotification("Objetivo Completado!", obj.text)
+                if self.onGoalComplete then self.onGoalComplete(obj.id, i) end
+            elseif obj.id == "work15" and tasksDone >= 15 then
+                obj.done = true
+                self:unlockNext(i)
+                self:addNotification("Objetivo Completado!", obj.text)
+                if self.onGoalComplete then self.onGoalComplete(obj.id, i) end
             elseif obj.id == "firstProject" and hasCompletedProject then
                 obj.done = true
                 self:unlockNext(i)
-                if self.emailRef and not self.personalEmailSent then
-                    self.personalEmailSent = true
-                    self.emailRef:addEmailToInbox({
-                        subject = "Felicidades! Proyecto completado",
-                        sender = "admin@empresa.com",
-                        type = "news",
-                        body = "Estimado freelancer:\n\nFelicidades por completar\nsu primer proyecto!\n\nHa demostrado ser un\ntrabajador confiable.\n\nSiga asi y pronto habran\nmas oportunidades.\n\nSaludos cordiales.",
-                    })
-                end
-            elseif obj.id == "work20" and tasksDone >= 20 then
+                self:addNotification("Objetivo Completado!", obj.text)
+                if self.onGoalComplete then self.onGoalComplete(obj.id, i) end
+            elseif obj.id == "money300" and money >= 300 then
                 obj.done = true
                 self:unlockNext(i)
-                if self.emailRef and not self.personalUnlocked then
-                    self.personalUnlocked = true
-                    self.emailRef:addEmailToInbox({
-                        subject = "Nuevo: Departamento de Personal",
-                        sender = "admin@empresa.com",
-                        type = "personal_unlock",
-                        body = "Estimado freelancer:\n\nHa completado 20 tareas!\nAhora puede contratar personal\npara que trabajen por usted.\n\nDescargue la aplicacion\n'Personal' desde este correo.\n\nSus empleados generaran\ndinero automaticamente.\n\nSaludos cordiales.",
-                    })
-                end
-            elseif obj.id == "money200" and money >= 200 then
+                self:addNotification("Objetivo Completado!", obj.text)
+                if self.onGoalComplete then self.onGoalComplete(obj.id, i) end
+            elseif obj.id == "work30" and tasksDone >= 30 then
                 obj.done = true
                 self:unlockNext(i)
+                self:addNotification("Objetivo Completado!", obj.text)
+                if self.onGoalComplete then self.onGoalComplete(obj.id, i) end
+            elseif obj.id == "money750" and money >= 750 then
+                obj.done = true
+                self:unlockNext(i)
+                self:addNotification("Objetivo Completado!", obj.text)
+                if self.onGoalComplete then self.onGoalComplete(obj.id, i) end
             end
         end
     end
+
+    for i = #self.pendingNotifications, 1, -1 do
+        self.pendingNotifications[i].timer = self.pendingNotifications[i].timer - dt
+        if self.pendingNotifications[i].timer <= 0 then
+            table.remove(self.pendingNotifications, i)
+        end
+    end
+end
+
+function Notepad:addNotification(title, text)
+    table.insert(self.pendingNotifications, {
+        title = title,
+        text = text,
+        timer = 4.0,
+    })
 end
 
 function Notepad:unlockNext(currentIndex)
@@ -175,6 +188,48 @@ end
 
 function Notepad:handleClick(x, y, button)
     return true
+end
+
+function Notepad:drawNotifications()
+    local prevFont = love.graphics.getFont()
+    local smallFont = love.graphics.newFont(12)
+    love.graphics.setFont(smallFont)
+
+    local screenW, screenH = love.graphics.getDimensions()
+
+    for i = #self.pendingNotifications, 1, -1 do
+        local notif = self.pendingNotifications[i]
+        if notif.timer > 0 then
+            local alpha = math.min(1, notif.timer / 0.5)
+            if notif.timer < 1.0 then
+                alpha = notif.timer
+            end
+
+            local notifW = 280
+            local notifH = 60
+            local notifX = screenW - notifW - 20
+            local notifY = 130 + (i - 1) * (notifH + 10)
+
+            love.graphics.setColor(0, 0, 0, alpha * 0.5)
+            love.graphics.rectangle("fill", notifX + 2, notifY + 2, notifW, notifH, 4, 4)
+
+            love.graphics.setColor(0.1, 0.1, 0.1, alpha)
+            love.graphics.rectangle("fill", notifX, notifY, notifW, notifH, 4, 4)
+
+            love.graphics.setColor(W95.highlight[1], W95.highlight[2], W95.highlight[3], alpha)
+            love.graphics.rectangle("line", notifX, notifY, notifW, notifH, 4, 4)
+
+            love.graphics.setColor(W95.highlight[1], W95.highlight[2], W95.highlight[3], alpha)
+            love.graphics.printf(notif.title, notifX, notifY + 6, notifW, "center")
+
+            love.graphics.setColor(1, 1, 1, alpha)
+            love.graphics.printf(notif.text, notifX, notifY + 24, notifW, "center")
+        else
+            table.remove(self.pendingNotifications, i)
+        end
+    end
+
+    love.graphics.setFont(prevFont)
 end
 
 function Notepad:draw(mx, my)

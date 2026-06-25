@@ -35,6 +35,7 @@ function MyPC.new(x, y)
 
     self.pcStats = nil
     self.upgradesRef = nil
+    self.explorerRef = nil
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
@@ -264,28 +265,60 @@ function MyPC:drawPerformanceTab(x, y, w, h)
     love.graphics.setColor(W95.text)
     love.graphics.print(usedMB .. " MB usados de " .. totalMB .. " MB", barX + 8, barY + 3)
 
-    love.graphics.print("Recursos del sistema:", x + 8, y + 60)
+    love.graphics.print("Consumo de energia:", x + 8, y + 58)
 
-    local resources = {
-        {"Recursos de archivos:", "92% libres"},
-        {"Recursos de GDI:", "78% libres"},
-        {"Recursos de usuario:", "85% libres"},
-    }
+    local totalWatts = 0
+    local psuCap = 150
+    if self.explorerRef then
+        totalWatts = self.explorerRef:getTotalWatts()
+        psuCap = self.explorerRef:getPsuCapacity()
+    end
 
-    for i, res in ipairs(resources) do
-        local ry = y + 78 + (i - 1) * 22
+    local pwBarX = x + 8
+    local pwBarY = y + 76
+    local pwBarW = w - 16
+    local pwBarH = 20
+
+    love.graphics.setColor(W95.fieldBg)
+    love.graphics.rectangle("fill", pwBarX, pwBarY, pwBarW, pwBarH)
+    self:drawInset(pwBarX, pwBarY, pwBarW, pwBarH)
+
+    local usedPW = math.min(totalWatts / psuCap, 1.0) * (pwBarW - 4)
+    if totalWatts > psuCap then
+        love.graphics.setColor(0.8, 0, 0)
+    else
+        love.graphics.setColor(0, 0.5, 0)
+    end
+    love.graphics.rectangle("fill", pwBarX + 2, pwBarY + 2, usedPW, pwBarH - 4)
+
+    love.graphics.setColor(W95.text)
+    love.graphics.print(totalWatts .. "W / " .. psuCap .. "W", pwBarX + 8, pwBarY + 3)
+
+    local componentWatts = {}
+    if self.explorerRef and self.explorerRef.componentWatts then
+        local componentOrder = {"cpu", "ram", "disk", "display", "cooling"}
+        local names = {cpu = "CPU", ram = "RAM", disk = "Disco", display = "GPU", cooling = "Cooling"}
+        local levels = self.explorerRef.upgradeLevels or {}
+        for _, stat in ipairs(componentOrder) do
+            local level = levels[stat] or 0
+            local watts = 0
+            if self.explorerRef.componentWatts[stat] and self.explorerRef.componentWatts[stat][level + 1] then
+                watts = self.explorerRef.componentWatts[stat][level + 1]
+            end
+            table.insert(componentWatts, {name = names[stat], watts = watts})
+        end
+    end
+
+    love.graphics.print("Desglose por componente:", x + 8, y + 106)
+    for i, comp in ipairs(componentWatts) do
+        local ry = y + 124 + (i - 1) * 18
         love.graphics.setColor(W95.text)
-        love.graphics.print(res[1], x + 8, ry)
-
-        love.graphics.setColor(W95.fieldBg)
-        love.graphics.rectangle("fill", x + 160, ry - 2, w - 168, 18)
-        self:drawInset(x + 160, ry - 2, w - 168, 18)
-        love.graphics.setColor(W95.text)
-        love.graphics.print(res[2], x + 166, ry)
+        love.graphics.print(comp.name, x + 12, ry)
+        love.graphics.print(comp.watts .. "W", x + 100, ry)
     end
 
     love.graphics.setColor(W95.text)
-    love.graphics.print("Archivo de intercambio: 24 MB", x + 8, y + 150)
+    love.graphics.print("Archivo de intercambio: 24 MB", x + 8, y + 220)
 
     love.graphics.setFont(prevFont)
 end

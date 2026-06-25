@@ -32,10 +32,7 @@ function Winamp.new(x, y)
     self.titleFont = love.graphics.newFont(14)
     self.smallFont = love.graphics.newFont(11)
 
-    self.playlist = {
-        {title = "The man who sold the world - Nirvana", duration = 0, file = "songw95_1.wav"},
-        {title = "Aeroplane - Red Hot Chili Peppers", duration = 0, file = "songw95_2.wav"},
-    }
+    self.playlist = {}
     self.selectedTrack = 1
     self.buttons = {}
 
@@ -300,7 +297,11 @@ end
 function Winamp:addSong(title, file)
     table.insert(self.playlist, {title = title, duration = 0, file = file})
     local index = #self.playlist
-    local ok, src = pcall(love.audio.newSource, "assets/sounds/" .. file, "stream")
+    local mode = "static"
+    if file:match("%.ogg$") or file:match("%.mp3$") then
+        mode = "stream"
+    end
+    local ok, src = pcall(love.audio.newSource, "assets/sounds/" .. file, mode)
     if ok then
         src:setVolume(self.volume)
         self:setSource(index, src)

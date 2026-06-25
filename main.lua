@@ -14,6 +14,15 @@ local bsodTimer = 0
 local bsodActive = false
 local malwarePopupTimer = 0
 local malwarePopupDuration = 3.0
+local installTimer = 0
+local installDuration = 3.0
+local installActive = false
+local installSound = nil
+local projectPopupActive = false
+local projectPopupTimer = 0
+local projectPopupDuration = 3.0
+local projectPopupSound = nil
+local bsodSound = nil
 local bootSound = nil
 local clickSounds = {}
 local startupSound = nil
@@ -89,18 +98,56 @@ local firstBootDone = false
 local iconImages = {}
 local winampMusic = nil
 
-local desktopIcons = {
-    {label = "Mi PC", icon = "mypc", x = 40, y = 40},
-    {label = "Internet Explorer", icon = "explorer", x = 40, y = 140},
-    {label = "Winamp", icon = "winamp", x = 40, y = 240},
-    {label = "Trabajo", icon = "trabajo", x = 40, y = 340, iconScale = 1.4},
-    {label = "Correo", icon = "email", x = 140, y = 40, iconScale = 1.4},
-    {label = "Objetivos", icon = "text", x = 140, y = 140},
-    {label = "Logros", icon = "achievements", x = 140, y = 240},
-    {label = "Papelera", icon = "recyclebin", x = 240, y = 40},
+local dynamicIcons = {}
+local dynamicIconOrder = {}
+
+local function addDynamicIcon(id, label, icon, x, y, iconScale)
+    dynamicIcons[id] = {label = label, icon = icon, x = x, y = y, iconScale = iconScale, active = false}
+    table.insert(dynamicIconOrder, id)
+end
+
+local function activateDynamicIcon(id)
+    if dynamicIcons[id] then
+        dynamicIcons[id].active = true
+    end
+end
+
+addDynamicIcon("explorer", "Internet Explorer", "explorer", 40, 140, nil)
+addDynamicIcon("winamp", "Winamp", "winamp", 40, 240, nil)
+addDynamicIcon("notepad", "Objetivos", "text", 140, 140, nil)
+addDynamicIcon("personal", "Personal", "staff", 240, 240, nil)
+addDynamicIcon("download", "WinOptimizer", "download", 340, 40, nil)
+
+local baseDesktopIcons = {
+    {label = "Mi PC", icon = "mypc"},
+    {label = "Trabajo", icon = "trabajo", iconScale = 1.4},
+    {label = "Correo", icon = "email", iconScale = 1.4},
+    {label = "Papelera", icon = "recyclebin"},
 }
-local personalIcon = {label = "Personal", icon = "staff", x = 240, y = 240}
-local downloadIcon = {label = "WinOptimizer", icon = "download", x = 340, y = 40}
+
+local function getDesktopIcons()
+    local all = {}
+    for _, icon in ipairs(baseDesktopIcons) do
+        table.insert(all, icon)
+    end
+    for _, id in ipairs(dynamicIconOrder) do
+        local dIcon = dynamicIcons[id]
+        if dIcon and dIcon.active then
+            table.insert(all, {label = dIcon.label, icon = dIcon.icon, iconScale = dIcon.iconScale})
+        end
+    end
+    local icons = {}
+    for i, icon in ipairs(all) do
+        local col = math.floor((i - 1) / 9)
+        local row = (i - 1) % 9
+        local def = {label = icon.label, icon = icon.icon, x = 40 + col * 100, y = 40 + row * 100}
+        if icon.iconScale then def.iconScale = icon.iconScale end
+        table.insert(icons, def)
+    end
+    return icons
+end
+
+local desktopIcons = getDesktopIcons()
 local W95 = {
     bg = {0.75, 0.75, 0.75},
     titleActive = {0.0, 0.0, 0.5},
@@ -135,9 +182,28 @@ function triggerMalware()
     gameState = "malware_popup"
     malwarePopupTimer = 0
     playWin95Error()
+
+    if winamp and winamp.music then
+        winamp.music:stop()
+    end
+
     if trabajo then
-        local loss = math.floor(trabajo.money * (0.3 + math.random() * 0.3))
+        if trabajo.activeProject then
+            trabajo:failProject()
+        end
+        local loss = math.floor(trabajo.money * 0.8)
         trabajo.money = math.max(0, trabajo.money - loss)
+        trabajo.malwareLossMessage = "Equipo danado por malware. Reparaciones: -$" .. loss
+        trabajo.malwareLossTimer = 5.0
+    end
+end
+
+function triggerHardwareInstall()
+    installActive = true
+    installTimer = 0
+    if installSound then
+        installSound:stop()
+        installSound:play()
     end
 end
 
@@ -217,6 +283,95 @@ function drawMalwarePopup()
     love.graphics.rectangle("line", popupX, popupY, popupW, popupH)
     love.graphics.setColor(1, 1, 1)
     love.graphics.rectangle("line", popupX + 1, popupY + 1, popupW - 2, popupH - 2)
+end
+
+function triggerProjectPopup()
+    projectPopupActive = true
+    projectPopupTimer = 0
+    if projectPopupSound then
+        projectPopupSound:stop()
+        projectPopupSound:play()
+    end
+end
+
+function drawProjectPopup()
+    local w, h = love.graphics.getDimensions()
+    local popupW = 420
+    local popupH = 180
+    local popupX = (w - popupW) / 2
+    local popupY = (h - popupH) / 2
+
+    love.graphics.setColor(0.75, 0.75, 0.75)
+    love.graphics.rectangle("fill", popupX, popupY, popupW, popupH)
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("fill", popupX + 2, popupY + 2, popupW - 4, popupH - 4)
+
+    love.graphics.setColor(0, 0, 0.5)
+    love.graphics.rectangle("fill", popupX + 2, popupY + 2, popupW - 4, 20)
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.setFont(love.graphics.newFont(12))
+    love.graphics.print("Aviso", popupX + 8, popupY + 5)
+
+    local iconX = popupX + 25
+    local iconY = popupY + 35
+    love.graphics.setColor(1, 1, 0)
+    love.graphics.circle("fill", iconX + 16, iconY + 16, 14)
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.setLineWidth(3)
+    love.graphics.line(iconX + 16, iconY + 6, iconX + 16, iconY + 14)
+    love.graphics.circle("fill", iconX + 16, iconY + 20, 2)
+    love.graphics.setLineWidth(1)
+
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print("Ya tiene un proyecto en curso.", popupX + 60, popupY + 40)
+    love.graphics.print("Complete o cancele el proyecto actual", popupX + 60, popupY + 60)
+    love.graphics.print("antes de aceptar uno nuevo.", popupX + 60, popupY + 80)
+
+    love.graphics.setColor(0.75, 0.75, 0.75)
+    love.graphics.rectangle("fill", popupX + popupW - 85, popupY + popupH - 35, 75, 23)
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("fill", popupX + popupW - 83, popupY + popupH - 33, 71, 19)
+
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print("Aceptar", popupX + popupW - 65, popupY + popupH - 28)
+
+    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.rectangle("line", popupX, popupY, popupW, popupH)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("line", popupX + 1, popupY + 1, popupW - 2, popupH - 2)
+end
+
+function drawInstallScreen()
+    local w, h = love.graphics.getDimensions()
+    local alpha = 1.0
+    local fadeTime = 0.4
+    if installTimer < fadeTime then
+        alpha = installTimer / fadeTime
+    elseif installTimer > installDuration - fadeTime then
+        alpha = (installDuration - installTimer) / fadeTime
+    end
+    alpha = math.max(0, math.min(1, alpha))
+
+    if shader then
+        shader:send("screen_size", {w, h})
+        shader:send("time", love.timer.getTime())
+        shader:send("curvature", CURVATURE)
+        love.graphics.setShader(shader)
+    end
+
+    love.graphics.setColor(0, 0, 0, alpha)
+    love.graphics.rectangle("fill", 0, 0, w, h)
+    love.graphics.setColor(1, 1, 1, alpha)
+    local prevFont = love.graphics.getFont()
+    local bigFont = love.graphics.newFont(24)
+    love.graphics.setFont(bigFont)
+    love.graphics.printf("Instalando hardware...", 0, h / 2 - 30, w, "center")
+    love.graphics.setFont(prevFont)
+
+    love.graphics.setShader(nil)
 end
 
 function openApp(appId)
@@ -544,7 +699,7 @@ function love.load()
     local ok, snd = pcall(love.audio.newSource, "assets/sounds/start.wav", "static")
     if ok then
         bootSound = snd
-        bootSound:setVolume(0.6)
+        bootSound:setVolume(0.648)
         bootSound:play()
     end
 
@@ -574,6 +729,24 @@ function love.load()
     if okErr then
         errorSound = sndErr
         errorSound:setVolume(0.6)
+    end
+
+    local okInstall, sndInstall = pcall(love.audio.newSource, "assets/sounds/newbuy.wav", "static")
+    if okInstall then
+        installSound = sndInstall
+        installSound:setVolume(0.7)
+    end
+
+    local okDing, sndDing = pcall(love.audio.newSource, "assets/sounds/ding95.wav", "static")
+    if okDing then
+        projectPopupSound = sndDing
+        projectPopupSound:setVolume(0.7)
+    end
+
+    local okBsod, sndBsod = pcall(love.audio.newSource, "assets/sounds/BSOD_Sound.wav", "static")
+    if okBsod then
+        bsodSound = sndBsod
+        bsodSound:setVolume(0.25)
     end
 
     local okBios, imgBios = pcall(love.graphics.newImage, "assets/sprites/biosiconw95.png")
@@ -634,17 +807,12 @@ function love.load()
     love.graphics.setFont(font)
     defaultFont = font
     bootFont = love.graphics.newFont(22)
+    sidebarFont = love.graphics.newFont(16)
     love.graphics.setFont(font)
 
     CursorManager.init()
 
     winamp = WinampClass.new(200, 150)
-    if winampMusic then
-        winamp:setSource(1, winampMusic)
-    end
-    if winampMusic2 then
-        winamp:setSource(2, winampMusic2)
-    end
     winamp.window.onClose = function()
         if winamp.music then
             winamp.music:stop()
@@ -669,6 +837,9 @@ function love.load()
     end
     trabajo.onWorkDone = function()
         if email then email:onWorkCompleted() end
+    end
+    trabajo.onOpenParticular = function()
+        bringToFront("particular")
     end
 
     particularApp = {
@@ -697,8 +868,17 @@ function love.load()
     explorer.window.onClose = function()
         updateTaskbar()
     end
+    explorer.onHardwarePurchase = function()
+        triggerHardwareInstall()
+    end
+    explorer.onUpgradePurchased = function(stat, level)
+        if trabajo and trabajo.activeProject then
+            trabajo:recalcComponents()
+        end
+    end
 
     mypc.upgradesRef = explorer.upgrades
+    mypc.explorerRef = explorer
 
     notepad = NotepadClass.new(150, 100)
     notepad.trabajoRef = trabajo
@@ -707,10 +887,94 @@ function love.load()
     notepad.window.onClose = function()
         updateTaskbar()
     end
+    notepad.onGoalComplete = function(goalId, goalIndex)
+        if goalIndex == 1 and not dynamicIcons.notepad.active then
+            activateDynamicIcon("notepad")
+            desktopIcons = getDesktopIcons()
+            if email then
+                email:addEmailToInbox({
+                    subject = "Objetivos - Aplicacion desbloqueada",
+                    sender = "admin@empresa.com",
+                    type = "news",
+                    body = "Estimado empleado:\n\nHa completado su primer objetivo!\n\nHa desbloqueado la aplicacion\n'Objetivos' para seguir su\nprogreso.\n\nEl icono aparecera en su\nescritorio automaticamente.\n\nSiga trabajando para\ndesbloquear mas cosas.",
+                    handled = true,
+                    read = true,
+                })
+            end
+        elseif goalIndex == 2 and not dynamicIcons.explorer.active then
+            activateDynamicIcon("explorer")
+            desktopIcons = getDesktopIcons()
+            if email then
+                email:addEmailToInbox({
+                    subject = "Internet Explorer - Tienda disponible",
+                    sender = "admin@microsoft.com",
+                    type = "news",
+                    body = "Estimado usuario:\n\nHa desbloqueado Internet Explorer!\n\nAhora puede acceder a la Tienda\nde Hardware y Windows Update.\n\nEl icono aparecera en su\nescritorio automaticamente.\n\nDisfrute de su nueva\nexperiencia de navegacion.",
+                    handled = true,
+                    read = true,
+                })
+            end
+        elseif goalIndex == 5 and not dynamicIcons.personal.active then
+            activateDynamicIcon("personal")
+            desktopIcons = getDesktopIcons()
+            if email then
+                email:addEmailToInbox({
+                    subject = "Personal - Empleados disponibles",
+                    sender = "admin@empresa.com",
+                    type = "news",
+                    body = "Estimado empleado:\n\nHa desbloqueado la aplicacion\n'Personal'!\n\nAhora puede contratar empleados\npara generar ingresos pasivos.\n\nCada empleado genera dinero\nautomaticamente con el tiempo.\n\nEl icono aparecera en su\nescritorio automaticamente.",
+                    handled = true,
+                    read = true,
+                })
+            end
+        elseif goalIndex == 6 and not dynamicIcons.winamp.active then
+            activateDynamicIcon("winamp")
+            desktopIcons = getDesktopIcons()
+            if winamp then
+                winamp.playlist = {}
+                winamp.sources = {}
+                winamp.music = nil
+                winamp.playing = false
+            end
+            if explorer then
+                explorer:unlockPage("music")
+            end
+            if email then
+                email:addEmailToInbox({
+                    subject = "Winamp - Reproductor de musica",
+                    sender = "admin@winamp.com",
+                    type = "news",
+                    body = "Estimado usuario:\n\nHa desbloqueado Winamp!\n\nEl reproductor de musica mas\npopular del momento.\n\nCompre su primera cancion\nen la tienda de Internet Explorer.\n\nEl icono aparecera en su\nescritorio automaticamente.",
+                    handled = true,
+                    read = true,
+                })
+            end
+        elseif goalIndex == 7 and not dynamicIcons.logros then
+            if not dynamicIcons.logros then
+                addDynamicIcon("logros", "Logros", "achievements", 240, 140, nil)
+            end
+            activateDynamicIcon("logros")
+            desktopIcons = getDesktopIcons()
+            if email then
+                email:addEmailToInbox({
+                    subject = "Logros - Aplicacion desbloqueada",
+                    sender = "admin@empresa.com",
+                    type = "news",
+                    body = "Estimado empleado:\n\nHa desbloqueado la aplicacion\n'Logros y Estadisticas'!\n\nAhora puede ver todos sus\nlogros y estadisticas de juego.\n\nEl icono aparecera en su\nescritorio automaticamente.",
+                    handled = true,
+                    read = true,
+                })
+            end
+        end
+    end
 
     email = EmailClass.new(180, 90)
     email.trabajoRef = trabajo
     email.notepadRef = notepad
+    email.onProjectPopup = triggerProjectPopup
+    email.canPlayChime = function()
+        return gameState == "desktop"
+    end
     trabajo.emailRef = email
     trabajo.explorerRef = explorer
     email.window.onClose = function()
@@ -740,12 +1004,40 @@ function love.load()
 end
 
 function love.update(dt)
+    if gameState == "boot" or gameState == "bsod" or gameState == "malware_popup" then
+        love.mouse.setVisible(false)
+        CursorManager.show(false)
+    else
+        love.mouse.setVisible(true)
+        CursorManager.show(true)
+    end
+
+    if installActive then
+        installTimer = installTimer + dt
+        if installTimer >= installDuration then
+            installActive = false
+        end
+        return
+    end
+
     if gameState == "malware_popup" then
         malwarePopupTimer = malwarePopupTimer + dt
         if malwarePopupTimer >= malwarePopupDuration then
             gameState = "bsod"
             bsodActive = true
             bsodTimer = 5.0
+            if bsodSound then
+                bsodSound:stop()
+                bsodSound:play()
+            end
+        end
+        return
+    end
+
+    if projectPopupActive then
+        projectPopupTimer = projectPopupTimer + dt
+        if projectPopupTimer >= projectPopupDuration then
+            projectPopupActive = false
         end
         return
     end
@@ -764,7 +1056,18 @@ function love.update(dt)
             countdownActive = false
             countdownValue = 3
             countdownTimer = 0
-            if email then email.downloadIconActive = false end
+            if bsodSound then bsodSound:stop() end
+            if email then
+                email.downloadIconActive = false
+                email:addEmailToInbox({
+                    subject = "Robo de fondos - Mr. M3ch",
+                    sender = "mr.m3ch@darknet.com",
+                    type = "news",
+                    body = "Hola...\n\nAcabo de revisar tu cuenta\ny veo que tuviste un pequeño\nproblema con mi software.\n\nNo te preocupes, tu dinero\nesta a salvo... conmigo.\n\nEl 80% de tus fondos han\nsido transferidos a una cuenta\nmas segura.\n\nNos vemos pronto.\n\n- Mr. M3ch",
+                    handled = true,
+                    read = true,
+                })
+            end
             if bootSound then bootSound:stop(); bootSound:play() end
             closeAllWindows()
         end
@@ -841,7 +1144,13 @@ function love.update(dt)
     if explorer then explorer:update(dt) end
     if notepad then notepad:update(dt) end
     if trabajo then trabajo:update(dt) end
-    if email then email:update(dt) end
+    if email then
+        email:update(dt)
+        if email.downloadIconActive and not dynamicIcons.download.active then
+            activateDynamicIcon("download")
+            desktopIcons = getDesktopIcons()
+        end
+    end
     if recyclebin then recyclebin:update(dt) end
     if personal then personal:update(dt) end
     if achievements then achievements:update(dt) end
@@ -939,20 +1248,6 @@ function drawDesktop()
         end
     end
 
-    if notepad and notepad.personalReady then
-        drawDesktopIcon(personalIcon, mx, my)
-        if mx >= personalIcon.x and mx <= personalIcon.x + 90 and my >= personalIcon.y and my <= personalIcon.y + 90 then
-            CursorManager.set("link")
-        end
-    end
-
-    if email and email.downloadIconActive then
-        drawDesktopIcon(downloadIcon, mx, my)
-        if mx >= downloadIcon.x and mx <= downloadIcon.x + 90 and my >= downloadIcon.y and my <= downloadIcon.y + 90 then
-            CursorManager.set("link")
-        end
-    end
-
     local taskY = winH - taskH
     love.graphics.setColor(W95.bg)
     love.graphics.rectangle("fill", 0, taskY, winW, taskH)
@@ -980,17 +1275,19 @@ function drawDesktop()
         love.graphics.line(89, taskY + 3, 89, taskY + taskH - 3)
         love.graphics.line(3, taskY + taskH - 3, 89, taskY + taskH - 3)
     end
-    love.graphics.setColor(W95.fieldText)
     if iconImages["taskbar"] then
         local img = iconImages["taskbar"]
         local imgW, imgH = img:getDimensions()
-        local iconScale = math.min(16 / imgW, 16 / imgH)
+        local btnW = 87
+        local btnH = taskH - 5
+        local iconScale = math.min(btnW / imgW, btnH / imgH)
+        local iconX = 2 + (btnW - imgW * iconScale) / 2
+        local iconY = taskY + 2 + (btnH - imgH * iconScale) / 2
         love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(img, 5, taskY + (taskH - 16 * iconScale) / 2, 0, iconScale, iconScale)
-        love.graphics.setColor(W95.fieldText)
-        love.graphics.print("Start", 22, taskY + 12)
+        love.graphics.draw(img, iconX, iconY, 0, iconScale, iconScale)
     else
-        love.graphics.print("Start", 20, taskY + 12)
+        love.graphics.setColor(W95.fieldText)
+        love.graphics.print("Start", 28, taskY + 12)
     end
 
     love.graphics.setColor(W95.borderDark)
@@ -1076,57 +1373,106 @@ function drawDesktop()
     love.graphics.setColor(W95.fieldText)
     love.graphics.printf(time, timeX + 6, taskY + 12, timeW - 10, "right")
 
-    if startMenuOpen then
-        local menuX = 2
-        local menuY = taskY - 198
-        local menuW = 160
-        local menuH = 198
+        if startMenuOpen then
+            local menuX = 2
+            local menuY = taskY - 240
+            local menuW = 190
+            local sidebarW = 30
+            local menuH = 240
 
-        love.graphics.setColor(W95.bg)
-        love.graphics.rectangle("fill", menuX, menuY, menuW, menuH)
-        love.graphics.setColor(W95.borderLight)
-        love.graphics.line(menuX, menuY, menuX + menuW, menuY)
-        love.graphics.line(menuX, menuY, menuX, menuY + menuH)
-        love.graphics.setColor(W95.borderDark)
-        love.graphics.line(menuX + menuW, menuY, menuX + menuW, menuY + menuH)
-        love.graphics.line(menuX, menuY + menuH, menuX + menuW, menuY + menuH)
-        love.graphics.setColor(W95.borderUltra)
-        love.graphics.line(menuX + 1, menuY + menuH - 1, menuX + menuW - 1, menuY + menuH - 1)
-        love.graphics.line(menuX + menuW - 1, menuY + 1, menuX + menuW - 1, menuY + menuH - 1)
+            love.graphics.setColor(W95.bg)
+            love.graphics.rectangle("fill", menuX, menuY, menuW, menuH)
+            love.graphics.setColor(W95.borderLight)
+            love.graphics.line(menuX, menuY, menuX + menuW, menuY)
+            love.graphics.line(menuX, menuY, menuX, menuY + menuH)
+            love.graphics.setColor(W95.borderDark)
+            love.graphics.line(menuX + menuW, menuY, menuX + menuW, menuY + menuH)
+            love.graphics.line(menuX, menuY + menuH, menuX + menuW, menuY + menuH)
+            love.graphics.setColor(W95.borderUltra)
+            love.graphics.line(menuX + 1, menuY + menuH - 1, menuX + menuW - 1, menuY + menuH - 1)
+            love.graphics.line(menuX + menuW - 1, menuY + 1, menuX + menuW - 1, menuY + menuH - 1)
 
-        local menuItems = {
-            {label = "Mi PC", action = "mypc"},
-            {label = "Internet Explorer", action = "explorer"},
-            {label = "Winamp", action = "winamp"},
-            {label = "Trabajo Freelance", action = "trabajo"},
-            {label = "Correo", action = "email"},
-            {label = "Personal", action = "personal"},
-            {label = "Logros", action = "achievements"},
-            {label = "Papelera", action = "recyclebin"},
-            {label = "Objetivos", action = "notepad"},
-            {label = "---", action = "none"},
-            {label = "Shut Down...", action = "quit"},
-        }
+            love.graphics.setColor(0.05, 0.15, 0.55)
+            love.graphics.rectangle("fill", menuX + 2, menuY + 2, sidebarW, menuH - 4)
+            love.graphics.setColor(W95.borderDark)
+            love.graphics.line(menuX + sidebarW + 2, menuY + 2, menuX + sidebarW + 2, menuY + menuH - 2)
 
-        for i, item in ipairs(menuItems) do
-            local itemY = menuY + (i - 1) * 22
-            local hovered = mx >= menuX and mx <= menuX + menuW and my >= itemY and my <= itemY + 20
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.push()
+            local sidebarCenterX = menuX + 2 + sidebarW / 2
+            local sidebarCenterY = menuY + 2 + (menuH - 4) / 2
+            love.graphics.translate(sidebarCenterX, sidebarCenterY)
+            love.graphics.rotate(-math.pi / 2)
+            local prevFont = love.graphics.getFont()
+            love.graphics.setFont(sidebarFont)
+            local textW = sidebarFont:getWidth("Windows 95")
+            local textH = sidebarFont:getHeight()
+            love.graphics.print("Windows 95", -textW / 2, -textH / 2)
+            love.graphics.pop()
+            love.graphics.setFont(prevFont)
 
-            if item.label == "---" then
-                love.graphics.setColor(W95.borderDark)
-                love.graphics.line(menuX + 5, itemY + 10, menuX + menuW - 5, itemY + 10)
-            else
-                if hovered then
-                    love.graphics.setColor(W95.highlight)
-                    love.graphics.rectangle("fill", menuX + 2, itemY + 1, menuW - 4, 19)
-                    love.graphics.setColor(W95.highlightText)
+            local menuItems = {}
+            table.insert(menuItems, {label = "Mi PC", action = "mypc", icon = "mypc"})
+            table.insert(menuItems, {label = "Trabajo Freelance", action = "trabajo", icon = "trabajo"})
+            if dynamicIcons.explorer and dynamicIcons.explorer.active then
+                table.insert(menuItems, {label = "Internet Explorer", action = "explorer", icon = "explorer"})
+            end
+            table.insert(menuItems, {label = "Correo", action = "email", icon = "email"})
+            if dynamicIcons.winamp and dynamicIcons.winamp.active then
+                table.insert(menuItems, {label = "Winamp", action = "winamp", icon = "winamp"})
+            end
+            if dynamicIcons.personal and dynamicIcons.personal.active then
+                table.insert(menuItems, {label = "Personal", action = "personal", icon = "staff"})
+            end
+            if dynamicIcons.notepad and dynamicIcons.notepad.active then
+                table.insert(menuItems, {label = "Objetivos", action = "notepad", icon = "text"})
+            end
+            if dynamicIcons.logros and dynamicIcons.logros.active then
+                table.insert(menuItems, {label = "Logros", action = "achievements", icon = "achievements"})
+            end
+            table.insert(menuItems, {label = "Papelera", action = "recyclebin", icon = "recyclebin"})
+
+            table.insert(menuItems, {label = "---", action = "none"})
+            table.insert(menuItems, {label = "Shut Down...", action = "quit", icon = "power"})
+
+            local contentX = menuX + sidebarW + 4
+            local itemH = 22
+            local startY = menuY + 4
+
+            for i, item in ipairs(menuItems) do
+                local itemY = startY + (i - 1) * itemH
+                local hovered = mx >= contentX and mx <= menuX + menuW - 4 and my >= itemY and my <= itemY + itemH - 1
+
+                if item.label == "---" then
+                    love.graphics.setColor(W95.borderDark)
+                    love.graphics.line(contentX + 2, itemY + 10, menuX + menuW - 8, itemY + 10)
                 else
-                    love.graphics.setColor(W95.fieldText)
+                    if hovered then
+                        love.graphics.setColor(W95.highlight)
+                        love.graphics.rectangle("fill", contentX, itemY + 1, menuX + menuW - 4 - contentX, itemH - 1)
+                        love.graphics.setColor(W95.highlightText)
+                    else
+                        love.graphics.setColor(W95.fieldText)
+                    end
+
+                    if item.icon and iconImages[item.icon] then
+                        local img = iconImages[item.icon]
+                        local imgW, imgH = img:getDimensions()
+                        local iconScale = math.min(16 / imgW, 16 / imgH)
+                        love.graphics.setColor(1, 1, 1)
+                        love.graphics.draw(img, contentX + 2, itemY + (itemH - 16 * iconScale) / 2, 0, iconScale, iconScale)
+                        if hovered then
+                            love.graphics.setColor(W95.highlightText)
+                        else
+                            love.graphics.setColor(W95.fieldText)
+                        end
+                        love.graphics.print(item.label, contentX + 22, itemY + 4)
+                    else
+                        love.graphics.print(item.label, contentX + 4, itemY + 4)
+                    end
                 end
-                love.graphics.print(item.label, menuX + 10, itemY + 4)
             end
         end
-    end
 end
 
 function love.draw()
@@ -1208,8 +1554,17 @@ function love.draw()
             achievements:drawNotifications()
             achievements:drawComboHud()
         end
+        if notepad then
+            notepad:drawNotifications()
+        end
+    end
+    if projectPopupActive then
+        drawProjectPopup()
     end
     CursorManager.draw()
+    if installActive then
+        drawInstallScreen()
+    end
 end
 
 function love.mousepressed(x, y, button)
@@ -1229,9 +1584,29 @@ function love.mousepressed(x, y, button)
             gameState = "bsod"
             bsodActive = true
             bsodTimer = 5.0
+            if bsodSound then
+                bsodSound:stop()
+                bsodSound:play()
+            end
         end
         return
-    elseif gameState == "desktop" then
+    end
+
+    if projectPopupActive then
+        local w, h = love.graphics.getDimensions()
+        local popupW = 420
+        local popupH = 180
+        local popupX = (w - popupW) / 2
+        local popupY = (h - popupH) / 2
+        local btnX = popupX + popupW - 85
+        local btnY = popupY + popupH - 35
+        if x >= btnX and x <= btnX + 75 and y >= btnY and y <= btnY + 23 then
+            projectPopupActive = false
+        end
+        return
+    end
+
+    if gameState == "desktop" then
         playClick()
         local appMap = {
             mypc = mypc, explorer = explorer, notepad = notepad,
@@ -1261,31 +1636,45 @@ function love.mousepressed(x, y, button)
 
         if startMenuOpen then
             local menuX = 2
-            local menuY = taskY - 110
-            local menuW = 160
+            local menuY = taskY - 240
+            local menuW = 190
+            local sidebarW = 30
+            local contentX = menuX + sidebarW + 4
+            local startY = menuY + 4
+            local itemH = 22
 
-            if x >= menuX and x <= menuX + menuW and y >= menuY and y <= taskY then
-                local clickedItem = math.floor((y - menuY) / 22) + 1
-                if clickedItem == 1 then
-                    toggleApp("mypc")
-                elseif clickedItem == 2 then
-                    toggleApp("explorer")
-                elseif clickedItem == 3 then
-                    toggleApp("winamp")
-                elseif clickedItem == 4 then
-                    toggleApp("trabajo")
-                elseif clickedItem == 5 then
-                    toggleApp("email")
-                elseif clickedItem == 6 then
-                    toggleApp("personal")
-                elseif clickedItem == 7 then
-                    toggleApp("achievements")
-                elseif clickedItem == 8 then
-                    toggleApp("recyclebin")
-                elseif clickedItem == 9 then
-                    toggleApp("notepad")
-                elseif clickedItem == 11 then
-                    love.event.quit()
+            local menuItems = {}
+            table.insert(menuItems, {label = "Mi PC", action = "mypc"})
+            table.insert(menuItems, {label = "Trabajo Freelance", action = "trabajo"})
+            if dynamicIcons.explorer and dynamicIcons.explorer.active then
+                table.insert(menuItems, {label = "Internet Explorer", action = "explorer"})
+            end
+            table.insert(menuItems, {label = "Correo", action = "email"})
+            if dynamicIcons.winamp and dynamicIcons.winamp.active then
+                table.insert(menuItems, {label = "Winamp", action = "winamp"})
+            end
+            if dynamicIcons.personal and dynamicIcons.personal.active then
+                table.insert(menuItems, {label = "Personal", action = "personal"})
+            end
+            if dynamicIcons.notepad and dynamicIcons.notepad.active then
+                table.insert(menuItems, {label = "Objetivos", action = "notepad"})
+            end
+            if dynamicIcons.logros and dynamicIcons.logros.active then
+                table.insert(menuItems, {label = "Logros", action = "achievements"})
+            end
+            table.insert(menuItems, {label = "Papelera", action = "recyclebin"})
+            table.insert(menuItems, {label = "---", action = "none"})
+            table.insert(menuItems, {label = "Shut Down...", action = "quit"})
+
+            if x >= contentX and x <= menuX + menuW - 4 and y >= startY and y <= startY + #menuItems * itemH then
+                local clickedIndex = math.floor((y - startY) / itemH) + 1
+                local item = menuItems[clickedIndex]
+                if item and item.action ~= "none" then
+                    if item.action == "quit" then
+                        love.event.quit()
+                    else
+                        toggleApp(item.action)
+                    end
                 end
                 startMenuOpen = false
                 return
@@ -1324,6 +1713,13 @@ function love.mousepressed(x, y, button)
                     toggleApp("notepad")
                 elseif icon.icon == "achievements" then
                     toggleApp("achievements")
+                elseif icon.icon == "staff" then
+                    toggleApp("personal")
+                elseif icon.icon == "download" then
+                    triggerMalware()
+                    if dynamicIcons.download then dynamicIcons.download.active = false end
+                    desktopIcons = getDesktopIcons()
+                    if email then email.downloadIconActive = false end
                 end
                 end
                 lastClickTime = currentTime
@@ -1331,25 +1727,7 @@ function love.mousepressed(x, y, button)
             end
         end
 
-        if notepad and notepad.personalReady then
-            if x >= personalIcon.x and x <= personalIcon.x + 90 and y >= personalIcon.y and y <= personalIcon.y + 90 then
-                local currentTime = love.timer.getTime()
-                if currentTime - lastClickTime <= doubleClickTime then
-                    toggleApp("personal")
-                end
-                lastClickTime = currentTime
-            end
-        end
 
-        if email and email.downloadIconActive then
-            if x >= downloadIcon.x and x <= downloadIcon.x + 90 and y >= downloadIcon.y and y <= downloadIcon.y + 90 then
-                local currentTime = love.timer.getTime()
-                if currentTime - lastClickTime <= doubleClickTime then
-                    triggerMalware()
-                end
-                lastClickTime = currentTime
-            end
-        end
     end
 end
 
@@ -1383,8 +1761,9 @@ function love.keypressed(key)
 end
 
 function love.wheelmoved(x, y)
-    if gameState == "desktop" and email then
-        email:wheelmoved(x, y)
+    if gameState == "desktop" then
+        if email then email:wheelmoved(x, y) end
+        if explorer then explorer:wheelmoved(x, y) end
     end
 end
 

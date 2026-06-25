@@ -22,79 +22,50 @@ local W95 = {
     link = {0, 0, 0.8},
 }
 
+local projectDifficulties = {
+    {id = "facil", label = "Fácil", color = {0.2, 0.8, 0.2}, hpMult = 1.0, rewardMult = 1.0},
+    {id = "normal", label = "Normal", color = {0.9, 0.9, 0.2}, hpMult = 2.67, rewardMult = 1.4},
+    {id = "dificil", label = "Difícil", color = {0.9, 0.6, 0.2}, hpMult = 4.67, rewardMult = 1.8},
+    {id = "muy_dificil", label = "Muy Difícil", color = {0.9, 0.3, 0.3}, hpMult = 7.33, rewardMult = 2.3},
+    {id = "pesadilla", label = "Pesadilla", color = {0.6, 0.0, 0.6}, hpMult = 10.67, rewardMult = 3.0},
+}
+
+local function getDifficultyForProject(index)
+    if index <= 4 then return projectDifficulties[1]
+    elseif index <= 8 then return projectDifficulties[2]
+    elseif index <= 13 then return projectDifficulties[3]
+    elseif index <= 17 then return projectDifficulties[4]
+    else return projectDifficulties[5]
+    end
+end
+
+local function generateProjectBody(baseBody, diff, reward)
+    return baseBody .. "\n\nDificultad: " .. diff.label .. "\nRecompensa: $" .. reward
+end
+
 local allEmails = {
-    {subject = "Proyecto: Digitacion de formularios", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos digitar 200 formularios\npara una empresa de seguros.\n\nRequisitos:\n- Velocidad de digitacion\n- Atencion al detalle\n- Sin errores de tipeo\n\nRecompensa: $50\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Digitacion de formularios", desc = "Digitar 200 formularios\nde seguros.", hp = 80, days = 14, reward = 50}},
-    {subject = "NOTICIAS: Windows 95 supera ventas", sender = "press@microsoft.com", type = "news", body = "Windows 95 vende mas de 7 millones\nde copias en sus primeros 5 meses.\nMicrosoft celebra el exito\ncon nuevas actualizaciones."},
-    {subject = "Driver de refrigeracion", sender = "drivers@cooling.com", type = "beneficial", body = "Descargue el driver actualizado\npara su sistema de refrigeracion.\nMejora el control de ventiladores\ny reduce el ruido del PC."},
-    {subject = "Proyecto: Clasificacion de archivos", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos clasificar 500 archivos\npor categoria y fecha.\n\nRequisitos:\n- Orden alfabetico\n- Clasificar por tipo\n- Crear indice\n\nRecompensa: $55\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Clasificacion de archivos", desc = "Clasificar 500 archivos\npor categoria y fecha.", hp = 85, days = 14, reward = 55}},
-    {subject = "NOTICIAS: Netscape Navigator 2.0", sender = "press@netscape.com", type = "news", body = "Netscape lanza Navigator 2.0,\ncon soporte para Java y\nframes. El navegador mas\npopular del mundo."},
+    {subject = "Proyecto: Digitacion de formularios", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos digitar 200 formularios\npara una empresa de seguros.\n\nRequisitos:\n- Velocidad de digitacion\n- Atencion al detalle\n- Sin errores de tipeo\n\nDificultad: Fácil\nRecompensa: $70\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Digitacion de formularios", desc = "Digitar 200 formularios\nde seguros.", baseHp = 150, days = 14, reward = 70, difficulty = "facil"}},
+    {subject = "Proyecto: Clasificacion de archivos", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos clasificar 500 archivos\npor categoria y fecha.\n\nRequisitos:\n- Orden alfabetico\n- Clasificar por tipo\n- Crear indice\n\nDificultad: Fácil\nRecompensa: $75\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Clasificacion de archivos", desc = "Clasificar 500 archivos\npor categoria y fecha.", baseHp = 150, days = 14, reward = 75, difficulty = "facil"}},
     {subject = "Disco duro IDE 1.2GB - $99", sender = "ofertas@compumail.com", type = "ad", body = "Disco duro IDE 1.2GB por solo $99!\nOferta por tiempo limitado.\nLlame al 555-0123."},
-    {subject = "Proyecto: Traduccion de documentos", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos traductor ingles-espanol\npara 10 documentos legales.\n\nRequisitos:\n- Dominio del ingles\n- Terminologia legal\n- Formato original\n\nRecompensa: $65\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Traduccion de documentos", desc = "Traducir 10 documentos\nlegales al espanol.", hp = 95, days = 14, reward = 65}},
-    {subject = "NOTICIAS: CompuServe ofrece acceso a Internet", sender = "noticias@tech.com", type = "news", body = "CompuServe lanza servicio\nde acceso a Internet.\nNavegacion y correo electronico\nincluidos. Competencia directa\ncon America Online."},
-    {subject = "Impresoras Matriciales $49", sender = "ventas@printers.com", type = "ad", body = "Impresoras Matriciales desde $49!\nEnvio gratis a todo el pais.\nVisite nuestra tienda en linea."},
-    {subject = "Proyecto: Soporte tecnico telefónico", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos personal para soporte\ntecnico por telefono.\n\nRequisitos:\n- Conocimiento de Windows\n- Paciencia con clientes\n- Solucionar problemas basicos\n\nRecompensa: $60\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Soporte tecnico", desc = "Dar soporte tecnico\npor telefono a clientes.", hp = 90, days = 14, reward = 60}},
-    {subject = "NOTICIAS: OJ Simpson - juicio del siglo", sender = "noticias@cnn.com", type = "news", body = "El juicio a OJ Simpson comienza\nen Los Angeles. El caso ha captado\nla atencion de todo el pais.\nCobertura en vivo por CNN."},
-    {subject = "Monitor CRT 15\" - oferta", sender = "monitores@techshop.com", type = "ad", body = "Monitor CRT 15 pulgadas SVGA\npor solo $189. Envio incluido.\nUltimas unidades disponibles."},
-    {subject = "Proyecto: Revision de facturas", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos revisar 150 facturas\npara detectar errores.\n\nRequisitos:\n- Atencion a numeros\n- Verificar impuestos\n- Reportar discrepancias\n\nRecompensa: $50\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Revision de facturas", desc = "Revisar 150 facturas\npor errores.", hp = 75, days = 14, reward = 50}},
-    {subject = "NOTICIAS: Windows 95 supera ventas", sender = "noticias@tech.com", type = "news", body = "Windows 95 vende mas de 7 millones\nde copias en sus primeros 5 meses.\nMicrosoft celebra el exito\ncon nuevas actualizaciones."},
-    {subject = "Tarjetas de-video Cirrus Logic", sender = "tarjetas@pcshop.com", type = "ad", body = "Tarjetas de video Cirrus Logic\n5430 desde $79. Compatibles\ncon Windows 95 y DOS."},
-    {subject = "Proyecto: Copia de documentos", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos copiar 300 documentos\na formato digital.\n\nRequisitos:\n- Scanner funcionando\n- Organizar por carpetas\n- Nombres correctos\n\nRecompensa: $55\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Copia de documentos", desc = "Digitalizar 300 documentos\ncon scanner.", hp = 85, days = 14, reward = 55}},
-    {subject = "NOTICIAS: Titanic - taquilla historica", sender = "noticias@hollywood.com", type = "news", body = "Titanic de James Cameron rompe\nrecords en taquilla, superando\nlos $600 millones en EE.UU.\nLa pelicula mas exitosa de todos\nlos tiempos en ese momento."},
-    {subject = "Disquetes 3.5\" x 50 - $12", sender = "disquetes@supplies.com", type = "ad", body = "Paquete de 50 disquetes 3.5\"\ndensidad alta por solo $12.\nEnvio por correo incluido."},
-    {subject = "Proyecto: Inventario de almacen", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos inventariar todo\nel almacen de la empresa.\n\nRequisitos:\n- Contar productos\n- Registrar cantidades\n- Crear hoja de calculo\n\nRecompensa: $50\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Inventario de almacen", desc = "Inventariar productos\ndel almacen.", hp = 70, days = 14, reward = 50}},
-    {subject = "NOTICIAS: Princesa Diana - fin de la monarquia", sender = "noticias@bbc.com", type = "news", body = "La princesa Diana anuncia su\nseparacion del principe Carlos.\nEl divorcio mas esperado del siglo\nen la monarquia britanica."},
-    {subject = "Mouse Genius optico $8", sender = "mouse@pcparts.com", type = "ad", body = "Mouse Genius optico serial\npor solo $8. Precision de\n800 DPI. Color gris."},
-    {subject = "Proyecto: Procesamiento de nominas", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos procesar las nominas\nde 50 empleados.\n\nRequisitos:\n- Calcular deducciones\n- Generar recibos\n- Entregar en tiempo\n\nRecompensa: $70\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Procesamiento de nominas", desc = "Calcular nominas de\n50 empleados.", hp = 100, days = 14, reward = 70}},
-    {subject = "NOTICIAS: Internet crece 2300%", sender = "noticias@wired.com", type = "news", body = "El uso de Internet crece un 2300%\nen 1995. Mas de 16 millones\nde personas tienen acceso.\nEl correo electronico se vuelve\nel metodo de comunicacion favorito."},
-    {subject = "Grabadora CD-ROM $299", sender = "cdrom@techstore.com", type = "ad", body = "Grabadora CD-ROM 2x por\nsolo $299. Grabe sus propios\ndiscos en casa! Oferta especial."},
-    {subject = "Proyecto: Help Desk interno", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos persona para Help Desk\ninterno de la empresa.\n\nRequisitos:\n- Conocimiento de redes\n- Resolver tickets\n- Documentar soluciones\n\nRecompensa: $65\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Help Desk interno", desc = "Resolver tickets de soporte\ninterno.", hp = 95, days = 14, reward = 65}},
-    {subject = "NOTICIAS: DVD - el futuro del entretenimiento", sender = "noticias@tech.com", type = "news", body = "Los primeros reproducores DVD\nllegan a las tiendas. El formato\nalmacena 4.7GB por disco.\nLa era del VHS termina.\nPrecio: $500 el reproducor."},
-    {subject = "Carpeta compartida C$", sender = "hacker@anon.com", type = "malware", body = "Acceda a carpetas compartidas\nde otros usuarios. Herramienta\ninclusa en el archivo adjunto.", moneyLoss = 55},
-    {subject = "Modem 56K USRobotics $89", sender = "modems@dialup.com", type = "ad", body = "Modem 56K USRobotics Sportster\npor solo $89. Navegue a toda\nvelocidad por Internet!"},
-    {subject = "Proyecto: Redaccion de cartas", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos redactar 50 cartas\ncomerciales para clientes.\n\nRequisitos:\n- Redaccion formal\n- Sin errores ortograficos\n- Formato profesional\n\nRecompensa: $55\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Redaccion de cartas", desc = "Redactar 50 cartas\ncomerciales.", hp = 80, days = 14, reward = 55}},
-    {subject = "NOTICIAS: AltaVista - buscador mas popular", sender = "noticias@tech.com", type = "news", body = "AltaVista se convierte en el\nbuscador mas usado de Internet.\nIndexa mas de 30 millones\nde paginas web. El motor de\nbusqueda por excelencia."},
-    {subject = "Serial de WinZip 6.3", sender = "serials@shareware.com", type = "malware", body = "Serial completo para WinZip 6.3.\nCopie y pegue durante la\ninstalacion para activar.", moneyLoss = 10},
-    {subject = "Disquete ZIP 100MB $49", sender = "zip@storage.com", type = "ad", body = "Disquetes ZIP Iomega 100MB\npor solo $49. El futuro\ndel almacenamiento portatil."},
-    {subject = "Scanner HP ScanJet $149", sender = "scanner@hpshop.com", type = "ad", body = "Scanner HP ScanJet 3100C\npor solo $149. Resolucion\n600x1200 dpi. Incluye software."},
-    {subject = "Proyecto: Archivo de correspondencia", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos archivar 400 cartas\ny documentos entrada.\n\nRequisitos:\n- Ordenar por fecha\n- Clasificar por remitente\n- Crear indice\n\nRecompensa: $50\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Archivo de correspondencia", desc = "Archivar 400 cartas\ny documentos.", hp = 70, days = 14, reward = 50}},
-    {subject = "NOTICIAS: AOL alcanza 8 millones", sender = "noticias@aol.com", type = "news", body = "America Online supera los 8 millones\nde suscriptores en 1997.\nEl servicio de internet por\nmarcador domina el mercado.\n'You've got mail!' se vuelve iconico."},
-    {subject = "Turbo Pascal gratis", sender = "free@programming.com", type = "malware", body = "Turbo Pascal 7.0 completo.\nIdeal para aprender a programar.\nDescargue el instalador.", moneyLoss = 8},
-    {subject = "Teclado IBM Model M $35", sender = "teclados@retro.com", type = "ad", body = "Teclado IBM Model M mecanico\npor solo $35. El mejor teclado\njamas fabricado. Aproveche!"},
-    {subject = "NOTICIAS: Sony PlayStation llega a EE.UU.", sender = "noticias@gaming.com", type = "news", body = "Sony lanza la PlayStation\nen Estados Unidos a $299.\n32 bits de potencia grafica.\nLa consola que cambiara\nlos videojuegos para siempre."},
-    {subject = "Proyecto: Base de datos de clientes", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos crear una base de datos\nde 200 clientes en Access.\n\nRequisitos:\n- Formulario de entrada\n- Busqueda rapida\n- Reportes basicos\n\nRecompensa: $65\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Base de datos de clientes", desc = "Crear BD de 200 clientes\nen Access.", hp = 95, days = 14, reward = 65}},
-    {subject = "Buenas noticias!", sender = "noticias@buenas.com", type = "malware", body = "Usted ha sido seleccionado\npara recibir un regalo especial.\nHaga clic en el enlace adjunto.", moneyLoss = 30},
-    {subject = "CD-ROM enciclopedia $29", sender = "cdrom@edu.com", type = "ad", body = "Enciclopedia Microsoft Encarta\n97 en CD-ROM por solo $29.\nMas de 1 million de articulos!"},
-    {subject = "Proyecto: Revision de impresiones", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos revisor de documentos\nimpresos para deteccion de erratas.\n\nRequisitos:\n- Atencion al detalle\n- Conocimiento de ortografia\n- Rapidez visual\n\nRecompensa: $50\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Revision de impresiones", desc = "Revisar documentos\nimpresos por erratas.", hp = 70, days = 14, reward = 50}},
-    {subject = "NOTICIAS: Juegos Olimpicos Atlanta 96", sender = "noticias@olympics.com", type = "news", body = "Atlanta 1996: EE.UU. gana 101 medallas\nen los Juegos Olimpicos de verano.\nMichael Johnson rompe record\nmundial en 200 metros."},
-    {subject = "Patch de DirectX gratis", sender = "drivers@microsoft.com", type = "beneficial", body = "Descargue el parche de DirectX 5.0\npara mejorar el rendimiento\nde sus juegos en Windows 95.\nCompatibilidad mejorada."},
-    {subject = "Pantallazo azul - solucion", sender = "soporte@microsoft.com", type = "beneficial", body = "Si su PC muestra el error\nde pantalla azul, descargue\nesta herramienta de recuperacion.\nRepara archivos de sistema corruptos."},
-    {subject = "Anti-spam para Outlook", sender = "seguridad@microsoft.com", type = "beneficial", body = "Proteja su correo contra spam.\nDescargue el filtro anti-spam\ncompatible con Windows 95.\nMantiene su bandeja limpia."},
-    {subject = "Driver de impresora HP", sender = "drivers@hp.com", type = "beneficial", body = "Driver actualizado para impresoras\nHP LaserJet 4. Mejora la calidad\ny velocidad de impresion.\nCompatible con Windows 95."},
-    {subject = "Compresor de archivos", sender = "tools@shareware.com", type = "beneficial", body = "Herramienta de compresion\nde archivos rapida y segura.\nAhorre espacio en su disco duro.\nCompatible con ZIP, RAR, TAR."},
-    {subject = "Proteccion contra virus", sender = "seguridad@mcafee.com", type = "beneficial", body = "Descargue la base de datos\nactualizada de McAfee VirusScan.\nProteja su PC de las ultimas\namenazas de virus conocidas."},
-    {subject = "Optimizador de Windows", sender = "tools@norton.com", type = "beneficial", body = "Norton Utilities incluye\nherramientas para limpiar\ny optimizar su Windows 95.\nMejore el rendimiento de su PC."},
-    {subject = "Backup de archivos", sender = "tools@stac.com", type = "beneficial", body = "Herramienta gratuita de respaldo\npara Windows 95. Copie sus archivos\nimportantes a disquetes o cinta.\nNo pierda sus datos nunca mas."},
-    {subject = "Traductor de paginas web", sender = "tools@altavista.com", type = "beneficial", body = "Descargue el traductor de\nAltaVista para paginas web.\nTraduzca ingles a espanol\nautomaticamente en su navegador."},
-    {subject = "Organizador de contactos", sender = "tools@ziff.com", type = "beneficial", body = "Ziff-Davis Contact Manager\nle ayuda a organizar sus\ncontactos y numeros de telefono.\nBusqueda rapida y exportacion."},
-    {subject = "Reproductor multimedia", sender = "tools@real.com", type = "beneficial", body = "RealPlayer para Windows 95.\nEscuche radios y vea videos\npor Internet. Primera version\nde streaming multimedia."},
-    {subject = "Lector de PDF", sender = "tools@adobe.com", type = "beneficial", body = "Adobe Acrobat Reader 3.0.\nDescargue y lea archivos PDF\nen su PC con Windows 95.\nGratis y sin licencia."},
-    {subject = "Proteccion de privacidad", sender = "seguridad@microsoft.com", type = "beneficial", body = "Herramienta de Microsoft para\nproteger su informacion personal\nmientras navega por Internet.\nBloquea rastreadores y cookies."},
-    {subject = "NOTICIAS: Pentium Pro disponible", sender = "noticias@tech.com", type = "news", body = "Intel lanza el Pentium Pro,\nnuevo procesador de 200MHz\ncon cache integrado.\nRendimiento sin precedentes\npara estaciones de trabajo."},
-    {subject = "NOTICIAS: USB 1.0 - futuro de la conectividad", sender = "noticias@tech.com", type = "news", body = "El estandar USB 1.0 es anunciado\npor Intel, Compaq y Microsoft.\nVelocidad de 12 Mbps.\nEl futuro de la conexion\nde perifericos al PC."},
-    {subject = "NOTICIAS: Mars Pathfinder aterriza", sender = "noticias@nasa.com", type = "news", body = "NASA aterriza exitosamente\nel Pathfinder en Marte.\nEl rover Sojourner explora\nla superficie marciana.\nExito de la ciencia espacial."},
-    {subject = "NOTICIAS: Apple presenta el iMac", sender = "noticias@tech.com", type = "news", body = "Apple Computer presenta el iMac,\ncomputador todo en uno de color\nazul traslucido. Diseno revolucionario\ny puerto USB. Steve Jobs regresa\nal poder en Apple."},
-    {subject = "NOTICIAS: ICQ - messenger en linea", sender = "noticias@tech.com", type = "news", body = "ICQ supera los 5 millones\nde usuarios. El programa de\nmensajeria instantanea mas\npopular de Internet.\n'Mensajeria en tiempo real'."},
-    {subject = "NOTICIAS: Nintendo 64 - consolea del futuro", sender = "noticias@gaming.com", type = "news", body = "Nintendo 64 supera las\nexpectativas de ventas.\nSuper Mario 64 revoluciona\nlos juegos en 3D.\nLa guerra de consolas arde."},
-    {subject = "NOTICIAS: Apple casi quiebra", sender = "noticias@tech.com", type = "news", body = "Apple Computer esta al borde\nde la quiebra. Steve Jobs regresa\ncomo CEO interino. La empresa\nbusca inversores para sobrevivir.\nEl futuro de Apple es incierto."},
-    {subject = "Proyecto: Base de datos de inventario", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos a alguien para crear\nuna base de datos de inventario\npara una empresa local.\n\nRequisitos:\n- Microsoft Access\n- Formularios de entrada\n- Reportes automaticos\n\nRecompensa: $80\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Base de datos Access", desc = "Crear sistema de inventario\npara empresa local.", hp = 100, days = 14, reward = 80}},
-    {subject = "Proyecto: Pagina web corporativa", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos una pagina web\ncorporativa para nuestra empresa.\n\nRequisitos:\n- HTML basico\n- Tablas de contenido\n- Formulario de contacto\n\nRecompensa: $100\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Pagina web corporativa", desc = "Diseno de sitio web\ncon HTML y tablas.", hp = 120, days = 14, reward = 100}},
-    {subject = "Proyecto: Reporte de nominas", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos un sistema de nomina\nen hoja de calculo.\n\nRequisitos:\n- Formulas automaticas\n- Calculo de impuestos\n- Impresion de recibos\n\nRecompensa: $60\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Reporte de nominas", desc = "Sistema de nomina\nen Hoja de calculo.", hp = 80, days = 14, reward = 60}},
-    {subject = "Proyecto: Presentacion multimedia", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos a alguien para crear\nuna presentacion multimedia.\n\nRequisitos:\n- Diapositivas con imagenes\n- Animaciones y transiciones\n- Sonido de fondo\n\nRecompensa: $70\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Presentacion multimedia", desc = "Slides con animaciones\ny transiciones.", hp = 90, days = 14, reward = 70}},
-    {subject = "Proyecto: Configuracion de red", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos configurar una\nred local de 5 computadoras.\n\nRequisitos:\n- Cableado de red\n- Configuracion TCP/IP\n- Compartir impresora\n\nRecompensa: $90\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Soporte de red", desc = "Configurar red local\nentre 5 computadoras.", hp = 110, days = 14, reward = 90}},
-    {subject = "Proyecto: App de inventario VB", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos una aplicacion\nde control de stock en VB.\n\nRequisitos:\n- Visual Basic 3.0\n- Base de datos Jet\n- Interfaz grafica\n\nRecompensa: $120\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "App de inventario", desc = "Programa de control\nde stock en Visual Basic.", hp = 140, days = 14, reward = 120}},
-    {subject = "Proyecto: Sistema de facturacion", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos un sistema de facturacion.\n\nRequisitos:\n- Generador de facturas\n- Base de datos de clientes\n- Reportes mensuales\n\nRecompensa: $110\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Sistema de facturacion", desc = "Generador de facturas\ncon base de datos.", hp = 130, days = 14, reward = 110}},
-    {subject = "Proyecto: Conversor de formatos", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos una herramienta\npara convertir archivos.\n\nRequisitos:\n- Convertir TXT a DOC\n- Convertir BMP a JPG\n- Interfaz simple\n\nRecompensa: $50\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Conversor de formatos", desc = "Herramienta para convertir\narchivos entre formatos.", hp = 70, days = 14, reward = 50}},
-    {subject = "NOTICIAS: Windows 98 - la nueva era", sender = "press@microsoft.com", type = "news", body = "Microsoft anuncia Windows 98,\nnueva version con mejoras\nen Internet Explorer 4.0,\nsoporte USB y FAT32.\nLanzamiento: junio de 1998."},
+    {subject = "Proyecto: Traduccion de documentos", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos traductor ingles-espanol\npara 10 documentos legales.\n\nRequisitos:\n- Dominio del ingles\n- Terminologia legal\n- Formato original\n\nDificultad: Fácil\nRecompensa: $90\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Traduccion de documentos", desc = "Traducir 10 documentos\nlegales al espanol.", baseHp = 150, days = 14, reward = 90, difficulty = "facil"}},
+    {subject = "Proyecto: Soporte tecnico telefónico", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos personal para soporte\ntecnico por telefono.\n\nRequisitos:\n- Conocimiento de Windows\n- Paciencia con clientes\n- Solucionar problemas basicos\n\nDificultad: Fácil\nRecompensa: $80\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Soporte tecnico", desc = "Dar soporte tecnico\npor telefono a clientes.", baseHp = 150, days = 14, reward = 80, difficulty = "facil"}},
+    {subject = "Proyecto: Revision de facturas", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos revisar 150 facturas\npara detectar errores.\n\nRequisitos:\n- Atencion a numeros\n- Verificar impuestos\n- Reportar discrepancias\n\nDificultad: Fácil\nRecompensa: $70\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Revision de facturas", desc = "Revisar 150 facturas\npor errores.", baseHp = 150, days = 14, reward = 70, difficulty = "facil"}},
+    {subject = "Proyecto: Copia de documentos", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos copiar 300 documentos\na formato digital.\n\nRequisitos:\n- Scanner funcionando\n- Organizar por carpetas\n- Nombres correctos\n\nDificultad: Normal\nRecompensa: $105\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Copia de documentos", desc = "Digitalizar 300 documentos\ncon scanner.", baseHp = 150, days = 14, reward = 105, difficulty = "normal"}},
+    {subject = "Proyecto: Inventario de almacen", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos inventariar todo\nel almacen de la empresa.\n\nRequisitos:\n- Contar productos\n- Registrar cantidades\n- Crear hoja de calculo\n\nDificultad: Normal\nRecompensa: $100\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Inventario de almacen", desc = "Inventariar productos\ndel almacen.", baseHp = 150, days = 14, reward = 100, difficulty = "normal"}},
+    {subject = "Proyecto: Procesamiento de nominas", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos procesar las nominas\nde 50 empleados.\n\nRequisitos:\n- Calcular deducciones\n- Generar recibos\n- Entregar en tiempo\n\nDificultad: Normal\nRecompensa: $135\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Procesamiento de nominas", desc = "Calcular nominas de\n50 empleados.", baseHp = 150, days = 14, reward = 135, difficulty = "normal"}},
+    {subject = "Proyecto: Help Desk interno", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos persona para Help Desk\ninterno de la empresa.\n\nRequisitos:\n- Conocimiento de redes\n- Resolver tickets\n- Documentar soluciones\n\nDificultad: Normal\nRecompensa: $125\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Help Desk interno", desc = "Resolver tickets de soporte\ninterno.", baseHp = 150, days = 14, reward = 125, difficulty = "normal"}},
+    {subject = "Proyecto: Redaccion de cartas", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos redactar 50 cartas\ncomerciales para clientes.\n\nRequisitos:\n- Redaccion formal\n- Sin errores ortograficos\n- Formato profesional\n\nDificultad: Normal\nRecompensa: $105\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Redaccion de cartas", desc = "Redactar 50 cartas\ncomerciales.", baseHp = 150, days = 14, reward = 105, difficulty = "normal"}},
+    {subject = "Proyecto: Archivo de correspondencia", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos archivar 400 cartas\ny documentos entrada.\n\nRequisitos:\n- Ordenar por fecha\n- Clasificar por remitente\n- Crear indice\n\nDificultad: Difícil\nRecompensa: $130\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Archivo de correspondencia", desc = "Archivar 400 cartas\ny documentos.", baseHp = 150, days = 14, reward = 130, difficulty = "dificil"}},
+    {subject = "Proyecto: Base de datos de clientes", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos crear una base de datos\nde 200 clientes en Access.\n\nRequisitos:\n- Formulario de entrada\n- Busqueda rapida\n- Reportes basicos\n\nDificultad: Difícil\nRecompensa: $160\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Base de datos de clientes", desc = "Crear BD de 200 clientes\nen Access.", baseHp = 150, days = 14, reward = 160, difficulty = "dificil"}},
+    {subject = "Proyecto: Revision de impresiones", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos revisor de documentos\nimpresos para deteccion de erratas.\n\nRequisitos:\n- Atencion al detalle\n- Conocimiento de ortografia\n- Rapidez visual\n\nDificultad: Difícil\nRecompensa: $130\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Revision de impresiones", desc = "Revisar documentos\nimpresos por erratas.", baseHp = 150, days = 14, reward = 130, difficulty = "dificil"}},
+    {subject = "Proyecto: Base de datos de inventario", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos a alguien para crear\nuna base de datos de inventario\npara una empresa local.\n\nRequisitos:\n- Microsoft Access\n- Formularios de entrada\n- Reportes automaticos\n\nDificultad: Difícil\nRecompensa: $200\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Base de datos Access", desc = "Crear sistema de inventario\npara empresa local.", baseHp = 150, days = 14, reward = 200, difficulty = "dificil"}},
+    {subject = "Proyecto: Pagina web corporativa", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos una pagina web\ncorporativa para nuestra empresa.\n\nRequisitos:\n- HTML basico\n- Tablas de contenido\n- Formulario de contacto\n\nDificultad: Difícil\nRecompensa: $245\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Pagina web corporativa", desc = "Diseno de sitio web\ncon HTML y tablas.", baseHp = 150, days = 14, reward = 245, difficulty = "dificil"}},
+    {subject = "Proyecto: Reporte de nominas", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos un sistema de nomina\nen hoja de calculo.\n\nRequisitos:\n- Formulas automaticas\n- Calculo de impuestos\n- Impresion de recibos\n\nDificultad: Muy Difícil\nRecompensa: $185\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Reporte de nominas", desc = "Sistema de nomina\nen Hoja de calculo.", baseHp = 150, days = 14, reward = 185, difficulty = "muy_dificil"}},
+    {subject = "Proyecto: Presentacion multimedia", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos a alguien para crear\nuna presentacion multimedia.\n\nRequisitos:\n- Diapositivas con imagenes\n- Animaciones y transiciones\n- Sonido de fondo\n\nDificultad: Muy Difícil\nRecompensa: $220\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Presentacion multimedia", desc = "Slides con animaciones\ny transiciones.", baseHp = 150, days = 14, reward = 220, difficulty = "muy_dificil"}},
+    {subject = "Proyecto: Configuracion de red", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos configurar una\nred local de 5 computadoras.\n\nRequisitos:\n- Cableado de red\n- Configuracion TCP/IP\n- Compartir impresora\n\nDificultad: Muy Difícil\nRecompensa: $275\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Soporte de red", desc = "Configurar red local\nentre 5 computadoras.", baseHp = 150, days = 14, reward = 275, difficulty = "muy_dificil"}},
+    {subject = "Proyecto: App de inventario VB", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nRequerimos una aplicacion\nde control de stock en VB.\n\nRequisitos:\n- Visual Basic 3.0\n- Base de datos Jet\n- Interfaz grafica\n\nDificultad: Muy Difícil\nRecompensa: $370\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "App de inventario", desc = "Programa de control\nde stock en Visual Basic.", baseHp = 150, days = 14, reward = 370, difficulty = "muy_dificil"}},
+    {subject = "Proyecto: Sistema de facturacion", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nBuscamos un sistema de facturacion.\n\nRequisitos:\n- Generador de facturas\n- Base de datos de clientes\n- Reportes mensuales\n\nDificultad: Pesadilla\nRecompensa: $450\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Sistema de facturacion", desc = "Generador de facturas\ncon base de datos.", baseHp = 150, days = 14, reward = 450, difficulty = "pesadilla"}},
+    {subject = "Proyecto: Conversor de formatos", sender = "clientes@freelance.com", type = "project", body = "Estimado freelancer:\n\nNecesitamos una herramienta\npara convertir archivos.\n\nRequisitos:\n- Convertir TXT a DOC\n- Convertir BMP a JPG\n- Interfaz simple\n\nDificultad: Pesadilla\nRecompensa: $210\nPlazo: 14 días\n\nResponda para aceptar el proyecto.", projectData = {name = "Conversor de formatos", desc = "Herramienta para convertir\narchivos entre formatos.", baseHp = 150, days = 14, reward = 210, difficulty = "pesadilla"}},
 }
 
 function Email.new(x, y)
@@ -108,10 +79,12 @@ function Email.new(x, y)
     self.lastMY = 0
     self.trabajoRef = nil
     self.notepadRef = nil
+    self.onProjectPopup = nil
     self.emailIndex = 1
     self.pendingApplications = 0
-    self.workSinceApplication = 0
-    self.workThreshold = 1 + math.random(5)
+    self.workSinceLastEmail = 0
+    self.emailChance = 0.015
+    self.emailBonus = 0
     self.chimeSound = nil
     self.initialized = false
     self.smallFont = love.graphics.newFont(11)
@@ -142,7 +115,7 @@ function Email.new(x, y)
         subject = "Bienvenido a su nuevo puesto",
         sender = "admin@empresa.com",
         type = "news",
-        body = "Estimado empleado:\n\nBienvenido a su nuevo puesto.\nLe explicaremos como funciona:\n\n1. GANAR DINERO:\nHaga click en el icono \"Trabajo\"\ny presione \"Trabajar\". Cada tarea\nle paga $1-2. Trabaje mas para\nganar mas y mejorar su PC.\n\n2. COMPRAR MEJORAS:\nAbra Internet Explorer y vaya\na \"Tienda\" en Favoritos. Ahí podra\ncomprar mejoras para su PC:\nCPU, RAM, Disco, Video,\nRefrigeracion.\n\n3. CORREO:\nRevise su correo regularmente.\nAlgunos correos son ofertas de\nproyectos con mejor recompensa.\nPero cuidado: hay correos\npeligrosos que le roban dinero.\n\n4. PROYECTOS:\nSus componentes generan circulos\nde progreso automaticamente.\nMejores componentes = mas rapido.\nComplete la barra antes de que\nse acabe el tiempo.\n\n5. OBJETIVOS:\nEl Bloc de notas muestra sus\nobjetivos y progreso.\n\nSu gerente.",
+        body = "Estimado empleado:\n\nBienvenido a su nuevo puesto.\nLe explicaremos como funciona:\n\n1. GANAR DINERO:\nHaga click en el icono \"Trabajo\"\ny presione \"Trabajar\". Cada tarea\nle paga $1-2. Trabaje mas para\nganar mas y mejorar su PC.\n\n2. OBJETIVOS:\nComplete objetivos para\ndesbloquear nuevas aplicaciones.\n\n3. CORREO:\nRevise su correo regularmente.\nAlgunos correos son ofertas de\nproyectos con mejor recompensa.\nPero cuidado: hay correos\npeligrosos que le roban dinero.\n\n4. PROYECTOS:\nSus componentes generan circulos\nde progreso automaticamente.\nMejores componentes = mas rapido.\nComplete la barra antes de que\nse acabe el tiempo.\n\nSu gerente.",
         handled = true,
         read = true,
     }
@@ -159,9 +132,11 @@ function Email:toggleVisible()
 end
 
 function Email:playChime()
-    if self.chimeSound and self.initialized then
-        self.chimeSound:stop()
-        self.chimeSound:play()
+    if self.chimeSound and self.initialized and self.canPlayChime then
+        if self.canPlayChime() then
+            self.chimeSound:stop()
+            self.chimeSound:play()
+        end
     end
 end
 
@@ -170,6 +145,9 @@ function Email:addNextEmail()
         local email = allEmails[self.emailIndex]
         email.read = false
         email.handled = false
+        if email.type == "project" then
+            email.daysLeft = 10
+        end
         table.insert(self.inbox, email)
         self.emailIndex = self.emailIndex + 1
         self:playChime()
@@ -179,6 +157,9 @@ end
 function Email:addEmailToInbox(email)
     email.read = false
     email.handled = false
+    if email.type == "project" then
+        email.daysLeft = 10
+    end
     table.insert(self.inbox, email)
     self.selectedIndex = #self.inbox
     self.selectedEmail = email
@@ -187,7 +168,7 @@ function Email:addEmailToInbox(email)
 end
 
 function Email:onWorkCompleted()
-    self.workSinceApplication = self.workSinceApplication + 1
+    self.workSinceLastEmail = self.workSinceLastEmail + 1
     self.totalTasksDone = self.totalTasksDone + 1
 
     if not self.malwareSent and self.totalTasksDone >= 15 then
@@ -203,9 +184,15 @@ function Email:onWorkCompleted()
         return
     end
 
-    if self.workSinceApplication >= self.workThreshold then
-        self.workSinceApplication = 0
-    self.workThreshold = 1 + math.random(10)
+    if self.workSinceLastEmail >= 12 then
+        self.emailBonus = 0.20
+    end
+
+    local chance = math.min(1.0, self.emailChance + self.emailBonus)
+    if math.random() < chance then
+        self.workSinceLastEmail = 0
+        self.emailChance = 0.015
+        self.emailBonus = 0
 
         if self.pendingApplications > 0 then
             self.pendingApplications = self.pendingApplications - 1
@@ -234,10 +221,30 @@ function Email:onWorkCompleted()
                 self:addNextEmail()
             end
         end
+    else
+        self.emailChance = math.min(1.0, self.emailChance + 0.02)
     end
 end
 
 function Email:update(dt)
+    if not self.dayTimer then self.dayTimer = 0 end
+    self.dayTimer = self.dayTimer + dt
+    if self.dayTimer >= 60 then
+        self.dayTimer = self.dayTimer - 60
+        for i = #self.inbox, 1, -1 do
+            local e = self.inbox[i]
+            if e.type == "project" and e.daysLeft and not e.handled then
+                e.daysLeft = e.daysLeft - 1
+                if e.daysLeft <= 0 then
+                    table.remove(self.inbox, i)
+                    if self.selectedEmail == e then
+                        self.selectedEmail = nil
+                        self.selectedIndex = 0
+                    end
+                end
+            end
+        end
+    end
 end
 
 function Email:drawBevel(x, y, w, h)
@@ -363,6 +370,15 @@ function Email:drawContent(cx, cy, cw, ch)
         ex = ex + colW[2]
         love.graphics.print(email.sender, ex, ey + 1)
 
+        if email.type == "project" and email.daysLeft and not email.handled then
+            if email.daysLeft <= 3 then
+                love.graphics.setColor({0.8, 0, 0})
+            else
+                love.graphics.setColor({0.6, 0.4, 0})
+            end
+            love.graphics.print(email.daysLeft .. "d", cx + listW - 24, ey + 1)
+        end
+
         table.insert(self.buttons, {x = cx + 2, y = ey, w = listW - 4, h = 17, action = "select", index = i})
         end
     end
@@ -394,6 +410,15 @@ function Email:drawContent(cx, cy, cw, ch)
         love.graphics.setColor(W95.text)
         love.graphics.print("De: " .. email.sender, cx + 8, contentY + 6)
         love.graphics.print("Asunto: " .. email.subject, cx + 8, contentY + 20)
+
+        if email.type == "project" and email.daysLeft and not email.handled then
+            if email.daysLeft <= 3 then
+                love.graphics.setColor({0.8, 0, 0})
+            else
+                love.graphics.setColor({0.6, 0.4, 0})
+            end
+            love.graphics.print("Dias restantes: " .. email.daysLeft, cx + cw - 120, contentY + 6)
+        end
 
         love.graphics.setColor(W95.borderDark)
         love.graphics.line(cx + 8, contentY + 36, cx + cw - 10, contentY + 36)
@@ -511,24 +536,50 @@ function Email:handleClick(x, y, button)
                         self.notepadRef.malwareDownloaded = (self.notepadRef.malwareDownloaded or 0) + 1
                     end
                 elseif self.selectedEmail.type == "project" and self.selectedEmail.projectData and self.trabajoRef then
+                    if self.selectedEmail.daysLeft and self.selectedEmail.daysLeft <= 0 then
+                        return true
+                    end
                     if not self.trabajoRef.activeProject then
                         self.trabajoRef.tabUnlocked = true
                         self.trabajoRef:startProject(self.selectedEmail.projectData)
+                        self.selectedEmail.handled = true
+                    else
+                        if self.onProjectPopup then
+                            self.onProjectPopup()
+                        end
                     end
                 elseif self.selectedEmail.type == "personal_unlock" then
                     self.selectedEmail.handled = true
                     if self.notepadRef then
                         self.notepadRef.personalReady = true
                     end
+                elseif self.selectedEmail.type == "beneficial" and not self.selectedEmail.handled then
+                    self.selectedEmail.handled = true
+                    local bonus = 10 + math.random(20)
+                    if self.trabajoRef then
+                        self.trabajoRef.money = self.trabajoRef.money + bonus
+                        self.trabajoRef.totalEarned = self.trabajoRef.totalEarned + bonus
+                    end
                 end
             elseif btn.action == "delete" and self.selectedEmail and not self.selectedEmail.handled then
-                self.selectedEmail.handled = true
                 if self.notepadRef then
                     self.notepadRef.emailsDeleted = (self.notepadRef.emailsDeleted or 0) + 1
                     if self.selectedEmail.type == "malware" then
                         self.notepadRef.malwareDeleted = (self.notepadRef.malwareDeleted or 0) + 1
                     end
                 end
+                local idx = nil
+                for i, e in ipairs(self.inbox) do
+                    if e == self.selectedEmail then
+                        idx = i
+                        break
+                    end
+                end
+                if idx then
+                    table.remove(self.inbox, idx)
+                end
+                self.selectedEmail = nil
+                self.selectedIndex = 0
             end
             return true
         end

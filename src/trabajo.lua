@@ -25,15 +25,39 @@ local W95 = {
     blue = {0.2, 0.4, 0.9},
 }
 
+local projectDifficulties = {
+    {id = "facil", label = "Fácil", color = {0.2, 0.8, 0.2}, hpMult = 1.0, rewardMult = 1.0},
+    {id = "normal", label = "Normal", color = {0.9, 0.9, 0.2}, hpMult = 2.67, rewardMult = 1.4},
+    {id = "dificil", label = "Difícil", color = {0.9, 0.6, 0.2}, hpMult = 4.67, rewardMult = 1.8},
+    {id = "muy_dificil", label = "Muy Difícil", color = {0.9, 0.3, 0.3}, hpMult = 7.33, rewardMult = 2.3},
+    {id = "pesadilla", label = "Pesadilla", color = {0.6, 0.0, 0.6}, hpMult = 10.67, rewardMult = 3.0},
+}
+
 local freelanceTasks = {
-    {name = "Entrada de datos", reward = 1, time = 1.0},
-    {name = "Correccion de documentos", reward = 2, time = 1.5},
-    {name = "Clasificacion de archivos", reward = 1, time = 0.8},
-    {name = "Revision de facturas", reward = 1, time = 1.2},
-    {name = "Digitacion de formularios", reward = 2, time = 1.3},
-    {name = "Procesamiento de nominas", reward = 2, time = 2.0},
-    {name = "Inventario de equipo", reward = 1, time = 1.0},
-    {name = "Archivo de correspondencia", reward = 1, time = 0.6},
+    {name = "Entrada de datos", reward = 1, time = 1.1, difficulty = "muy_facil"},
+    {name = "Clasificacion de archivos", reward = 1, time = 0.9, difficulty = "muy_facil"},
+    {name = "Archivo de correspondencia", reward = 1, time = 0.7, difficulty = "muy_facil"},
+    {name = "Inventario de equipo", reward = 1, time = 1.1, difficulty = "muy_facil"},
+    {name = "Correccion de documentos", reward = 2, time = 1.65, difficulty = "facil"},
+    {name = "Revision de facturas", reward = 1, time = 1.3, difficulty = "facil"},
+    {name = "Digitacion de formularios", reward = 2, time = 1.45, difficulty = "facil"},
+    {name = "Procesamiento de nominas", reward = 2, time = 2.2, difficulty = "normal"},
+    {name = "Redaccion de cartas", reward = 3, time = 2.0, difficulty = "normal"},
+    {name = "Traduccion simple", reward = 3, time = 1.8, difficulty = "normal"},
+    {name = "Base de datos Access", reward = 4, time = 2.5, difficulty = "dificil"},
+    {name = "Configuracion de red", reward = 5, time = 2.8, difficulty = "dificil"},
+    {name = "Pagina web HTML", reward = 5, time = 3.0, difficulty = "dificil"},
+    {name = "App Visual Basic", reward = 7, time = 3.5, difficulty = "muy_dificil"},
+    {name = "Sistema de facturacion", reward = 8, time = 4.0, difficulty = "muy_dificil"},
+    {name = "Red corporativa", reward = 10, time = 4.5, difficulty = "pesadilla"},
+    {name = "Sistema ERP", reward = 12, time = 5.0, difficulty = "pesadilla"},
+}
+
+local difficultyUnlockMilestone = {
+    normal = {type = "tasks", value = 50},
+    dificil = {type = "tasks", value = 100},
+    muy_dificil = {type = "tasks", value = 200},
+    pesadilla = {type = "tasks", value = 350},
 }
 
 local componentDefs = {
@@ -41,13 +65,14 @@ local componentDefs = {
         label = "GPU",
         color = {0.2, 0.8, 0.3},
         baseInterval = 2.0,
-        basePower = 4,
+        basePower = 3,
         tiers = {
-            {interval = 2.0, power = 4},
-            {interval = 1.4, power = 5},
-            {interval = 0.9, power = 7},
-            {interval = 0.5, power = 9},
+            {interval = 2.0, power = 3},
+            {interval = 1.6, power = 5},
+            {interval = 1.2, power = 8},
+            {interval = 0.8, power = 12},
         },
+        passive = "Mayor daño por circulo",
     },
     cpu = {
         label = "CPU",
@@ -56,34 +81,37 @@ local componentDefs = {
         basePower = 2,
         tiers = {
             {interval = 3.0, power = 2},
-            {interval = 2.2, power = 3},
-            {interval = 1.5, power = 4},
-            {interval = 0.9, power = 5},
+            {interval = 2.4, power = 3},
+            {interval = 1.8, power = 5},
+            {interval = 1.2, power = 7},
         },
+        passive = "Genera circulos mas rapido",
     },
     ram = {
         label = "RAM",
         color = {0.9, 0.5, 0.1},
         baseInterval = 4.0,
-        basePower = 3,
+        basePower = 1,
         tiers = {
-            {interval = 4.0, power = 3},
-            {interval = 3.0, power = 4},
-            {interval = 2.0, power = 5},
-            {interval = 1.2, power = 6},
+            {interval = 4.0, power = 1},
+            {interval = 3.2, power = 2},
+            {interval = 2.4, power = 3},
+            {interval = 1.6, power = 5},
         },
+        passive = "Multiplicador de puntos al llegar",
     },
     cooling = {
         label = "Refrigeracion",
         color = {0.2, 0.8, 0.8},
         baseInterval = 5.0,
-        basePower = 2,
+        basePower = 1,
         tiers = {
-            {interval = 5.0, power = 2},
-            {interval = 3.5, power = 3},
-            {interval = 2.5, power = 4},
-            {interval = 1.5, power = 5},
+            {interval = 5.0, power = 1},
+            {interval = 4.0, power = 2},
+            {interval = 3.0, power = 3},
+            {interval = 2.0, power = 4},
         },
+        passive = "Reduce fallos (bugs) en circulos",
     },
 }
 
@@ -103,11 +131,16 @@ function Trabajo.new(x, y)
     self.level = 1
     self.baseReward = 1
     self.onWorkDone = nil
+    self.onOpenParticular = nil
     self.emailRef = nil
     self.pcStatsRef = nil
     self.explorerRef = nil
     self.achievementsRef = nil
     self.completedProjects = 0
+
+    self.activeJobs = {}
+    self.maxJobs = 1
+    self.unlockedDifficulties = {muy_facil = true, facil = true}
 
     self.particularWindow = WindowManager.new("Trabajo Particular", (x or 250) + 50, (y or 120) + 50, 460, 400)
     self.particularWindow.minimizeOnly = true
@@ -121,7 +154,11 @@ function Trabajo.new(x, y)
     self.projectDesc = ""
     self.resultMessage = ""
     self.resultTimer = 0
+    self.malwareLossMessage = ""
+    self.malwareLossTimer = 0
     self.projectCooldown = 0
+    self.successMessage = ""
+    self.successTimer = 0
 
     self.components = {}
     self.circles = {}
@@ -140,6 +177,17 @@ function Trabajo.new(x, y)
         self:drawParticularContent(cx, cy, cw, ch)
     end
     self.particularWindow.onMousePressed = function(_, x, y, button)
+        if button ~= 1 then return false end
+        for _, btn in ipairs(self.buttons) do
+            if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+                if btn.action == "dismiss_success" then
+                    self.successMessage = ""
+                    self.successTimer = 0
+                    self.particularWindow.visible = false
+                end
+                return true
+            end
+        end
         return true
     end
 
@@ -164,6 +212,8 @@ function Trabajo.new(x, y)
         table.insert(self.circleSounds, sndCs2)
     end
 
+    self.floatingFont = love.graphics.newFont(18)
+
     return self
 end
 
@@ -175,9 +225,9 @@ end
 function Trabajo:getUpgrades()
     local upgMap = {}
     if self.explorerRef then
-        for _, upg in ipairs(self.explorerRef.upgrades) do
-            if upg.purchased then
-                upgMap[upg.stat] = true
+        for stat, level in pairs(self.explorerRef.upgradeLevels) do
+            if level > 0 then
+                upgMap[stat] = level
             end
         end
     end
@@ -185,7 +235,6 @@ function Trabajo:getUpgrades()
 end
 
 function Trabajo:getComponentTier(componentId)
-    local upgMap = self:getUpgrades()
     local statMap = {
         gpu = "display",
         cpu = "cpu",
@@ -194,16 +243,10 @@ function Trabajo:getComponentTier(componentId)
     }
     local stat = statMap[componentId]
     if not stat then return 0 end
-
-    local tierCount = 0
     if self.explorerRef then
-        for _, upg in ipairs(self.explorerRef.upgrades) do
-            if upg.stat == stat and upg.purchased then
-                tierCount = tierCount + 1
-            end
-        end
+        return self.explorerRef.upgradeLevels[stat] or 0
     end
-    return math.min(tierCount, 4)
+    return 0
 end
 
 function Trabajo:getComponentInterval(componentId)
@@ -242,12 +285,41 @@ function Trabajo:startProject(projectData)
     self.activeProject = projectData.name
     self.projectDesc = projectData.desc
     self.projectProgress = 0
-    self.projectMaxProgress = 100
-    self.projectDaysLeft = projectData.days or 14
-    self.projectMaxDays = projectData.days or 14
-    self.projectReward = projectData.reward
+
+    local isFirstProject = (self.completedProjects or 0) == 0
+    local diffId = projectData.difficulty or "facil"
+    local diffInfo = nil
+    for _, d in ipairs(projectDifficulties) do
+        if d.id == diffId then diffInfo = d break end
+    end
+
+    if isFirstProject then
+        self.projectMaxProgress = 100
+    else
+        local baseHp = projectData.baseHp or 150
+        local hpMult = diffInfo and diffInfo.hpMult or 1.0
+        self.projectMaxProgress = math.floor(baseHp * hpMult)
+    end
+
+    self.projectDifficulty = diffInfo
+    local baseDays = projectData.days or 14
+    local completed = self.completedProjects or 0
+    local scaleFactor = math.max(0.3, 1.0 - completed * 0.1)
+    local scaledDays = math.max(4, math.floor(baseDays * scaleFactor))
+    self.projectDaysLeft = scaledDays
+    self.projectMaxDays = scaledDays
+
+    if isFirstProject then
+        self.projectReward = projectData.reward
+    else
+        local rewardMult = diffInfo and diffInfo.rewardMult or 1.0
+        self.projectReward = math.floor(projectData.reward * rewardMult)
+    end
+
     self.resultMessage = ""
     self.resultTimer = 0
+    self.malwareLossMessage = ""
+    self.malwareLossTimer = 0
     self.circles = {}
     self.floatingNumbers = {}
     self.barShake = 0
@@ -256,6 +328,7 @@ function Trabajo:startProject(projectData)
 
     self.particularWindow.visible = true
     self.particularWindow.minimized = false
+    if self.onOpenParticular then self.onOpenParticular() end
 end
 
 function Trabajo:update(dt)
@@ -263,22 +336,24 @@ function Trabajo:update(dt)
         self.cooldown = self.cooldown - dt
     end
 
-    if self.currentTask then
-        self.taskProgress = self.taskProgress + dt
-        local adjustedTime = self.currentTask.time * self:getTaskTimeMultiplier()
-        if self.taskProgress >= adjustedTime then
-            local baseReward = self.currentTask.reward + (self.level - 1) * 1
+    self.maxJobs = self:getJobCapacity()
+    self:checkDifficultyUnlocks()
+
+    for i = #self.activeJobs, 1, -1 do
+        local job = self.activeJobs[i]
+        job.progress = job.progress + dt
+        local adjustedTime = job.task.time * self:getTaskTimeMultiplier()
+        if job.progress >= adjustedTime then
+            local baseReward = job.task.reward
             local comboMult = 1.0
             if self.achievementsRef then
                 comboMult = self.achievementsRef.comboMultiplier or 1.0
             end
-            local reward = math.floor(baseReward * comboMult)
+            local hwMult = self:getTaskRewardMultiplier()
+            local reward = math.floor(baseReward * comboMult * hwMult)
             self.money = self.money + reward
             self.totalEarned = self.totalEarned + reward
             self.tasksCompleted = self.tasksCompleted + 1
-            self.currentTask = nil
-            self.taskProgress = 0
-            self.cooldown = self.cooldownMax
             if self.moneySounds and #self.moneySounds > 0 then
                 local snd = self.moneySounds[math.random(#self.moneySounds)]
                 snd:stop()
@@ -288,6 +363,7 @@ function Trabajo:update(dt)
                 self.achievementsRef:onTaskComplete(reward)
             end
             if self.onWorkDone then self.onWorkDone() end
+            table.remove(self.activeJobs, i)
         end
     end
 
@@ -295,6 +371,21 @@ function Trabajo:update(dt)
         self.resultTimer = self.resultTimer - dt
         if self.resultTimer <= 0 then
             self.resultMessage = ""
+        end
+    end
+
+    if self.successTimer > 0 then
+        self.successTimer = self.successTimer - dt
+        if self.successTimer <= 0 then
+            self.successMessage = ""
+            self.particularWindow.visible = false
+        end
+    end
+
+    if self.malwareLossTimer and self.malwareLossTimer > 0 then
+        self.malwareLossTimer = self.malwareLossTimer - dt
+        if self.malwareLossTimer <= 0 then
+            self.malwareLossMessage = ""
         end
     end
 
@@ -317,7 +408,7 @@ function Trabajo:update(dt)
 
     if self.activeProject then
         for _, comp in ipairs(self.components) do
-            comp.timer = comp.timer + dt
+            comp.timer = comp.timer + dt * self:getCircleGenMultiplier()
             if comp.timer >= comp.interval then
                 comp.timer = comp.timer - comp.interval
                 self:generateCircle(comp)
@@ -336,7 +427,7 @@ function Trabajo:update(dt)
                 if circ.isBug then
                     self.projectProgress = math.max(0, self.projectProgress - circ.power)
                     table.insert(self.floatingNumbers, {
-                        text = "-" .. circ.power .. "% BUG",
+                        text = "-" .. circ.power,
                         x = circ.targetX,
                         y = circ.targetY,
                         timer = 1.5,
@@ -345,9 +436,10 @@ function Trabajo:update(dt)
                         isBug = true,
                     })
                 else
-                    self.projectProgress = self.projectProgress + circ.power
+                    local finalPower = math.floor(circ.power * self:getRamMultiplier())
+                    self.projectProgress = self.projectProgress + finalPower
                     table.insert(self.floatingNumbers, {
-                        text = "+" .. circ.power .. "%",
+                        text = "+" .. finalPower,
                         x = circ.targetX,
                         y = circ.targetY,
                         timer = 1.0,
@@ -383,11 +475,14 @@ function Trabajo:generateCircle(comp)
     local dx = targetX - startX
     local dy = targetY - startY
     local dist = math.sqrt(dx * dx + dy * dy)
-    local speed = 200
+    local baseSpeed = 200
+    local speed = baseSpeed
 
-    local isBug = math.random() < 0.08
+    local bugChance = math.max(0, 0.08 - self:getBugChanceReduction())
+    local isBug = math.random() < bugChance
     local circColor = isBug and {0.9, 0.15, 0.15} or comp.color
-    local circPower = isBug and math.floor(comp.power * 0.6) or comp.power
+    local basePower = isBug and math.floor(comp.power * 0.6) or comp.power
+    local circPower = math.floor(basePower * self:getCirclePowerMultiplier())
 
     table.insert(self.circles, {
         x = startX,
@@ -418,21 +513,13 @@ function Trabajo:winProject()
     self.money = self.money + reward
     self.totalEarned = self.totalEarned + reward
     self.completedProjects = (self.completedProjects or 0) + 1
-    self.resultMessage = "Proyecto completado! +$" .. reward
-    self.resultTimer = 3.0
+    self.successMessage = "Proyecto exitoso! +$" .. reward
+    self.successTimer = 5.0
 
     if self.achievementsRef then
         self.achievementsRef:onProjectComplete(reward, false)
     end
 
-    if self.emailRef then
-        self.emailRef:addEmailToInbox({
-            subject = "Proyecto completado: " .. self.activeProject,
-            sender = "clientes@freelance.com",
-            type = "news",
-            body = "Estimado freelancer:\n\nFelicidades! Ha completado\nel proyecto \"" .. self.activeProject .. "\"\nsatisfactoriamente.\n\nSu trabajo es de excelente\ncalidad. Seguiremos contactandole\npara futuros proyectos.\n\nRecompensa recibida: $" .. reward .. "\n\nSaludos cordiales.",
-        })
-    end
     self:clearProject()
     if self.onWorkDone then self.onWorkDone() end
 end
@@ -473,20 +560,106 @@ function Trabajo:clearProject()
     self.components = {}
     self.barShake = 0
 
-    self.particularWindow.visible = false
+    if self.successTimer <= 0 then
+        self.particularWindow.visible = false
+    end
+end
+
+function Trabajo:getAvailableTasks()
+    local available = {}
+    for _, task in ipairs(freelanceTasks) do
+        if self.unlockedDifficulties[task.difficulty] then
+            table.insert(available, task)
+        end
+    end
+    return available
+end
+
+function Trabajo:checkDifficultyUnlocks()
+    for diff, milestone in pairs(difficultyUnlockMilestone) do
+        if not self.unlockedDifficulties[diff] then
+            if milestone.type == "tasks" and self.tasksCompleted >= milestone.value then
+                self.unlockedDifficulties[diff] = true
+            end
+        end
+    end
 end
 
 function Trabajo:getEarningsPerClick()
-    return self.baseReward + (self.level - 1) * 1
+    local available = self:getAvailableTasks()
+    if #available == 0 then return 1 end
+    local totalReward = 0
+    for _, task in ipairs(available) do
+        totalReward = totalReward + task.reward
+    end
+    return math.floor(totalReward / #available * self:getTaskRewardMultiplier())
 end
 
 function Trabajo:getTaskTimeMultiplier()
-    local mult = 1.43
+    local mult = 1.75
     local upgMap = self:getUpgrades()
-    if upgMap.cpu then mult = mult - 0.10 end
-    if upgMap.display then mult = mult - 0.05 end
-    if upgMap.ram then mult = mult - 0.05 end
-    if mult < 0.7 then mult = 0.7 end
+    if upgMap.cpu then mult = mult * math.pow(0.80, upgMap.cpu) end
+    if upgMap.cooling then
+        local coolingBoost = 0.10 + (upgMap.cooling - 1) * 0.20
+        mult = mult * (1.0 - coolingBoost)
+    end
+    if mult < 0.5 then mult = 0.5 end
+    return mult
+end
+
+function Trabajo:getTaskRewardMultiplier()
+    local mult = 1.0
+    local upgMap = self:getUpgrades()
+    if upgMap.display then mult = mult + 0.40 * upgMap.display end
+    if upgMap.cooling then
+        local coolingBoost = 0.10 + (upgMap.cooling - 1) * 0.20
+        mult = mult * (1.0 + coolingBoost)
+    end
+    return mult
+end
+
+function Trabajo:getJobCapacity()
+    local capacity = 1
+    local upgMap = self:getUpgrades()
+    if upgMap.ram then capacity = capacity + upgMap.ram end
+    return capacity
+end
+
+function Trabajo:getCooldownMultiplier()
+    local mult = 1.0
+    return mult
+end
+
+function Trabajo:getCircleSpeedMultiplier()
+    local mult = 1.0
+    return mult
+end
+
+function Trabajo:getCirclePowerMultiplier()
+    local mult = 1.0
+    local upgMap = self:getUpgrades()
+    if upgMap.display then mult = mult + 0.30 * upgMap.display end
+    return mult
+end
+
+function Trabajo:getCircleGenMultiplier()
+    local mult = 1.0
+    local upgMap = self:getUpgrades()
+    if upgMap.cpu then mult = mult * math.pow(0.85, upgMap.cpu) end
+    return mult
+end
+
+function Trabajo:getBugChanceReduction()
+    local reduction = 0
+    local upgMap = self:getUpgrades()
+    if upgMap.cooling then reduction = reduction + 0.02 * upgMap.cooling end
+    return reduction
+end
+
+function Trabajo:getRamMultiplier()
+    local mult = 1.0
+    local upgMap = self:getUpgrades()
+    if upgMap.ram then mult = mult + 0.25 * upgMap.ram end
     return mult
 end
 
@@ -534,35 +707,38 @@ function Trabajo:drawFreelanceTab(x, y, w, h)
     love.graphics.print("Tareas completadas: " .. self.tasksCompleted, x + 8, y + 34)
     love.graphics.setColor(W95.green)
     love.graphics.print("Dinero: $" .. self.money, x + 8, y + 52)
+    love.graphics.setColor(W95.yellow)
+    love.graphics.print("Trabajos: " .. #self.activeJobs .. "/" .. self.maxJobs, x + 8, y + 68)
 
     love.graphics.setColor(W95.borderDark)
-    love.graphics.line(x + 8, y + 72, x + w - 8, y + 72)
+    love.graphics.line(x + 8, y + 86, x + w - 8, y + 86)
 
-    if self.currentTask then
-        love.graphics.setColor(W95.text)
-        love.graphics.printf("Trabajando en:", x + 8, y + 82, w - 16, "center")
-        love.graphics.setColor(W95.highlight)
-        love.graphics.printf(self.currentTask.name, x + 8, y + 98, w - 16, "center")
+    if #self.activeJobs > 0 then
+        for i, job in ipairs(self.activeJobs) do
+            local jobY = y + 92 + (i - 1) * 40
+            love.graphics.setColor(W95.text)
+            love.graphics.printf("Tarea " .. i .. ": " .. job.task.name, x + 8, jobY, w - 16, "center")
 
-        local barX = x + 20
-        local barY = y + 118
-        local barW = w - 40
-        local barH = 20
+            local barX = x + 20
+            local barY = jobY + 16
+            local barW = w - 40
+            local barH = 16
 
-        love.graphics.setColor(W95.fieldBg)
-        love.graphics.rectangle("fill", barX, barY, barW, barH)
-        self:drawInset(barX, barY, barW, barH)
+            love.graphics.setColor(W95.fieldBg)
+            love.graphics.rectangle("fill", barX, barY, barW, barH)
+            self:drawInset(barX, barY, barW, barH)
 
-        local progress = math.min(self.taskProgress / (self.currentTask.time * self:getTaskTimeMultiplier()), 1)
-        love.graphics.setColor(W95.highlight)
-        love.graphics.rectangle("fill", barX + 2, barY + 2, (barW - 4) * progress, barH - 4)
+            local progress = math.min(job.progress / (job.task.time * self:getTaskTimeMultiplier()), 1)
+            love.graphics.setColor(W95.highlight)
+            love.graphics.rectangle("fill", barX + 2, barY + 2, (barW - 4) * progress, barH - 4)
 
-        love.graphics.setColor(W95.white)
-        love.graphics.printf(math.floor(progress * 100) .. "%", barX, barY + 3, barW, "center")
+            love.graphics.setColor(W95.white)
+            love.graphics.printf(math.floor(progress * 100) .. "%", barX, barY + 1, barW, "center")
+        end
 
         local cancelW = 70
         local cancelX = x + (w - cancelW) / 2
-        local cancelY = y + 146
+        local cancelY = y + 92 + #self.activeJobs * 40 + 4
         local mx, my = love.mouse.getPosition()
         local cancelHov = mx >= cancelX and mx <= cancelX + cancelW and my >= cancelY and my <= cancelY + 20
         love.graphics.setColor(cancelHov and {0.85, 0.85, 0.85} or W95.bg)
@@ -574,12 +750,12 @@ function Trabajo:drawFreelanceTab(x, y, w, h)
     else
         local earnings = self:getEarningsPerClick()
         love.graphics.setColor(W95.text)
-        love.graphics.printf("Ganancia por tarea: $" .. earnings, x + 8, y + 82, w - 16, "center")
+        love.graphics.printf("Ganancia por tarea: $" .. earnings, x + 8, y + 92, w - 16, "center")
 
         local btnW = 140
         local btnH = 32
         local btnX = x + (w - btnW) / 2
-        local btnY = y + 106
+        local btnY = y + 116
         local mx, my = love.mouse.getPosition()
         local btnHov = mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH
 
@@ -599,10 +775,22 @@ function Trabajo:drawFreelanceTab(x, y, w, h)
         end
 
         love.graphics.setColor(W95.borderDark)
-        love.graphics.line(x + 8, y + 148, x + w - 8, y + 148)
+        love.graphics.line(x + 8, y + 158, x + w - 8, y + 158)
 
-        love.graphics.setColor(W95.textDim)
-        love.graphics.print("Nivel: " .. self.level, x + 8, y + 156)
+        local compInfoY = y + 162
+        local compLabels = {
+            {id = "cpu", label = "CPU", color = {0.6, 0.2, 0.9}},
+            {id = "gpu", label = "GPU", color = {0.2, 0.8, 0.3}},
+            {id = "ram", label = "RAM", color = {0.9, 0.5, 0.1}},
+            {id = "cooling", label = "FAN", color = {0.2, 0.8, 0.8}},
+        }
+        local colW = (w - 16) / 4
+        for i, comp in ipairs(compLabels) do
+            local tier = self:getComponentTier(comp.id)
+            local cx = x + 8 + (i - 1) * colW
+            love.graphics.setColor(comp.color)
+            love.graphics.printf(comp.label .. " Lv." .. tier, cx, compInfoY, colW, "center")
+        end
     end
 end
 
@@ -621,6 +809,27 @@ function Trabajo:drawParticularContent(cx, cy, cw, ch)
 end
 
 function Trabajo:drawParticularTab(x, y, w, h)
+    if self.successMessage ~= "" then
+        love.graphics.setColor(W95.green)
+        love.graphics.printf(self.successMessage, x + 8, y + h / 2 - 30, w - 16, "center")
+        love.graphics.setColor(W95.text)
+        love.graphics.printf("Felicidades por completar el proyecto!", x + 8, y + h / 2 - 10, w - 16, "center")
+
+        local btnW = 80
+        local btnH = 24
+        local btnX = x + (w - btnW) / 2
+        local btnY = y + h / 2 + 20
+        local mx, my = love.mouse.getPosition()
+        local btnHov = mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH
+        love.graphics.setColor(btnHov and {0.85, 0.85, 0.85} or W95.bg)
+        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+        self:drawBevel(btnX, btnY, btnW, btnH)
+        love.graphics.setColor(W95.text)
+        love.graphics.printf("Aceptar", btnX, btnY + 5, btnW, "center")
+        table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "dismiss_success"})
+        return
+    end
+
     if not self.activeProject then
         love.graphics.setColor(W95.text)
         love.graphics.printf("Sin proyecto activo", x + 8, y + h / 2 - 20, w - 16, "center")
@@ -638,17 +847,22 @@ function Trabajo:drawParticularTab(x, y, w, h)
     love.graphics.setColor(W95.highlight)
     love.graphics.printf(self.activeProject, x + 8, y + 18, w - 16, "center")
 
+    if self.projectDifficulty then
+        love.graphics.setColor(self.projectDifficulty.color)
+        love.graphics.printf("[" .. self.projectDifficulty.label .. "]", x + 8, y + 32, w - 16, "center")
+    end
+
     love.graphics.setColor(W95.textDim)
     local descLines = {}
     for line in self.projectDesc:gmatch("[^\n]*") do
         table.insert(descLines, line)
     end
     for i, line in ipairs(descLines) do
-        love.graphics.printf(line, x + 8, y + 32 + (i - 1) * 12, w - 16, "center")
+        love.graphics.printf(line, x + 8, y + 46 + (i - 1) * 12, w - 16, "center")
     end
 
     local barX = x + 16
-    local barY = y + 60
+    local barY = y + 74
     local barW = w - 32
     local barH = 16
 
@@ -675,7 +889,10 @@ function Trabajo:drawParticularTab(x, y, w, h)
         else
             love.graphics.setColor(0.2, 1, 0.2, alpha)
         end
-        love.graphics.printf(num.text, num.x - 30, num.y, 60, "center")
+        local prevFont = love.graphics.getFont()
+        love.graphics.setFont(self.floatingFont)
+        love.graphics.printf(num.text, num.x - 40, num.y, 80, "center")
+        love.graphics.setFont(prevFont)
     end
 
     local infoY = barY + barH + 6
@@ -747,7 +964,7 @@ function Trabajo:drawParticularTab(x, y, w, h)
         love.graphics.printf(componentNames[comp.id] or comp.label, bx + vibOff, by + 29, boxW, "center")
 
         love.graphics.setColor(comp.color)
-        love.graphics.printf(comp.power .. "%/circulo", bx + vibOff, by + 41, boxW, "center")
+        love.graphics.printf(comp.power .. "/circulo", bx + vibOff, by + 41, boxW, "center")
 
         comp.screenX = bx + boxW / 2 + vibOff
         comp.screenY = by + boxH / 2
@@ -772,7 +989,7 @@ function Trabajo:drawParticularTab(x, y, w, h)
         local bigFont = love.graphics.newFont(13)
         love.graphics.setFont(bigFont)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.printf(circ.power .. "%", cx - 16, cy - 8, 32, "center")
+        love.graphics.printf(circ.power, cx - 16, cy - 8, 32, "center")
         love.graphics.setFont(prevFont)
     end
 
@@ -780,6 +997,19 @@ function Trabajo:drawParticularTab(x, y, w, h)
         love.graphics.setColor(W95.yellow)
         love.graphics.printf(self.resultMessage, x + 8, y + h - 14, w - 16, "center")
     end
+
+    if self.malwareLossMessage and self.malwareLossMessage ~= "" then
+        love.graphics.setColor({0.8, 0, 0})
+        love.graphics.printf(self.malwareLossMessage, x + 8, y + h - 30, w - 16, "center")
+    end
+end
+
+function Trabajo:getEarningsPerClick()
+    local totalReward = 0
+    for _, task in ipairs(freelanceTasks) do
+        totalReward = totalReward + task.reward
+    end
+    return math.floor(totalReward / #freelanceTasks)
 end
 
 function Trabajo:handleClick(x, y, button)
@@ -787,12 +1017,16 @@ function Trabajo:handleClick(x, y, button)
 
     for _, btn in ipairs(self.buttons) do
         if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-            if btn.action == "work" and self.cooldown <= 0 and not self.currentTask then
-                self.currentTask = freelanceTasks[math.random(#freelanceTasks)]
-                self.taskProgress = 0
+            if btn.action == "work" and self.cooldown <= 0 and #self.activeJobs < self.maxJobs then
+                local available = self:getAvailableTasks()
+                if #available > 0 then
+                    local task = available[math.random(#available)]
+                    table.insert(self.activeJobs, {task = task, progress = 0})
+                end
             elseif btn.action == "cancel" then
-                self.currentTask = nil
-                self.taskProgress = 0
+                if #self.activeJobs > 0 then
+                    table.remove(self.activeJobs, #self.activeJobs)
+                end
                 self.cooldown = self.cooldownMax
             end
             return true

@@ -23,6 +23,7 @@ local W95 = {
     contentBg = {1, 1, 1},
     statusBar = {0.75, 0.75, 0.75},
     favBg = {0.75, 0.75, 0.75},
+    yellow = {0.8, 0.6, 0},
     favHover = {0, 0, 0.8},
     green = {0, 0.5, 0},
 }
@@ -39,66 +40,94 @@ function Explorer.new(x, y)
     self.trabajoRef = nil
     self.pcStatsRef = nil
     self.winampRef = nil
+    self.onHardwarePurchase = nil
 
     self.musicSongs = {
-        {name = "Nirvana - Smells Like Teen Spirit", price = 5, file = "songw95_1.wav", purchased = true},
-        {name = "RHCP - Aeroplane", price = 5, file = "songw95_2.wav", purchased = true},
-        {name = "Backstreet Boys - I Want It That Way", price = 100, file = "songw95_3.wav", purchased = false},
-        {name = "Las Ketchup - Asereje", price = 100, file = "songw95_4.wav", purchased = false},
+        {name = "Nirvana - Smells Like Teen Spirit", price = 35, file = "songw95_1.wav", purchased = false, category = "tendencias"},
+        {name = "RHCP - Aeroplane", price = 45, file = "songw95_2.wav", purchased = false, category = "tendencias"},
+        {name = "Backstreet Boys - I Want It That Way", price = 60, file = "songw95_3.wav", purchased = false, category = "tendencias"},
+        {name = "Las Ketchup - Asereje", price = 75, file = "songw95_4.wav", purchased = false, category = "tendencias"},
+        {name = "Nobuo Uematsu - Corridors of Time", price = 50, file = "chrono.ogg", purchased = false, category = "videojuegos"},
     }
 
     self.favorites = {
         {label = "Tienda", page = "upgrades"},
-        {label = "Musica", page = "music"},
-        {label = "Fondo de escritorio", page = "wallpaper"},
         {label = "Windows Update", page = "update"},
-        {label = "MSN", page = "msn"},
+        {label = "Musica", page = "music", unlocked = false},
+        {label = "Fondo de escritorio", page = "wallpaper", unlocked = false},
+        {label = "MSN", page = "msn", unlocked = false},
     }
+    self.unlockedPages = {upgrades = true, update = true}
 
     self.upgradeTiers = {
         cpu = {
-            {from = "Pentium 75MHz", to = "Pentium 100MHz", price = 250},
-            {from = "Pentium 100MHz", to = "Pentium 133MHz", price = 500},
-            {from = "Pentium 133MHz", to = "Pentium 200MHz", price = 1000},
-            {from = "Pentium 200MHz", to = "Pentium MMX 233", price = 2500},
+            {from = "Pentium 75MHz", to = "Pentium 100MHz", price = 80, watts = 30},
+            {from = "Pentium 100MHz", to = "Pentium 133MHz", price = 160, watts = 40},
+            {from = "Pentium 133MHz", to = "Pentium 200MHz", price = 352, watts = 55},
+            {from = "Pentium 200MHz", to = "Pentium MMX 233", price = 800, watts = 70},
         },
         ram = {
-            {from = "16 MB", to = "32 MB", price = 150},
-            {from = "32 MB", to = "64 MB", price = 350},
-            {from = "64 MB", to = "128 MB", price = 750},
-            {from = "128 MB", to = "256 MB", price = 1500},
+            {from = "16 MB", to = "32 MB", price = 70, watts = 3},
+            {from = "32 MB", to = "64 MB", price = 133, watts = 5},
+            {from = "64 MB", to = "128 MB", price = 266, watts = 8},
+            {from = "128 MB", to = "256 MB", price = 560, watts = 12},
         },
         disk = {
-            {from = "850 MB", to = "1.2 GB", price = 200},
-            {from = "1.2 GB", to = "2.1 GB", price = 400},
-            {from = "2.1 GB", to = "4.3 GB", price = 800},
-            {from = "4.3 GB", to = "8.4 GB", price = 1600},
+            {from = "850 MB", to = "1.2 GB", price = 90, watts = 8},
+            {from = "1.2 GB", to = "2.1 GB", price = 189, watts = 10},
+            {from = "2.1 GB", to = "4.3 GB", price = 397, watts = 12},
+            {from = "4.3 GB", to = "8.4 GB", price = 834, watts = 15},
         },
         display = {
-            {from = "Standard VGA", to = "S3 Trio64", price = 400},
-            {from = "S3 Trio64", to = "S3 ViRGE", price = 800},
-            {from = "S3 ViRGE", to = "3dfx Banshee", price = 1500},
-            {from = "3dfx Banshee", to = "Voodoo 3 3000", price = 3000},
+            {from = "Standard VGA", to = "S3 Trio64", price = 100, watts = 10},
+            {from = "S3 Trio64", to = "S3 ViRGE", price = 220, watts = 15},
+            {from = "S3 ViRGE", to = "3dfx Banshee", price = 484, watts = 25},
+            {from = "3dfx Banshee", to = "Voodoo 3 3000", price = 1065, watts = 40},
         },
         cooling = {
-            {from = "Disipador basico", to = "Ventilador activo", price = 150},
-            {from = "Ventilador activo", to = "Cooler Turbo", price = 350},
-            {from = "Cooler Turbo", to = "Refrigeracion liquida", price = 700},
-            {from = "Refrigeracion liquida", to = "Sistema custom", price = 1400},
+            {from = "Disipador basico", to = "Ventilador activo", price = 75, watts = 2},
+            {from = "Ventilador activo", to = "Cooler Turbo", price = 143, watts = 4},
+            {from = "Cooler Turbo", to = "Refrigeracion liquida", price = 271, watts = 8},
+            {from = "Refrigeracion liquida", to = "Sistema custom", price = 515, watts = 12},
         },
-        monitor = {
-            {from = '14" CRT', to = '15" SVGA', price = 300},
-            {from = '15" SVGA', to = '17" CRT', price = 600},
-            {from = '17" CRT', to = '19" Trinitron', price = 1200},
-            {from = '19" Trinitron', to = '21" TFT', price = 2400},
+        psu = {
+            {from = "Fuente 150W", to = "Fuente 200W", price = 60, capacity = 200},
+            {from = "Fuente 200W", to = "Fuente 250W", price = 120, capacity = 250},
+            {from = "Fuente 250W", to = "Fuente 300W", price = 240, capacity = 300},
+            {from = "Fuente 300W", to = "Fuente 350W", price = 480, capacity = 350},
         },
     }
 
     self.upgradeLevels = {
-        cpu = 0, ram = 0, disk = 0, display = 0, cooling = 0, monitor = 0,
+        cpu = 0, ram = 0, disk = 0, display = 0, cooling = 0, psu = 0,
     }
 
+    self.componentWatts = {
+        cpu = {30, 40, 55, 70},
+        ram = {3, 5, 8, 12},
+        disk = {8, 10, 12, 15},
+        display = {10, 15, 25, 40},
+        cooling = {2, 4, 8, 12},
+    }
+
+    self.psuCapacity = {150, 200, 250, 300, 350}
+
     self.upgrades = self:getVisibleUpgrades()
+
+    self.shopView = "grid"
+    self.selectedComponent = nil
+    self.shopScrollY = 0
+    self.navHistory = {}
+    self.navIndex = 0
+
+    self.componentIcons = {
+        cpu = {label = "Procesador", icon = "CPU"},
+        ram = {label = "Memoria RAM", icon = "RAM"},
+        disk = {label = "Disco Duro", icon = "HDD"},
+        display = {label = "Placa de Video", icon = "GPU"},
+        cooling = {label = "Refrigeracion", icon = "FAN"},
+        psu = {label = "Fuente de Poder", icon = "PSU"},
+    }
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
@@ -137,6 +166,38 @@ function Explorer:toggleVisible()
     self.window.minimized = false
 end
 
+function Explorer:unlockPage(page)
+    self.unlockedPages[page] = true
+    for _, fav in ipairs(self.favorites) do
+        if fav.page == page then
+            fav.unlocked = true
+        end
+    end
+end
+
+function Explorer:getTotalWatts()
+    local total = 0
+    local componentOrder = {"cpu", "ram", "disk", "display", "cooling"}
+    for _, stat in ipairs(componentOrder) do
+        local level = self.upgradeLevels[stat] or 0
+        if self.componentWatts[stat] and self.componentWatts[stat][level + 1] then
+            total = total + self.componentWatts[stat][level + 1]
+        elseif self.componentWatts[stat] and self.componentWatts[stat][1] then
+            total = total + self.componentWatts[stat][1]
+        end
+    end
+    return total
+end
+
+function Explorer:getPsuCapacity()
+    local level = self.upgradeLevels.psu or 0
+    return self.psuCapacity[level + 1] or 150
+end
+
+function Explorer:canAffordWatts(watts)
+    return self:getTotalWatts() + watts <= self:getPsuCapacity()
+end
+
 function Explorer:update(dt)
     if self.loading then
         self.loadTimer = self.loadTimer + dt
@@ -159,6 +220,42 @@ function Explorer:navigateTo(page)
             self.selectedFav = i
             break
         end
+    end
+    if page == "upgrades" then
+        self.shopView = "grid"
+        self.selectedComponent = nil
+        self.shopScrollY = 0
+        self.navHistory = {}
+        self.navIndex = 0
+    end
+end
+
+function Explorer:navigateToComponent(stat)
+    self.shopView = "detail"
+    self.selectedComponent = stat
+    table.insert(self.navHistory, {view = "grid"})
+    self.navIndex = #self.navHistory
+end
+
+function Explorer:navigateBack()
+    if self.navIndex > 0 then
+        local hist = self.navHistory[self.navIndex]
+        self.shopView = hist.view
+        self.selectedComponent = hist.component
+        self.navIndex = self.navIndex - 1
+    else
+        self.shopView = "grid"
+        self.selectedComponent = nil
+        self.shopScrollY = 0
+    end
+end
+
+function Explorer:navigateForward()
+    if self.navIndex < #self.navHistory then
+        self.navIndex = self.navIndex + 1
+        local hist = self.navHistory[self.navIndex]
+        self.shopView = hist.view
+        self.selectedComponent = hist.component
     end
 end
 
@@ -263,24 +360,28 @@ function Explorer:drawContent(cx, cy, cw, ch)
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(cx + 4, contentY + 18, cx + favW - 4, contentY + 18)
 
+    local favIndex = 0
     for i, fav in ipairs(self.favorites) do
-        local fy = contentY + 22 + (i - 1) * 20
-        local favHovered = self.lastMX >= cx and self.lastMX <= cx + favW and self.lastMY >= fy and self.lastMY <= fy + 18
+        if fav.unlocked ~= false then
+            favIndex = favIndex + 1
+            local fy = contentY + 22 + (favIndex - 1) * 20
+            local favHovered = self.lastMX >= cx and self.lastMX <= cx + favW and self.lastMY >= fy and self.lastMY <= fy + 18
 
-        if i == self.selectedFav and not self.loading then
-            love.graphics.setColor(W95.favHover)
-            love.graphics.rectangle("fill", cx + 2, fy, favW - 4, 18)
-            love.graphics.setColor(W95.highlightText)
-        elseif favHovered then
-            love.graphics.setColor({0.85, 0.85, 0.85})
-            love.graphics.rectangle("fill", cx + 2, fy, favW - 4, 18)
-            love.graphics.setColor(W95.link)
-        else
-            love.graphics.setColor(W95.text)
+            if fav.page == self.currentPage and not self.loading then
+                love.graphics.setColor(W95.favHover)
+                love.graphics.rectangle("fill", cx + 2, fy, favW - 4, 18)
+                love.graphics.setColor(W95.highlightText)
+            elseif favHovered then
+                love.graphics.setColor({0.85, 0.85, 0.85})
+                love.graphics.rectangle("fill", cx + 2, fy, favW - 4, 18)
+                love.graphics.setColor(W95.link)
+            else
+                love.graphics.setColor(W95.text)
+            end
+
+            love.graphics.print("  " .. fav.label, cx + 6, fy + 3)
+            table.insert(self.buttons, {x = cx, y = fy, w = favW, h = 18, action = "fav", page = fav.page, index = i})
         end
-
-        love.graphics.print("  " .. fav.label, cx + 6, fy + 3)
-        table.insert(self.buttons, {x = cx, y = fy, w = favW, h = 18, action = "fav", page = fav.page, index = i})
     end
 
     local pageX = cx + favW
@@ -296,13 +397,13 @@ function Explorer:drawContent(cx, cy, cw, ch)
         self:finishLoad()
         if self.currentPage == "upgrades" then
             self:drawUpgradesPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
-        elseif self.currentPage == "music" then
+        elseif self.currentPage == "music" and self.unlockedPages.music then
             self:drawMusicPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
-        elseif self.currentPage == "wallpaper" then
+        elseif self.currentPage == "wallpaper" and self.unlockedPages.wallpaper then
             self:drawWallpaperPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
         elseif self.currentPage == "update" then
             self:drawPlaceholderPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20, "Windows Update", "Su sistema esta actualizado.")
-        elseif self.currentPage == "msn" then
+        elseif self.currentPage == "msn" and self.unlockedPages.msn then
             self:drawPlaceholderPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20, "MSN", "Bienvenido a MSN.com")
         else
             self:drawHomePage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
@@ -391,80 +492,243 @@ function Explorer:drawUpgradesPage(x, y, w, h)
     love.graphics.setColor(W95.green)
     love.graphics.printf("Su dinero: " .. moneyStr, x, y + 24, w, "center")
 
-    if #self.upgrades == 0 then
-        love.graphics.setColor(W95.text)
-        love.graphics.printf("¡Todos los componentes al maximo!", x, y + 60, w, "center")
-        love.graphics.setColor(W95.green)
-        love.graphics.printf("Su PC esta completamente upgrades.", x, y + 80, w, "center")
+    if self.shopView == "grid" then
+        self:drawShopGrid(x, y + 44, w, h - 64)
     else
-        love.graphics.setColor(W95.text)
-        love.graphics.printf("Mejore su PC - Componentes disponibles:", x, y + 40, w, "center")
-
-        local tableX = x + 10
-        local tableY = y + 56
-        local colW = {100, 100, 100, 65, 80}
-        local rowH = 24
-
-        love.graphics.setColor(W95.highlight)
-        love.graphics.rectangle("fill", tableX, tableY, w - 20, rowH)
-
-        love.graphics.setColor(W95.highlightText)
-        local headers = {"Componente", "Actual", "Upgrade", "Precio", "Comprar"}
-        local hx = tableX + 4
-        for i, header in ipairs(headers) do
-            love.graphics.print(header, hx, tableY + 6)
-            hx = hx + colW[i]
-        end
-
-        for i, upg in ipairs(self.upgrades) do
-            local ry = tableY + rowH + (i - 1) * rowH
-            local isEven = i % 2 == 0
-
-            if isEven then
-                love.graphics.setColor({0.92, 0.92, 0.92})
-                love.graphics.rectangle("fill", tableX, ry, w - 20, rowH)
-            end
-
-            love.graphics.setColor(W95.text)
-            local rx = tableX + 4
-            love.graphics.print(upg.name, rx, ry + 6)
-            rx = rx + colW[1]
-            love.graphics.setColor(W95.textDim)
-            love.graphics.print(upg.current, rx, ry + 6)
-            rx = rx + colW[2]
-            love.graphics.setColor({0, 0.5, 0})
-            love.graphics.print(upg.upgrade, rx, ry + 6)
-            rx = rx + colW[3]
-            love.graphics.setColor({0.8, 0, 0})
-            love.graphics.print("$" .. upg.price, rx, ry + 6)
-            rx = rx + colW[4]
-
-            local btnW = 56
-            local btnH = 18
-            local btnX = rx
-            local btnY = ry + 3
-
-            local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
-            local canBuy = self.trabajoRef and self.trabajoRef.money >= upg.price
-            love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
-            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
-            self:drawBevel(btnX, btnY, btnW, btnH)
-            love.graphics.setColor(canBuy and W95.text or W95.textDim)
-            love.graphics.printf("Comprar", btnX, btnY + 3, btnW, "center")
-            table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "buy", index = i})
-        end
-
-        love.graphics.setColor(W95.borderDark)
-        love.graphics.line(x + 10, tableY + rowH + #self.upgrades * rowH + 4, x + w - 10, tableY + rowH + #self.upgrades * rowH + 4)
+        self:drawShopDetail(x, y + 44, w, h - 64)
     end
 
     if self.purchaseMsgTimer and self.purchaseMsgTimer > 0 and self.purchaseMessage then
         love.graphics.setColor(W95.highlight)
         love.graphics.printf(self.purchaseMessage, x, y + h - 38, w, "center")
     end
+end
 
+function Explorer:drawShopGrid(x, y, w, h)
+    local componentOrder = {"cpu", "ram", "disk", "display", "cooling", "psu"}
+    local cols = 3
+    local cellW = 120
+    local cellH = 110
+    local padding = 16
+    local startX = x + (w - cols * (cellW + padding) + padding) / 2
+
+    local totalWatts = self:getTotalWatts()
+    local psuCap = self:getPsuCapacity()
+
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Consumo: " .. totalWatts .. "W / " .. psuCap .. "W", x, y - 16, w, "center")
+
+    love.graphics.setScissor(x, y, w, h)
+
+    local scrollOffset = -self.shopScrollY
+
+    for i, stat in ipairs(componentOrder) do
+        local col = (i - 1) % cols
+        local row = math.floor((i - 1) / cols)
+        local cx = startX + col * (cellW + padding)
+        local cy = y + 8 + row * (cellH + padding) + scrollOffset
+
+        if cy + cellH > y and cy < y + h then
+            local comp = self.componentIcons[stat]
+            local level = self.upgradeLevels[stat] or 0
+            local tiers = self.upgradeTiers[stat]
+            local isMaxed = level >= #tiers
+
+            local currentWatts = 0
+            if self.componentWatts[stat] and self.componentWatts[stat][level + 1] then
+                currentWatts = self.componentWatts[stat][level + 1]
+            elseif self.componentWatts[stat] and self.componentWatts[stat][1] then
+                currentWatts = self.componentWatts[stat][1]
+            end
+
+            local hovered = self.lastMX >= cx and self.lastMX <= cx + cellW and self.lastMY >= cy and self.lastMY <= cy + cellH
+
+            love.graphics.setColor(hovered and {0.85, 0.85, 0.85} or W95.bg)
+            love.graphics.rectangle("fill", cx, cy, cellW, cellH)
+            self:drawBevel(cx, cy, cellW, cellH)
+
+            love.graphics.setColor(W95.highlight)
+            love.graphics.rectangle("fill", cx + 4, cy + 4, cellW - 8, 28)
+            love.graphics.setColor(W95.highlightText)
+            love.graphics.printf(comp.icon, cx + 4, cy + 10, cellW - 8, "center")
+
+            love.graphics.setColor(W95.text)
+            love.graphics.printf(comp.label, cx, cy + 36, cellW, "center")
+
+            love.graphics.setColor(W95.textDim)
+            love.graphics.printf("Lv." .. level, cx, cy + 50, cellW, "center")
+
+            if isMaxed then
+                love.graphics.setColor(W95.green)
+                love.graphics.printf("MAX", cx, cy + 54, cellW, "center")
+            else
+                local nextTier = tiers[level + 1]
+                local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= nextTier.price
+                local canBuyWatts = stat == "psu" or self:canAffordWatts(nextTier.watts or 0)
+                if canBuyMoney and canBuyWatts then
+                    love.graphics.setColor(W95.green)
+                else
+                    love.graphics.setColor({0.8, 0, 0})
+                end
+                love.graphics.printf("$" .. nextTier.price, cx, cy + 54, cellW, "center")
+            end
+
+            if stat == "psu" then
+                local psuLevel = self.upgradeLevels.psu or 0
+                local nextCap = self.psuCapacity[psuLevel + 2] or self.psuCapacity[#self.psuCapacity]
+                love.graphics.setColor(W95.textDim)
+                love.graphics.printf("-> " .. nextCap .. "W", cx, cy + 70, cellW, "center")
+            else
+            love.graphics.setColor(W95.textDim)
+            love.graphics.printf(currentWatts .. "W", cx, cy + 70, cellW, "center")
+            end
+
+            local bonusText = ""
+            if stat == "cpu" then
+                local bonus = level * 20
+                bonusText = "Tiempo: -" .. bonus .. "%"
+            elseif stat == "display" then
+                local bonus = level * 40
+                bonusText = "Dinero: +" .. bonus .. "%"
+            elseif stat == "ram" then
+                bonusText = "Trabajos: " .. (1 + level)
+            elseif stat == "cooling" then
+                local bonus = 10 + (level - 1) * 20
+                if level == 0 then bonus = 0 end
+                bonusText = "Boost: +" .. bonus .. "%"
+            elseif stat == "disk" then
+                bonusText = "Apps: " .. (1 + level)
+            elseif stat == "psu" then
+                bonusText = "Capacidad"
+            end
+
+            love.graphics.setColor(W95.yellow)
+            love.graphics.printf(bonusText, cx, cy + 86, cellW, "center")
+
+            table.insert(self.buttons, {x = cx, y = cy, w = cellW, h = cellH, action = "component", stat = stat})
+        end
+    end
+
+    love.graphics.setScissor()
+end
+
+function Explorer:drawShopDetail(x, y, w, h)
+    local stat = self.selectedComponent
+    if not stat then return end
+
+    local comp = self.componentIcons[stat]
+    local tiers = self.upgradeTiers[stat]
+    local level = self.upgradeLevels[stat] or 0
+
+    local totalWatts = self:getTotalWatts()
+    local psuCap = self:getPsuCapacity()
+
+    love.graphics.setColor(W95.text)
+    love.graphics.printf(comp.label, x, y, w, "center")
+
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x + 10, y + 18, x + w - 10, y + 18)
+
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Nivel actual: " .. level .. "/" .. #tiers .. "  |  Consumo: " .. totalWatts .. "W / " .. psuCap .. "W", x, y + 24, w, "center")
+
+    local tableX = x + 10
+    local tableY = y + 50
+    local rowH = 28
+
+    local isPsu = stat == "psu"
+    local headers = isPsu and {"Upgrade", "Capacidad", "Precio", "Estado"} or {"Upgrade", "Watts", "Precio", "Estado"}
+    local colW2 = {(w - 120) / 2, 50, 70, 80}
+
+    love.graphics.setColor(W95.highlight)
+    love.graphics.rectangle("fill", tableX, tableY, w - 20, rowH)
+    love.graphics.setColor(W95.highlightText)
+    local hx = tableX + 4
+    for i, header in ipairs(headers) do
+        love.graphics.print(header, hx, tableY + 8)
+        hx = hx + colW2[i]
+    end
+
+    for i, tier in ipairs(tiers) do
+        local ry = tableY + rowH + (i - 1) * rowH
+        local isEven = i % 2 == 0
+        local isCurrent = i == level + 1
+        local isOwned = i <= level
+
+        if isEven then
+            love.graphics.setColor({0.92, 0.92, 0.92})
+            love.graphics.rectangle("fill", tableX, ry, w - 20, rowH)
+        end
+
+        love.graphics.setColor(W95.text)
+        local rx = tableX + 4
+        love.graphics.print(tier.from .. " -> " .. tier.to, rx, ry + 8)
+        rx = rx + colW2[1]
+
+        love.graphics.setColor(W95.textDim)
+        if isPsu then
+            love.graphics.print(tier.capacity .. "W", rx, ry + 8)
+        else
+            love.graphics.print((tier.watts or 0) .. "W", rx, ry + 8)
+        end
+        rx = rx + colW2[2]
+
+        local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= tier.price
+        local canBuyWatts = isPsu or self:canAffordWatts(tier.watts or 0)
+        if canBuyMoney and canBuyWatts then
+            love.graphics.setColor(W95.green)
+        else
+            love.graphics.setColor({0.8, 0, 0})
+        end
+        love.graphics.print("$" .. tier.price, rx, ry + 8)
+        rx = rx + colW2[3]
+
+        if isOwned then
+            love.graphics.setColor(W95.green)
+            love.graphics.print("Comprado", rx, ry + 8)
+        elseif isCurrent then
+            local btnW = 70
+            local btnH = 20
+            local btnX = rx
+            local btnY = ry + 4
+            local canBuy = canBuyMoney and canBuyWatts
+            local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
+            love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
+            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+            self:drawBevel(btnX, btnY, btnW, btnH)
+            love.graphics.setColor(canBuy and W95.text or W95.textDim)
+            love.graphics.printf("Comprar", btnX, btnY + 4, btnW, "center")
+            table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "buy", stat = stat, tierIndex = i})
+        else
+            love.graphics.setColor(W95.textDim)
+            love.graphics.print("Bloqueado", rx, ry + 8)
+        end
+    end
+
+    local descY = y + h - 60
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x + 10, descY, x + w - 10, descY)
+
+    local descriptions = {
+        cpu = "Freelance: -20% tiempo de tarea por upgrade\nProyecto: Genera circulos mas rapido\n\nBase: 35% mas lento sin upgrades.\nCada nivel de CPU reduce el tiempo\nentre tareas y acelera la generacion\nde circulos en proyectos.",
+        ram = "Freelance: +1 trabajo simultaneo por upgrade\nProyecto: +25% puntos por circulo\n\nCada nivel de RAM permite hacer\nmas trabajos a la vez y aumenta\nlos puntos que dan los circulos.",
+        disk = "Almacenamiento del sistema\nDetermina cuantas apps puedes tener\n\nCada nivel de HDD desbloquea\nnuevas aplicaciones y funciones.",
+        display = "Freelance: +40% dinero por tarea por upgrade\nProyecto: Mayor daño por circulo\n\nCada nivel de GPU aumenta el dinero\npor tarea y el daño de los circulos\nen proyectos.",
+        cooling = "Freelance: +10% GPU y CPU, +20% por upgrade\nProyecto: Reduce bugs en circulos\n\nCada nivel de cooling potencia\nla GPU y CPU, y reduce la\nprobabilidad de bugs.",
+        psu = "Fuente de alimentacion\nDetermina la capacidad maxima de watts\n\nPermite instalar componentes mas\npotentes sin exceder el limite.",
+    }
+
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Que hace este componente:", x + 10, descY + 6, w - 20, "left")
+
+    local desc = descriptions[stat] or ""
     love.graphics.setColor(W95.textDim)
-    love.graphics.printf("Precios en dolares. Impuestos no incluidos.", x, y + h - 20, w, "center")
+    local descLines = desc:gmatch("[^\n]+")
+    local lineY = descY + 22
+    for line in descLines do
+        love.graphics.print("  " .. line, x + 14, lineY)
+        lineY = lineY + 14
+    end
 end
 
 function Explorer:handleClick(x, y, button)
@@ -476,34 +740,76 @@ function Explorer:handleClick(x, y, button)
                 if not self.loading then
                     self:navigateTo(btn.page)
                 end
+            elseif btn.action == "component" then
+                self:navigateToComponent(btn.stat)
             elseif btn.action == "buy" then
-                local upg = self.upgrades[btn.index]
-                if upg and self.trabajoRef then
-                    if self.trabajoRef.money >= upg.price and not upg.purchased then
-                        self.trabajoRef.money = self.trabajoRef.money - upg.price
-                        upg.purchased = true
-                        self.upgradeLevels[upg.stat] = (self.upgradeLevels[upg.stat] or 0) + 1
-                        self.purchaseMessage = upg.name .. " mejorado a " .. upg.upgrade .. "!"
-                        self.purchaseMsgTimer = 2.0
-                        if self.pcStatsRef then
-                            if upg.stat == "cpu" then self.pcStatsRef.cpu = upg.upgrade end
-                            if upg.stat == "ram" then
-                                self.pcStatsRef.ram = upg.upgrade
-                                local num = upg.upgrade:match("(%d+)")
-                                if num then self.pcStatsRef.ramNum = tonumber(num) end
+                if btn.stat and btn.tierIndex then
+                    local stat = btn.stat
+                    local tierIndex = btn.tierIndex
+                    local tiers = self.upgradeTiers[stat]
+                    local level = self.upgradeLevels[stat] or 0
+                    if tierIndex == level + 1 and tiers[tierIndex] then
+                        local tier = tiers[tierIndex]
+                        local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= tier.price
+                        local canBuyWatts = self:canAffordWatts(tier.watts or 0)
+                        if canBuyMoney and canBuyWatts then
+                            self.trabajoRef.money = self.trabajoRef.money - tier.price
+                            self.upgradeLevels[stat] = level + 1
+                            local names = {cpu = "Procesador", ram = "Memoria RAM", disk = "Disco Duro", display = "Placa de Video", cooling = "Refrigeracion", psu = "Fuente de Poder"}
+                            self.purchaseMessage = names[stat] .. " mejorado a " .. tier.to .. "!"
+                            self.purchaseMsgTimer = 2.0
+                            if self.onHardwarePurchase then self.onHardwarePurchase() end
+                            if self.onUpgradePurchased then self.onUpgradePurchased(stat, level + 1) end
+                            if self.pcStatsRef then
+                                if stat == "cpu" then self.pcStatsRef.cpu = tier.to end
+                                if stat == "ram" then
+                                    self.pcStatsRef.ram = tier.to
+                                    local num = tier.to:match("(%d+)")
+                                    if num then self.pcStatsRef.ramNum = tonumber(num) end
+                                end
+                                if stat == "disk" then self.pcStatsRef.disk = tier.to .. " HDD" end
+                                if stat == "display" then self.pcStatsRef.display = tier.to end
+                                if stat == "cooling" then self.pcStatsRef.cooling = tier.to end
+                                if stat == "psu" then self.pcStatsRef.psu = tier.to end
                             end
-                            if upg.stat == "disk" then self.pcStatsRef.disk = upg.upgrade .. " HDD" end
-                            if upg.stat == "display" then self.pcStatsRef.display = upg.upgrade end
-                            if upg.stat == "cooling" then self.pcStatsRef.cooling = upg.upgrade end
-                            if upg.stat == "monitor" then self.pcStatsRef.monitor = upg.upgrade end
+                            self.upgrades = self:getVisibleUpgrades()
+                        elseif not canBuyMoney then
+                            self.purchaseMessage = "Dinero insuficiente. Necesitas $" .. tier.price
+                            self.purchaseMsgTimer = 2.0
+                        elseif not canBuyWatts then
+                            self.purchaseMessage = "Fuente de poder insuficiente. Necesita mas watts."
+                            self.purchaseMsgTimer = 2.0
                         end
-                        self.upgrades = self:getVisibleUpgrades()
-                    elseif upg.purchased then
-                        self.purchaseMessage = "Ya tienes este upgrade."
-                        self.purchaseMsgTimer = 2.0
-                    else
-                        self.purchaseMessage = "Dinero insuficiente. Necesitas $" .. upg.price
-                        self.purchaseMsgTimer = 2.0
+                    end
+                else
+                    local upg = self.upgrades[btn.index]
+                    if upg and self.trabajoRef then
+                        if self.trabajoRef.money >= upg.price and not upg.purchased then
+                            self.trabajoRef.money = self.trabajoRef.money - upg.price
+                            upg.purchased = true
+                            self.upgradeLevels[upg.stat] = (self.upgradeLevels[upg.stat] or 0) + 1
+                            self.purchaseMessage = upg.name .. " mejorado a " .. upg.upgrade .. "!"
+                            self.purchaseMsgTimer = 2.0
+                            if self.pcStatsRef then
+                                if upg.stat == "cpu" then self.pcStatsRef.cpu = upg.upgrade end
+                                if upg.stat == "ram" then
+                                    self.pcStatsRef.ram = upg.upgrade
+                                    local num = upg.upgrade:match("(%d+)")
+                                    if num then self.pcStatsRef.ramNum = tonumber(num) end
+                                end
+                                if upg.stat == "disk" then self.pcStatsRef.disk = upg.upgrade .. " HDD" end
+                                if upg.stat == "display" then self.pcStatsRef.display = upg.upgrade end
+                                if upg.stat == "cooling" then self.pcStatsRef.cooling = upg.upgrade end
+                                if upg.stat == "monitor" then self.pcStatsRef.monitor = upg.upgrade end
+                            end
+                            self.upgrades = self:getVisibleUpgrades()
+                        elseif upg.purchased then
+                            self.purchaseMessage = "Ya tienes este upgrade."
+                            self.purchaseMsgTimer = 2.0
+                        else
+                            self.purchaseMessage = "Dinero insuficiente. Necesitas $" .. upg.price
+                            self.purchaseMsgTimer = 2.0
+                        end
                     end
                 end
             elseif btn.action == "tb" then
@@ -514,6 +820,10 @@ function Explorer:handleClick(x, y, button)
                     self.loadTimer = 0
                 elseif btn.label == "Actualizar" then
                     self:navigateTo(self.currentPage)
+                elseif btn.label == "Atras" then
+                    self:navigateBack()
+                elseif btn.label == "Adelante" then
+                    self:navigateForward()
                 end
             elseif btn.action == "buymusic" then
                 local song = self.musicSongs[btn.index]
@@ -560,6 +870,13 @@ function Explorer:mousemoved(x, y)
     self.window:mousemoved(x, y)
 end
 
+function Explorer:wheelmoved(x, y)
+    if self.currentPage == "upgrades" and self.shopView == "grid" then
+        self.shopScrollY = self.shopScrollY - y * 20
+        if self.shopScrollY < 0 then self.shopScrollY = 0 end
+    end
+end
+
 function Explorer:drawMusicPage(x, y, w, h)
     love.graphics.setColor(W95.text)
     love.graphics.printf("Tienda de Musica - Microsoft", x, y, w, "center")
@@ -578,65 +895,85 @@ function Explorer:drawMusicPage(x, y, w, h)
     love.graphics.printf("Descargue la mejor musica para su PC", x, y + 40, w, "center")
 
     local tableX = x + 20
-    local tableY = y + 58
     local colW = {200, 70, 80}
     local rowH = 22
+    local songIndex = 0
 
-    love.graphics.setColor(W95.highlight)
-    love.graphics.rectangle("fill", tableX, tableY, w - 40, rowH)
-    love.graphics.setColor(W95.highlightText)
-    local headers = {"Cancion", "Precio", "Comprar"}
-    local hx = tableX + 4
-    for i, header in ipairs(headers) do
-        love.graphics.print(header, hx, tableY + 5)
-        hx = hx + colW[i]
+    local categories = {
+        {id = "tendencias", label = "Tendencias"},
+        {id = "videojuegos", label = "Musica de Videojuegos"},
+    }
+
+    local curY = y + 58
+
+    for _, cat in ipairs(categories) do
+        love.graphics.setColor(W95.highlight)
+        love.graphics.rectangle("fill", tableX, curY, w - 40, rowH)
+        love.graphics.setColor(W95.highlightText)
+        love.graphics.printf(cat.label, tableX, curY + 5, w - 40, "center")
+        curY = curY + rowH
+
+        love.graphics.setColor(W95.highlight)
+        love.graphics.rectangle("fill", tableX, curY, w - 40, rowH)
+        love.graphics.setColor(W95.highlightText)
+        local headers = {"Cancion", "Precio", "Comprar"}
+        local hx = tableX + 4
+        for i, header in ipairs(headers) do
+            love.graphics.print(header, hx, curY + 5)
+            hx = hx + colW[i]
+        end
+        curY = curY + rowH
+
+        for i, song in ipairs(self.musicSongs) do
+            if song.category == cat.id then
+                songIndex = songIndex + 1
+                local isEven = songIndex % 2 == 0
+
+                if isEven then
+                    love.graphics.setColor({0.92, 0.92, 0.92})
+                    love.graphics.rectangle("fill", tableX, curY, w - 40, rowH)
+                end
+
+                love.graphics.setColor(W95.text)
+                love.graphics.print(song.name, tableX + 4, curY + 5)
+
+                local rx = tableX + colW[1]
+                if song.purchased then
+                    love.graphics.setColor(W95.green)
+                    love.graphics.print("Comprado", rx, curY + 5)
+                else
+                    love.graphics.setColor({0.8, 0, 0})
+                    love.graphics.print("$" .. song.price, rx, curY + 5)
+                end
+
+                rx = rx + colW[2]
+                local btnW = 56
+                local btnH = 18
+                local btnX = rx
+                local btnY = curY + 2
+
+                if song.purchased then
+                    love.graphics.setColor(W95.green)
+                    love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+                    love.graphics.setColor(W95.white)
+                    love.graphics.printf("OK", btnX, btnY + 3, btnW, "center")
+                else
+                    local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
+                    love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
+                    love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+                    self:drawBevel(btnX, btnY, btnW, btnH)
+                    love.graphics.setColor(W95.text)
+                    love.graphics.printf("Comprar", btnX, btnY + 3, btnW, "center")
+                    table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "buymusic", index = i})
+                end
+                curY = curY + rowH
+            end
+        end
+
+        love.graphics.setColor(W95.borderDark)
+        love.graphics.line(x + 20, curY, x + w - 20, curY)
+        curY = curY + 4
     end
-
-    for i, song in ipairs(self.musicSongs) do
-        local ry = tableY + rowH + (i - 1) * rowH
-        local isEven = i % 2 == 0
-
-        if isEven then
-            love.graphics.setColor({0.92, 0.92, 0.92})
-            love.graphics.rectangle("fill", tableX, ry, w - 40, rowH)
-        end
-
-        love.graphics.setColor(W95.text)
-        love.graphics.print(song.name, tableX + 4, ry + 5)
-
-        local rx = tableX + colW[1]
-        if song.purchased then
-            love.graphics.setColor(W95.green)
-            love.graphics.print("Comprado", rx, ry + 5)
-        else
-            love.graphics.setColor({0.8, 0, 0})
-            love.graphics.print("$" .. song.price, rx, ry + 5)
-        end
-
-        rx = rx + colW[2]
-        local btnW = 56
-        local btnH = 18
-        local btnX = rx
-        local btnY = ry + 2
-
-        if song.purchased then
-            love.graphics.setColor(W95.green)
-            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
-            love.graphics.setColor(W95.white)
-            love.graphics.printf("OK", btnX, btnY + 3, btnW, "center")
-        else
-            local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
-            love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
-            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
-            self:drawBevel(btnX, btnY, btnW, btnH)
-            love.graphics.setColor(W95.text)
-            love.graphics.printf("Comprar", btnX, btnY + 3, btnW, "center")
-            table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "buymusic", index = i})
-        end
-    end
-
-    love.graphics.setColor(W95.borderDark)
-    love.graphics.line(x + 20, tableY + rowH + #self.musicSongs * rowH + 4, x + w - 20, tableY + rowH + #self.musicSongs * rowH + 4)
 
     if self.purchaseMsgTimer and self.purchaseMsgTimer > 0 and self.purchaseMessage then
         love.graphics.setColor(W95.highlight)
