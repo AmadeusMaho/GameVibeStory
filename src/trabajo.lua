@@ -353,7 +353,7 @@ function Trabajo:generateCircle(comp)
     local dx = targetX - startX
     local dy = targetY - startY
     local dist = math.sqrt(dx * dx + dy * dy)
-    local speed = 300
+    local speed = 200
 
     table.insert(self.circles, {
         x = startX,
@@ -364,8 +364,9 @@ function Trabajo:generateCircle(comp)
         targetY = targetY,
         color = comp.color,
         power = comp.power,
-        life = dist / speed + 0.05,
-        radius = 5,
+        life = dist / speed + 0.1,
+        radius = 12,
+        componentLabel = comp.label,
     })
 
     comp.vibration = 0.2
@@ -675,6 +676,13 @@ function Trabajo:drawParticularTab(x, y, w, h)
     local gapX = 8
     local gapY = 6
 
+    local componentNames = {
+        gpu = "S3 Trio64",
+        cpu = "Pentium 133",
+        ram = "16MB EDO",
+        cooling = "Cooler Master",
+    }
+
     for i, comp in ipairs(self.components) do
         local col = (i - 1) % 2
         local row = math.floor((i - 1) / 2)
@@ -690,18 +698,27 @@ function Trabajo:drawParticularTab(x, y, w, h)
         love.graphics.rectangle("fill", bx + vibOff, by, boxW, boxH)
         self:drawInset(bx + vibOff, by, boxW, boxH)
 
+        local imgX = bx + 4 + vibOff
+        local imgY = by + 4
+        local imgW = 32
+        local imgH = boxH - 8
+        love.graphics.setColor(comp.color[1] * 0.3, comp.color[2] * 0.3, comp.color[3] * 0.3)
+        love.graphics.rectangle("fill", imgX, imgY, imgW, imgH, 2, 2)
         love.graphics.setColor(comp.color)
-        love.graphics.circle("fill", bx + 14 + vibOff, by + boxH / 2, 8)
+        love.graphics.rectangle("line", imgX, imgY, imgW, imgH)
 
         love.graphics.setColor(W95.text)
-        love.graphics.print(comp.label, bx + 26 + vibOff, by + 6)
+        love.graphics.print(comp.label, bx + 40 + vibOff, by + 4)
 
         local tierNames = {"Basico", "T1", "T2", "T3", "T4"}
         love.graphics.setColor(W95.textDim)
-        love.graphics.print(tierNames[comp.tier + 1] or "Basico", bx + 26 + vibOff, by + 20)
+        love.graphics.print(tierNames[comp.tier + 1] or "Basico", bx + 40 + vibOff, by + 16)
 
         love.graphics.setColor(comp.color)
-        love.graphics.printf(comp.power .. "%/c", bx + vibOff, by + 32, boxW, "center")
+        love.graphics.print(componentNames[comp.id] or comp.label, bx + 40 + vibOff, by + 28)
+
+        love.graphics.setColor(W95.textDim)
+        love.graphics.printf(comp.power .. "%/c", bx + vibOff, by + 36, boxW, "center")
 
         comp.screenX = bx + boxW / 2 + vibOff
         comp.screenY = by + boxH / 2
@@ -712,6 +729,14 @@ function Trabajo:drawParticularTab(x, y, w, h)
     for _, circ in ipairs(self.circles) do
         love.graphics.setColor(circ.color)
         love.graphics.circle("fill", circ.x, circ.y, circ.radius)
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.circle("line", circ.x, circ.y, circ.radius)
+        local prevFont = love.graphics.getFont()
+        local bigFont = love.graphics.newFont(12)
+        love.graphics.setFont(bigFont)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf(circ.power .. "%", circ.x - 14, circ.y - 7, 28, "center")
+        love.graphics.setFont(prevFont)
     end
 
     if self.resultMessage ~= "" then

@@ -15,7 +15,7 @@ local bsodActive = false
 local malwarePopupTimer = 0
 local malwarePopupDuration = 3.0
 local bootSound = nil
-local clickSound = nil
+local clickSounds = {}
 local startupSound = nil
 local errorSound = nil
 local biosLogo = nil
@@ -117,9 +117,10 @@ local W95 = {
 }
 
 function playClick()
-    if clickSound then
-        clickSound:stop()
-        clickSound:play()
+    if #clickSounds > 0 then
+        local snd = clickSounds[math.random(#clickSounds)]
+        snd:stop()
+        snd:play()
     end
 end
 
@@ -532,8 +533,18 @@ function love.load()
 
     local ok2, snd2 = pcall(love.audio.newSource, "assets/sounds/click.wav", "static")
     if ok2 then
-        clickSound = snd2
-        clickSound:setVolume(0.6)
+        snd2:setVolume(0.6)
+        table.insert(clickSounds, snd2)
+    end
+    local ok2b, snd2b = pcall(love.audio.newSource, "assets/sounds/click2.wav", "static")
+    if ok2b then
+        snd2b:setVolume(0.6)
+        table.insert(clickSounds, snd2b)
+    end
+    local ok2c, snd2c = pcall(love.audio.newSource, "assets/sounds/click3.wav", "static")
+    if ok2c then
+        snd2c:setVolume(0.6)
+        table.insert(clickSounds, snd2c)
     end
 
     local ok3, snd3 = pcall(love.audio.newSource, "assets/sounds/startupWindows.wav", "static")
@@ -1179,6 +1190,7 @@ function love.mousepressed(x, y, button)
         end
         return
     elseif gameState == "desktop" then
+        playClick()
         local appMap = {
             mypc = mypc, explorer = explorer, notepad = notepad,
             winamp = winamp, trabajo = trabajo, email = email, recyclebin = recyclebin,
@@ -1194,7 +1206,6 @@ function love.mousepressed(x, y, button)
             end
         end
 
-        playClick()
         local winH = love.graphics.getHeight()
         local taskH = 40
         local taskY = winH - taskH
