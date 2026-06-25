@@ -39,7 +39,7 @@ local freelanceTasks = {
 local componentDefs = {
     gpu = {
         label = "GPU",
-        color = {0.2, 0.5, 1.0},
+        color = {0.2, 0.8, 0.3},
         baseInterval = 2.0,
         basePower = 4,
         tiers = {
@@ -51,7 +51,7 @@ local componentDefs = {
     },
     cpu = {
         label = "CPU",
-        color = {0.2, 0.8, 0.3},
+        color = {0.6, 0.2, 0.9},
         baseInterval = 3.0,
         basePower = 2,
         tiers = {
@@ -63,7 +63,7 @@ local componentDefs = {
     },
     ram = {
         label = "RAM",
-        color = {0.9, 0.8, 0.2},
+        color = {0.9, 0.5, 0.1},
         baseInterval = 4.0,
         basePower = 3,
         tiers = {
@@ -152,11 +152,16 @@ function Trabajo.new(x, y)
         end
     end
 
-    self.circleSound = nil
+    self.circleSounds = {}
     local okCs, sndCs = pcall(love.audio.newSource, "assets/sounds/circlesound.wav", "static")
     if okCs then
         sndCs:setVolume(0.5)
-        self.circleSound = sndCs
+        table.insert(self.circleSounds, sndCs)
+    end
+    local okCs2, sndCs2 = pcall(love.audio.newSource, "assets/sounds/circlesound2.wav", "static")
+    if okCs2 then
+        sndCs2:setVolume(0.5)
+        table.insert(self.circleSounds, sndCs2)
     end
 
     return self
@@ -328,17 +333,30 @@ function Trabajo:update(dt)
             circ.y = circ.y + circ.vy * dt
             circ.life = circ.life - dt
             if circ.life <= 0 then
-                self.projectProgress = self.projectProgress + circ.power
-                table.insert(self.floatingNumbers, {
-                    text = "+" .. circ.power .. "%",
-                    x = circ.targetX,
-                    y = circ.targetY,
-                    timer = 1.0,
-                    maxTimer = 1.0,
-                    vy = -40,
-                })
+                if circ.isBug then
+                    self.projectProgress = math.max(0, self.projectProgress - circ.power)
+                    table.insert(self.floatingNumbers, {
+                        text = "-" .. circ.power .. "% BUG",
+                        x = circ.targetX,
+                        y = circ.targetY,
+                        timer = 1.5,
+                        maxTimer = 1.5,
+                        vy = -40,
+                        isBug = true,
+                    })
+                else
+                    self.projectProgress = self.projectProgress + circ.power
+                    table.insert(self.floatingNumbers, {
+                        text = "+" .. circ.power .. "%",
+                        x = circ.targetX,
+                        y = circ.targetY,
+                        timer = 1.0,
+                        maxTimer = 1.0,
+                        vy = -40,
+                    })
+                end
                 self.barShake = 0.15
-                self.barShakeIntensity = 2
+                self.barShakeIntensity = circ.isBug and 4 or 2
                 table.remove(self.circles, i)
 
                 if self.projectProgress >= self.projectMaxProgress then
@@ -367,6 +385,10 @@ function Trabajo:generateCircle(comp)
     local dist = math.sqrt(dx * dx + dy * dy)
     local speed = 200
 
+    local isBug = math.random() < 0.08
+    local circColor = isBug and {0.9, 0.15, 0.15} or comp.color
+    local circPower = isBug and math.floor(comp.power * 0.6) or comp.power
+
     table.insert(self.circles, {
         x = startX,
         y = startY,
@@ -374,18 +396,20 @@ function Trabajo:generateCircle(comp)
         vy = (dy / dist) * speed,
         targetX = targetX,
         targetY = targetY,
-        color = comp.color,
-        power = comp.power,
+        color = circColor,
+        power = circPower,
         life = dist / speed + 0.1,
         radius = 12,
         componentLabel = comp.label,
+        isBug = isBug,
     })
 
     comp.vibration = 0.2
 
-    if self.circleSound then
-        self.circleSound:stop()
-        self.circleSound:play()
+    if #self.circleSounds > 0 then
+        local snd = self.circleSounds[math.random(#self.circleSounds)]
+        snd:stop()
+        snd:play()
     end
 end
 
@@ -646,7 +670,11 @@ function Trabajo:drawParticularTab(x, y, w, h)
 
     for _, num in ipairs(self.floatingNumbers) do
         local alpha = num.timer / num.maxTimer
-        love.graphics.setColor(0.2, 1, 0.2, alpha)
+        if num.isBug then
+            love.graphics.setColor(1, 0.2, 0.2, alpha)
+        else
+            love.graphics.setColor(0.2, 1, 0.2, alpha)
+        end
         love.graphics.printf(num.text, num.x - 30, num.y, 60, "center")
     end
 
@@ -734,19 +762,10 @@ function Trabajo:drawParticularTab(x, y, w, h)
         love.graphics.setColor(0, 0, 0, 0.3)
         love.graphics.circle("fill", cx + 2, cy + 2, r)
 
-        love.graphics.setColor(circ.color[1] * 0.5, circ.color[2] * 0.5, circ.color[3] * 0.5)
+        love.graphics.setColor(circ.color)
         love.graphics.circle("fill", cx, cy, r)
 
-        love.graphics.setColor(circ.color[1] * 0.8, circ.color[2] * 0.8, circ.color[3] * 0.8)
-        love.graphics.circle("fill", cx, cy, r * 0.75)
-
-        love.graphics.setColor(circ.color)
-        love.graphics.circle("fill", cx, cy, r * 0.55)
-
-        love.graphics.setColor(circ.color[1] * 1.2, circ.color[2] * 1.2, circ.color[3] * 1.2)
-        love.graphics.circle("fill", cx - r * 0.2, cy - r * 0.2, r * 0.25)
-
-        love.graphics.setColor(0, 0, 0, 0.6)
+        love.graphics.setColor(0, 0, 0)
         love.graphics.circle("line", cx, cy, r)
 
         local prevFont = love.graphics.getFont()
