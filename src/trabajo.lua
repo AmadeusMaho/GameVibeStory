@@ -672,9 +672,20 @@ function Trabajo:drawParticularTab(x, y, w, h)
     local gridY = infoY + 18
     local gridX = x + 16
     local boxW = (w - 40) / 2
-    local boxH = 44
+    local boxH = 60
     local gapX = 8
     local gapY = 6
+
+    local tierColors = {
+        {0.5, 0.5, 0.5},
+        {0.5, 0.5, 0.5},
+        {0.2, 0.7, 0.2},
+        {0.2, 0.4, 0.9},
+        {0.6, 0.2, 0.9},
+        {0.9, 0.6, 0.1},
+    }
+
+    local tierNames = {"Basico", "Basico", "Avanzado", "Elite", "Legendario"}
 
     local componentNames = {
         gpu = "S3 Trio64",
@@ -694,31 +705,34 @@ function Trabajo:drawParticularTab(x, y, w, h)
             vibOff = (math.random() - 0.5) * 4
         end
 
+        local tierCol = tierColors[comp.tier + 1] or tierColors[1]
+
         love.graphics.setColor(W95.fieldBg)
         love.graphics.rectangle("fill", bx + vibOff, by, boxW, boxH)
-        self:drawInset(bx + vibOff, by, boxW, boxH)
 
-        local imgX = bx + 4 + vibOff
-        local imgY = by + 4
-        local imgW = 32
-        local imgH = boxH - 8
-        love.graphics.setColor(comp.color[1] * 0.3, comp.color[2] * 0.3, comp.color[3] * 0.3)
-        love.graphics.rectangle("fill", imgX, imgY, imgW, imgH, 2, 2)
-        love.graphics.setColor(comp.color)
-        love.graphics.rectangle("line", imgX, imgY, imgW, imgH)
+        love.graphics.setColor(tierCol[1] * 0.3, tierCol[2] * 0.3, tierCol[3] * 0.3)
+        love.graphics.rectangle("fill", bx + vibOff, by, boxW, 3)
+        love.graphics.rectangle("fill", bx + vibOff, by + boxH - 3, boxW, 3)
+        love.graphics.rectangle("fill", bx + vibOff, by, 3, boxH)
+        love.graphics.rectangle("fill", bx + vibOff + boxW - 3, by, 3, boxH)
+
+        love.graphics.setColor(tierCol)
+        love.graphics.rectangle("fill", bx + vibOff, by, boxW, 2)
+        love.graphics.rectangle("fill", bx + vibOff, by + boxH - 2, boxW, 2)
+        love.graphics.rectangle("fill", bx + vibOff, by, 2, boxH)
+        love.graphics.rectangle("fill", bx + vibOff + boxW - 2, by, 2, boxH)
 
         love.graphics.setColor(W95.text)
-        love.graphics.print(comp.label, bx + 40 + vibOff, by + 4)
+        love.graphics.printf(comp.label, bx + vibOff, by + 5, boxW, "center")
 
-        local tierNames = {"Basico", "T1", "T2", "T3", "T4"}
+        love.graphics.setColor(tierCol)
+        love.graphics.printf(tierNames[comp.tier + 1] or "Basico", bx + vibOff, by + 17, boxW, "center")
+
         love.graphics.setColor(W95.textDim)
-        love.graphics.print(tierNames[comp.tier + 1] or "Basico", bx + 40 + vibOff, by + 16)
+        love.graphics.printf(componentNames[comp.id] or comp.label, bx + vibOff, by + 29, boxW, "center")
 
         love.graphics.setColor(comp.color)
-        love.graphics.print(componentNames[comp.id] or comp.label, bx + 40 + vibOff, by + 28)
-
-        love.graphics.setColor(W95.textDim)
-        love.graphics.printf(comp.power .. "%/c", bx + vibOff, by + 36, boxW, "center")
+        love.graphics.printf(comp.power .. "%/circulo", bx + vibOff, by + 41, boxW, "center")
 
         comp.screenX = bx + boxW / 2 + vibOff
         comp.screenY = by + boxH / 2
@@ -727,15 +741,32 @@ function Trabajo:drawParticularTab(x, y, w, h)
     end
 
     for _, circ in ipairs(self.circles) do
+        local r = circ.radius
+        local cx, cy = circ.x, circ.y
+
+        love.graphics.setColor(0, 0, 0, 0.3)
+        love.graphics.circle("fill", cx + 2, cy + 2, r)
+
+        love.graphics.setColor(circ.color[1] * 0.5, circ.color[2] * 0.5, circ.color[3] * 0.5)
+        love.graphics.circle("fill", cx, cy, r)
+
+        love.graphics.setColor(circ.color[1] * 0.8, circ.color[2] * 0.8, circ.color[3] * 0.8)
+        love.graphics.circle("fill", cx, cy, r * 0.75)
+
         love.graphics.setColor(circ.color)
-        love.graphics.circle("fill", circ.x, circ.y, circ.radius)
-        love.graphics.setColor(0, 0, 0)
-        love.graphics.circle("line", circ.x, circ.y, circ.radius)
+        love.graphics.circle("fill", cx, cy, r * 0.55)
+
+        love.graphics.setColor(circ.color[1] * 1.2, circ.color[2] * 1.2, circ.color[3] * 1.2)
+        love.graphics.circle("fill", cx - r * 0.2, cy - r * 0.2, r * 0.25)
+
+        love.graphics.setColor(0, 0, 0, 0.6)
+        love.graphics.circle("line", cx, cy, r)
+
         local prevFont = love.graphics.getFont()
-        local bigFont = love.graphics.newFont(12)
+        local bigFont = love.graphics.newFont(13)
         love.graphics.setFont(bigFont)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.printf(circ.power .. "%", circ.x - 14, circ.y - 7, 28, "center")
+        love.graphics.printf(circ.power .. "%", cx - 16, cy - 8, 32, "center")
         love.graphics.setFont(prevFont)
     end
 
