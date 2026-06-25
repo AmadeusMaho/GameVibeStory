@@ -812,7 +812,7 @@ end
 function drawEnergyStar(x, y)
     if energyLogo then
         local imgW, imgH = energyLogo:getDimensions()
-        local scale = math.min(70 / imgW, 50 / imgH)
+        local scale = math.min(140 / imgW, 100 / imgH)
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(energyLogo, x, y, 0, scale, scale)
     end
