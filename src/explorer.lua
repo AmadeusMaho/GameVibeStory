@@ -47,17 +47,59 @@ function Explorer.new(x, y)
         {name = "RHCP - Aeroplane", price = 45, file = "songw95_2.wav", purchased = false, category = "tendencias"},
         {name = "Backstreet Boys - I Want It That Way", price = 60, file = "songw95_3.wav", purchased = false, category = "tendencias"},
         {name = "Las Ketchup - Asereje", price = 75, file = "songw95_4.wav", purchased = false, category = "tendencias"},
-        {name = "Nobuo Uematsu - Corridors of Time", price = 50, file = "chrono.ogg", purchased = false, category = "videojuegos"},
+        {name = "Nobuo Uematsu - Corridors of Time", price = 50, file = "songGame_w95.wav", purchased = false, category = "videojuegos"},
     }
 
     self.favorites = {
         {label = "Tienda", page = "upgrades"},
+        {label = "Apps", page = "apps"},
         {label = "Windows Update", page = "update"},
         {label = "Musica", page = "music", unlocked = false},
         {label = "Fondo de escritorio", page = "wallpaper", unlocked = false},
         {label = "MSN", page = "msn", unlocked = false},
     }
-    self.unlockedPages = {upgrades = true, update = true}
+    self.unlockedPages = {upgrades = true, update = true, apps = true}
+
+    self.appStore = {
+        {
+            id = "winbatch",
+            name = "Winbatch",
+            desc = "Automatiza tareas freelance.\nHace clic automaticamente\nen el boton Trabajar cada\n3 segundos.",
+            price = 500,
+            icon = "winbatch",
+            purchased = false,
+            milestone = nil,
+        },
+        {
+            id = "app2",
+            name = "Proximamente...",
+            desc = "Nueva app disponible pronto.",
+            price = 0,
+            icon = nil,
+            purchased = false,
+            milestone = "locked",
+        },
+        {
+            id = "app3",
+            name = "Proximamente...",
+            desc = "Nueva app disponible pronto.",
+            price = 0,
+            icon = nil,
+            purchased = false,
+            milestone = "locked",
+        },
+        {
+            id = "app4",
+            name = "Proximamente...",
+            desc = "Nueva app disponible pronto.",
+            price = 0,
+            icon = nil,
+            purchased = false,
+            milestone = "locked",
+        },
+    }
+    self.appStoreScrollY = 0
+    self.selectedApp = nil
 
     self.upgradeTiers = {
         cpu = {
@@ -67,10 +109,10 @@ function Explorer.new(x, y)
             {from = "Pentium 200MHz", to = "Pentium MMX 233", price = 800, watts = 70},
         },
         ram = {
-            {from = "16 MB", to = "32 MB", price = 70, watts = 3},
-            {from = "32 MB", to = "64 MB", price = 133, watts = 5},
-            {from = "64 MB", to = "128 MB", price = 266, watts = 8},
-            {from = "128 MB", to = "256 MB", price = 560, watts = 12},
+            {from = "16 MB", to = "32 MB", price = 200, watts = 3},
+            {from = "32 MB", to = "64 MB", price = 500, watts = 5},
+            {from = "64 MB", to = "128 MB", price = 1200, watts = 8},
+            {from = "128 MB", to = "256 MB", price = 3000, watts = 12},
         },
         disk = {
             {from = "850 MB", to = "1.2 GB", price = 90, watts = 8},
@@ -397,6 +439,8 @@ function Explorer:drawContent(cx, cy, cw, ch)
         self:finishLoad()
         if self.currentPage == "upgrades" then
             self:drawUpgradesPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
+        elseif self.currentPage == "apps" then
+            self:drawAppsPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
         elseif self.currentPage == "music" and self.unlockedPages.music then
             self:drawMusicPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
         elseif self.currentPage == "wallpaper" and self.unlockedPages.wallpaper then
@@ -463,6 +507,118 @@ function Explorer:drawHomePage(x, y, w, h)
 
     love.graphics.setColor(W95.link)
     love.graphics.printf("http://www.microsoft.com", x, y + 100, w, "center")
+end
+
+function Explorer:drawAppsPage(x, y, w, h)
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Tienda de Aplicaciones", x, y, w, "center")
+
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x + 10, y + 20, x + w - 10, y + 20)
+
+    local moneyStr = "$0"
+    if self.trabajoRef then
+        moneyStr = "$" .. self.trabajoRef.money
+    end
+    love.graphics.setColor(W95.green)
+    love.graphics.printf("Su dinero: " .. moneyStr, x, y + 24, w, "center")
+
+    local cols = 3
+    local cellW = 120
+    local cellH = 130
+    local padding = 16
+    local startX = x + (w - cols * (cellW + padding) + padding) / 2
+
+    love.graphics.setScissor(x, y + 44, w, h - 44)
+
+    local scrollOffset = -self.appStoreScrollY
+
+    for i, app in ipairs(self.appStore) do
+        local col = (i - 1) % cols
+        local row = math.floor((i - 1) / cols)
+        local cx = startX + col * (cellW + padding)
+        local cy = y + 52 + row * (cellH + padding) + scrollOffset
+
+        if cy + cellH > y + 44 and cy < y + h then
+            local isLocked = app.milestone == "locked"
+            local isSelected = self.selectedApp and self.selectedApp.id == app.id
+            local hovered = self.lastMX >= cx and self.lastMX <= cx + cellW and self.lastMY >= cy and self.lastMY <= cy + cellH
+
+            love.graphics.setColor(isSelected and {0.9, 0.9, 1.0} or (hovered and {0.85, 0.85, 0.85} or W95.bg))
+            love.graphics.rectangle("fill", cx, cy, cellW, cellH)
+            self:drawBevel(cx, cy, cellW, cellH)
+
+            love.graphics.setColor(W95.highlight)
+            love.graphics.rectangle("fill", cx + 4, cy + 4, cellW - 8, 40)
+
+            if app.icon and iconImages[app.icon] then
+                local img = iconImages[app.icon]
+                local imgW, imgH = img:getDimensions()
+                local iconScale = math.min(36 / imgW, 36 / imgH)
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.draw(img, cx + (cellW - 36) / 2, cy + 6, 0, iconScale, iconScale)
+            else
+                love.graphics.setColor(W95.textDim)
+                love.graphics.printf("?", cx, cy + 16, cellW, "center")
+            end
+
+            love.graphics.setColor(W95.text)
+            love.graphics.printf(app.name, cx, cy + 48, cellW, "center")
+
+            if isLocked then
+                love.graphics.setColor(W95.textDim)
+                love.graphics.printf("Proximamente...", cx, cy + 64, cellW, "center")
+                table.insert(self.buttons, {x = cx, y = cy, w = cellW, h = cellH, action = "selectapp", index = i})
+            elseif app.purchased then
+                love.graphics.setColor(W95.green)
+                love.graphics.printf("Instalado", cx, cy + 64, cellW, "center")
+                table.insert(self.buttons, {x = cx, y = cy, w = cellW, h = cellH, action = "selectapp", index = i})
+            else
+                love.graphics.setColor({0.8, 0, 0})
+                love.graphics.printf("$" .. app.price, cx, cy + 64, cellW, "center")
+
+                local btnW = 56
+                local btnH = 18
+                local btnX = cx + (cellW - btnW) / 2
+                local btnY = cy + 82
+                local btnHov = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
+                local canAfford = self.trabajoRef and self.trabajoRef.money >= app.price
+
+                if canAfford then
+                    love.graphics.setColor(btnHov and {0.85, 0.85, 0.85} or W95.bg)
+                    love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+                    self:drawBevel(btnX, btnY, btnW, btnH)
+                    love.graphics.setColor(W95.green)
+                    love.graphics.printf("Comprar", btnX, btnY + 3, btnW, "center")
+                    table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "buyapp", index = i})
+                else
+                    love.graphics.setColor(W95.textDim)
+                    love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+                    self:drawBevel(btnX, btnY, btnW, btnH)
+                    love.graphics.setColor(W95.textDim)
+                    love.graphics.printf("Comprar", btnX, btnY + 3, btnW, "center")
+                end
+                table.insert(self.buttons, {x = cx, y = cy, w = cellW, h = cellH - 30, action = "selectapp", index = i})
+            end
+        end
+    end
+
+    love.graphics.setScissor()
+
+    if self.selectedApp then
+        local app = self.selectedApp
+        love.graphics.setColor(W95.borderDark)
+        love.graphics.line(x + 10, y + h - 60, x + w - 10, y + h - 60)
+        love.graphics.setColor(W95.text)
+        love.graphics.printf(app.name, x, y + h - 55, w, "center")
+        love.graphics.setColor(W95.textDim)
+        love.graphics.printf(app.desc, x, y + h - 40, w, "center")
+    end
+
+    if self.purchaseMsgTimer and self.purchaseMsgTimer > 0 and self.purchaseMessage then
+        love.graphics.setColor(W95.highlight)
+        love.graphics.printf(self.purchaseMessage, x, y + h - 20, w, "center")
+    end
 end
 
 function Explorer:drawPlaceholderPage(x, y, w, h, title, desc)
@@ -742,6 +898,11 @@ function Explorer:handleClick(x, y, button)
                 end
             elseif btn.action == "component" then
                 self:navigateToComponent(btn.stat)
+            elseif btn.action == "selectapp" then
+                local app = self.appStore[btn.index]
+                if app then
+                    self.selectedApp = app
+                end
             elseif btn.action == "buy" then
                 if btn.stat and btn.tierIndex then
                     local stat = btn.stat
@@ -813,6 +974,20 @@ function Explorer:handleClick(x, y, button)
                         end
                     end
                 end
+            elseif btn.action == "buyapp" then
+                local app = self.appStore[btn.index]
+                if app and self.trabajoRef and not app.purchased and app.milestone ~= "locked" then
+                    if self.trabajoRef.money >= app.price then
+                        self.trabajoRef.money = self.trabajoRef.money - app.price
+                        app.purchased = true
+                        self.purchaseMessage = app.name .. " instalado!"
+                        self.purchaseMsgTimer = 2.0
+                        if self.onAppPurchased then self.onAppPurchased(app.id) end
+                    else
+                        self.purchaseMessage = "Dinero insuficiente."
+                        self.purchaseMsgTimer = 2.0
+                    end
+                end
             elseif btn.action == "tb" then
                 if btn.label == "Inicio" then
                     self:navigateTo("home")
@@ -875,6 +1050,9 @@ function Explorer:wheelmoved(x, y)
     if self.currentPage == "upgrades" and self.shopView == "grid" then
         self.shopScrollY = self.shopScrollY - y * 20
         if self.shopScrollY < 0 then self.shopScrollY = 0 end
+    elseif self.currentPage == "apps" then
+        self.appStoreScrollY = self.appStoreScrollY - y * 20
+        if self.appStoreScrollY < 0 then self.appStoreScrollY = 0 end
     end
 end
 

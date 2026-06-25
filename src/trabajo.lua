@@ -160,6 +160,10 @@ function Trabajo.new(x, y)
     self.successMessage = ""
     self.successTimer = 0
 
+    self.winbatchActive = false
+    self.winbatchTimer = 0
+    self.winbatchInterval = 3.0
+
     self.components = {}
     self.circles = {}
     self.floatingNumbers = {}
@@ -336,34 +340,61 @@ function Trabajo:update(dt)
         self.cooldown = self.cooldown - dt
     end
 
+    if self.winbatchActive then
+        self.winbatchTimer = self.winbatchTimer + dt
+        if self.winbatchTimer >= self.winbatchInterval then
+            self.winbatchTimer = self.winbatchTimer - self.winbatchInterval
+            for slot = 1, self.maxJobs do
+                if not self.activeJobs[slot] then
+                    local available = self:getAvailableTasks()
+                    if #available > 0 then
+                        local task = available[math.random(#available)]
+                        self.activeJobs[slot] = {task = task, progress = 0}
+                    end
+                    break
+                end
+            end
+        end
+    end
+
+    local oldMaxJobs = self.maxJobs
     self.maxJobs = self:getJobCapacity()
+    
+    if self.maxJobs ~= oldMaxJobs then
+        local baseH = 200
+        local slotH = 60
+        self.window.h = baseH + self.maxJobs * slotH
+    end
+    
     self:checkDifficultyUnlocks()
 
-    for i = #self.activeJobs, 1, -1 do
-        local job = self.activeJobs[i]
-        job.progress = job.progress + dt
-        local adjustedTime = job.task.time * self:getTaskTimeMultiplier()
-        if job.progress >= adjustedTime then
-            local baseReward = self:getBaseRewardPerTask()
-            local comboMult = 1.0
-            if self.achievementsRef then
-                comboMult = self.achievementsRef.comboMultiplier or 1.0
+    for slot = 1, self.maxJobs do
+        local job = self.activeJobs[slot]
+        if job then
+            job.progress = job.progress + dt
+            local adjustedTime = job.task.time * self:getTaskTimeMultiplier()
+            if job.progress >= adjustedTime then
+                local baseReward = self:getBaseRewardPerTask()
+                local comboMult = 1.0
+                if self.achievementsRef then
+                    comboMult = self.achievementsRef.comboMultiplier or 1.0
+                end
+                local hwMult = self:getTaskRewardMultiplier()
+                local reward = math.floor(baseReward * comboMult * hwMult)
+                self.money = self.money + reward
+                self.totalEarned = self.totalEarned + reward
+                self.tasksCompleted = self.tasksCompleted + 1
+                if self.moneySounds and #self.moneySounds > 0 then
+                    local snd = self.moneySounds[math.random(#self.moneySounds)]
+                    snd:stop()
+                    snd:play()
+                end
+                if self.achievementsRef then
+                    self.achievementsRef:onTaskComplete(reward)
+                end
+                if self.onWorkDone then self.onWorkDone() end
+                self.activeJobs[slot] = nil
             end
-            local hwMult = self:getTaskRewardMultiplier()
-            local reward = math.floor(baseReward * comboMult * hwMult)
-            self.money = self.money + reward
-            self.totalEarned = self.totalEarned + reward
-            self.tasksCompleted = self.tasksCompleted + 1
-            if self.moneySounds and #self.moneySounds > 0 then
-                local snd = self.moneySounds[math.random(#self.moneySounds)]
-                snd:stop()
-                snd:play()
-            end
-            if self.achievementsRef then
-                self.achievementsRef:onTaskComplete(reward)
-            end
-            if self.onWorkDone then self.onWorkDone() end
-            table.remove(self.activeJobs, i)
         end
     end
 
@@ -593,7 +624,7 @@ end
 function Trabajo:getTaskTimeMultiplier()
     local mult = 1.75
     local upgMap = self:getUpgrades()
-    if upgMap.cpu then mult = mult * math.pow(0.80, upgMap.cpu) end
+    if upgMap.cpu then mult = mult * math.pow(0.70, upgMap.cpu) end
     if upgMap.cooling then
         local coolingBoost = 0.10 + (upgMap.cooling - 1) * 0.20
         mult = mult * (1.0 - coolingBoost)
@@ -698,6 +729,8 @@ function Trabajo:drawContent(cx, cy, cw, ch)
 end
 
 function Trabajo:drawFreelanceTab(x, y, w, h)
+    self.buttons = {}
+    
     love.graphics.setColor(W95.text)
     love.graphics.printf("Trabajo Freelance", x + 8, y + 8, w - 16, "center")
 
@@ -705,23 +738,34 @@ function Trabajo:drawFreelanceTab(x, y, w, h)
     love.graphics.line(x + 8, y + 26, x + w - 8, y + 26)
 
     love.graphics.setColor(W95.text)
-    love.graphics.print("Tareas completadas: " .. self.tasksCompleted, x + 8, y + 34)
+    love.graphics.print("Tareas completadas: " .. self.tasksCompleted, x + 8, y + 30)
     love.graphics.setColor(W95.green)
-    love.graphics.print("Dinero: $" .. self.money, x + 8, y + 52)
-    love.graphics.setColor(W95.yellow)
-    love.graphics.print("Trabajos: " .. #self.activeJobs .. "/" .. self.maxJobs, x + 8, y + 68)
+    love.graphics.print("Dinero: $" .. self.money, x + 8, y + 44)
+
+    if self.winbatchActive then
+        love.graphics.setColor(0.2, 0.8, 0.2)
+        love.graphics.print("Winbatch: ACTIVO", x + w - 120, y + 30)
+    end
 
     love.graphics.setColor(W95.borderDark)
-    love.graphics.line(x + 8, y + 86, x + w - 8, y + 86)
+    love.graphics.line(x + 8, y + 60, x + w - 8, y + 60)
 
-    if #self.activeJobs > 0 then
-        for i, job in ipairs(self.activeJobs) do
-            local jobY = y + 92 + (i - 1) * 40
-            love.graphics.setColor(W95.text)
-            love.graphics.printf("Tarea " .. i .. ": " .. job.task.name, x + 8, jobY, w - 16, "center")
-
+    local slotH = 60
+    local slotStartY = y + 64
+    
+    for slot = 1, self.maxJobs do
+        local slotY = slotStartY + (slot - 1) * slotH
+        local job = self.activeJobs[slot]
+        
+        love.graphics.setColor(W95.text)
+        love.graphics.printf("Slot " .. slot, x + 8, slotY, w - 16, "center")
+        
+        if job then
+            love.graphics.setColor(W95.textDim)
+            love.graphics.printf(job.task.name, x + 8, slotY + 14, w - 16, "center")
+            
             local barX = x + 20
-            local barY = jobY + 16
+            local barY = slotY + 28
             local barW = w - 40
             local barH = 16
 
@@ -735,63 +779,44 @@ function Trabajo:drawFreelanceTab(x, y, w, h)
 
             love.graphics.setColor(W95.white)
             love.graphics.printf(math.floor(progress * 100) .. "%", barX, barY + 1, barW, "center")
-        end
-
-        local cancelW = 70
-        local cancelX = x + (w - cancelW) / 2
-        local cancelY = y + 92 + #self.activeJobs * 40 + 4
-        local mx, my = love.mouse.getPosition()
-        local cancelHov = mx >= cancelX and mx <= cancelX + cancelW and my >= cancelY and my <= cancelY + 20
-        love.graphics.setColor(cancelHov and {0.85, 0.85, 0.85} or W95.bg)
-        love.graphics.rectangle("fill", cancelX, cancelY, cancelW, 20)
-        self:drawBevel(cancelX, cancelY, cancelW, 20)
-        love.graphics.setColor(W95.red)
-        love.graphics.printf("Cancelar", cancelX, cancelY + 3, cancelW, "center")
-        table.insert(self.buttons, {x = cancelX, y = cancelY, w = cancelW, h = 20, action = "cancel"})
-    else
-        local earnings = self:getEarningsPerClick()
-        love.graphics.setColor(W95.text)
-        love.graphics.printf("Ganancia por tarea: $" .. earnings, x + 8, y + 92, w - 16, "center")
-
-        local btnW = 140
-        local btnH = 32
-        local btnX = x + (w - btnW) / 2
-        local btnY = y + 116
-        local mx, my = love.mouse.getPosition()
-        local btnHov = mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH
-
-        if self.cooldown > 0 then
-            love.graphics.setColor(W95.textDim)
-            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
-            self:drawBevel(btnX, btnY, btnW, btnH)
-            love.graphics.setColor(W95.textDim)
-            love.graphics.printf("Esperar...", btnX, btnY + 9, btnW, "center")
         else
+            local earnings = self:getEarningsPerClick()
+            love.graphics.setColor(W95.textDim)
+            love.graphics.printf("$" .. earnings .. "/tarea", x + 8, slotY + 14, w - 16, "center")
+            
+            local btnW = 100
+            local btnH = 24
+            local btnX = x + (w - btnW) / 2
+            local btnY = slotY + 30
+            local mx, my = love.mouse.getPosition()
+            local btnHov = mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH
+            
             love.graphics.setColor(btnHov and {0.85, 0.85, 0.85} or W95.bg)
             love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
             self:drawBevel(btnX, btnY, btnW, btnH)
             love.graphics.setColor(W95.green)
-            love.graphics.printf("Trabajar", btnX, btnY + 9, btnW, "center")
-            table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "work"})
+            love.graphics.printf("Trabajar", btnX, btnY + 5, btnW, "center")
+            table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "work_slot", slot = slot})
         end
+    end
 
-        love.graphics.setColor(W95.borderDark)
-        love.graphics.line(x + 8, y + 158, x + w - 8, y + 158)
+    local bottomY = slotStartY + self.maxJobs * slotH + 4
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x + 8, bottomY, x + w - 8, bottomY)
 
-        local compInfoY = y + 162
-        local compLabels = {
-            {id = "cpu", label = "CPU", color = {0.6, 0.2, 0.9}},
-            {id = "gpu", label = "GPU", color = {0.2, 0.8, 0.3}},
-            {id = "ram", label = "RAM", color = {0.9, 0.5, 0.1}},
-            {id = "cooling", label = "FAN", color = {0.2, 0.8, 0.8}},
-        }
-        local colW = (w - 16) / 4
-        for i, comp in ipairs(compLabels) do
-            local tier = self:getComponentTier(comp.id)
-            local cx = x + 8 + (i - 1) * colW
-            love.graphics.setColor(comp.color)
-            love.graphics.printf(comp.label .. " Lv." .. tier, cx, compInfoY, colW, "center")
-        end
+    local compInfoY = bottomY + 4
+    local compLabels = {
+        {id = "cpu", label = "CPU", color = {0.6, 0.2, 0.9}},
+        {id = "gpu", label = "GPU", color = {0.2, 0.8, 0.3}},
+        {id = "ram", label = "RAM", color = {0.9, 0.5, 0.1}},
+        {id = "cooling", label = "FAN", color = {0.2, 0.8, 0.8}},
+    }
+    local colW = (w - 16) / 4
+    for i, comp in ipairs(compLabels) do
+        local tier = self:getComponentTier(comp.id)
+        local cx = x + 8 + (i - 1) * colW
+        love.graphics.setColor(comp.color)
+        love.graphics.printf(comp.label .. " Lv." .. tier, cx, compInfoY, colW, "center")
     end
 end
 
@@ -1010,17 +1035,14 @@ function Trabajo:handleClick(x, y, button)
 
     for _, btn in ipairs(self.buttons) do
         if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-            if btn.action == "work" and self.cooldown <= 0 and #self.activeJobs < self.maxJobs then
+            if btn.action == "work_slot" and btn.slot then
                 local available = self:getAvailableTasks()
-                if #available > 0 then
+                if #available > 0 and not self.activeJobs[btn.slot] then
                     local task = available[math.random(#available)]
-                    table.insert(self.activeJobs, {task = task, progress = 0})
+                    self.activeJobs[btn.slot] = {task = task, progress = 0}
                 end
-            elseif btn.action == "cancel" then
-                if #self.activeJobs > 0 then
-                    table.remove(self.activeJobs, #self.activeJobs)
-                end
-                self.cooldown = self.cooldownMax
+            elseif btn.action == "cancel_slot" and btn.slot then
+                self.activeJobs[btn.slot] = nil
             end
             return true
         end

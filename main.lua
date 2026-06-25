@@ -782,6 +782,8 @@ function love.load()
     if ok15 then iconImages["achievements"] = img15 end
     local ok16, img16 = pcall(love.graphics.newImage, "assets/sprites/download1.png")
     if ok16 then iconImages["download"] = img16 end
+    local ok17, img17 = pcall(love.graphics.newImage, "assets/sprites/winbatch.png")
+    if ok17 then iconImages["winbatch"] = img17 end
 
     local ok8, snd8 = pcall(love.audio.newSource, "assets/sounds/songw95_1.wav", "stream")
     if ok8 then
@@ -874,6 +876,11 @@ function love.load()
     explorer.onUpgradePurchased = function(stat, level)
         if trabajo and trabajo.activeProject then
             trabajo:recalcComponents()
+        end
+    end
+    explorer.onAppPurchased = function(appId)
+        if appId == "winbatch" and trabajo then
+            trabajo.winbatchActive = true
         end
     end
 
@@ -1278,13 +1285,15 @@ function drawDesktop()
     if iconImages["taskbar"] then
         local img = iconImages["taskbar"]
         local imgW, imgH = img:getDimensions()
-        local btnW = 87
-        local btnH = taskH - 5
-        local iconScale = math.min(btnW / imgW, btnH / imgH)
-        local iconX = 2 + (btnW - imgW * iconScale) / 2
-        local iconY = taskY + 2 + (btnH - imgH * iconScale) / 2
+        local padding = 1
+        local btnX = 2 - padding
+        local btnY = taskY + 2 - padding
+        local btnW = 88 + padding * 2
+        local btnH = taskH - 4 + padding * 2
+        local scaleX = btnW / imgW
+        local scaleY = btnH / imgH
         love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(img, iconX, iconY, 0, iconScale, iconScale)
+        love.graphics.draw(img, btnX, btnY, 0, scaleX, scaleY)
     else
         love.graphics.setColor(W95.fieldText)
         love.graphics.print("Start", 28, taskY + 12)
