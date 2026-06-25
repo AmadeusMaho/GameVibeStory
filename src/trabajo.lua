@@ -36,49 +36,62 @@ local freelanceTasks = {
     {name = "Archivo de correspondencia", reward = 1, time = 0.6},
 }
 
-local hardwareComponents = {
-    cpu = {
-        base = {name = "Procesamiento", critChance = 0.05, actionsPerTurn = 1, gpuLock = 0},
-        cpu100 = {name = "Lote de datos", critChance = 0.10, actionsPerTurn = 1, gpuLock = 1},
-        pentium133 = {name = "Multitarea", critChance = 0.15, actionsPerTurn = 2, gpuLock = 2},
-        pentium200 = {name = "SQL Avanzado", critChance = 0.20, actionsPerTurn = 2, gpuLock = 3},
-    },
+local componentDefs = {
     gpu = {
-        base = {name = "Render basico", power = 8, heatPerAttack = 5},
-        s3trio = {name = "Graficos 2D", power = 14, heatPerAttack = 8},
-        virge = {name = "Rendimiento 3D", power = 22, heatPerAttack = 12},
-        banshee = {name = "Aceleracion 3D", power = 30, heatPerAttack = 16},
+        label = "GPU",
+        color = {0.2, 0.5, 1.0},
+        baseInterval = 2.0,
+        basePower = 4,
+        tiers = {
+            {interval = 2.0, power = 4},
+            {interval = 1.4, power = 5},
+            {interval = 0.9, power = 7},
+            {interval = 0.5, power = 9},
+        },
+    },
+    cpu = {
+        label = "CPU",
+        color = {0.2, 0.8, 0.3},
+        baseInterval = 3.0,
+        basePower = 2,
+        tiers = {
+            {interval = 3.0, power = 2},
+            {interval = 2.2, power = 3},
+            {interval = 1.5, power = 4},
+            {interval = 0.9, power = 5},
+        },
     },
     ram = {
-        base = {name = "Carga rapida", special = "none"},
-        ram32 = {name = "Buffer amplio", special = "none"},
-        ram64 = {name = "Cache activo", special = "none"},
-        ram128 = {name = "Virtualizacion", special = "none"},
+        label = "RAM",
+        color = {0.9, 0.8, 0.2},
+        baseInterval = 4.0,
+        basePower = 3,
+        tiers = {
+            {interval = 4.0, power = 3},
+            {interval = 3.0, power = 4},
+            {interval = 2.0, power = 5},
+            {interval = 1.2, power = 6},
+        },
     },
     cooling = {
-        base = {name = "Disipador basico", coolPerTurn = 3, maxHeatTolerance = 60},
-        cool1 = {name = "Ventilador activo", coolPerTurn = 5, maxHeatTolerance = 70},
-        cool2 = {name = "Cooler avanzado", coolPerTurn = 8, maxHeatTolerance = 80},
-        cool3 = {name = "Refrigeracion liquida", coolPerTurn = 12, maxHeatTolerance = 90},
+        label = "Refrigeracion",
+        color = {0.2, 0.8, 0.8},
+        baseInterval = 5.0,
+        basePower = 2,
+        tiers = {
+            {interval = 5.0, power = 2},
+            {interval = 3.5, power = 3},
+            {interval = 2.5, power = 4},
+            {interval = 1.5, power = 5},
+        },
     },
 }
 
-local gpuTierNames = {"Render basico", "S3 Trio64", "ViRGE", "Banshee"}
-
-local projectTypes = {
-    {name = "Base de datos Access", desc = "Crear sistema de inventario\npara empresa local.", hp = 100, days = 14, reward = 80},
-    {name = "Pagina web corporativa", desc = "Diseno de sitio web\ncon HTML y tablas.", hp = 120, days = 14, reward = 100},
-    {name = "Reporte de nominas", desc = "Sistema de nomina\nen Hoja de calculo.", hp = 80, days = 14, reward = 60},
-    {name = "Presentacion multimedia", desc = "Slides con animaciones\ny transiciones.", hp = 90, days = 14, reward = 70},
-    {name = "Soporte de red", desc = "Configurar red local\nentre 5 computadoras.", hp = 110, days = 14, reward = 90},
-    {name = "App de inventario", desc = "Programa de control\nde stock en Visual Basic.", hp = 140, days = 14, reward = 120},
-    {name = "Sistema de facturacion", desc = "Generador de facturas\ncon base de datos.", hp = 130, days = 14, reward = 110},
-    {name = "Conversor de formatos", desc = "Herramienta para convertir\narchivos entre formatos.", hp = 70, days = 14, reward = 50},
-}
+local componentOrder = {"gpu", "cpu", "ram", "cooling"}
 
 function Trabajo.new(x, y)
     local self = setmetatable({}, Trabajo)
-    self.window = WindowManager.new("Trabajo Freelance", x or 250, y or 120, 420, 380)
+    self.window = WindowManager.new("Trabajo Freelance", x or 250, y or 120, 460, 400)
 
     self.money = 0
     self.totalEarned = 0
@@ -104,47 +117,21 @@ function Trabajo.new(x, y)
     self.tabUnlocked = false
 
     self.activeProject = nil
-    self.projectHP = 0
-    self.projectMaxHP = 0
-    self.projectDays = 0
+    self.projectProgress = 0
+    self.projectMaxProgress = 100
+    self.projectDaysLeft = 14
     self.projectMaxDays = 14
     self.projectReward = 0
     self.projectDesc = ""
-    self.turnCount = 0
     self.resultMessage = ""
     self.resultTimer = 0
     self.projectCooldown = 0
-    self.lastAttackLog = ""
 
-    self.ram = 5
-    self.maxRAM = 5
-    self.ramRegen = 1
-
-    self.heat = 0
-    self.maxHeat = 60
-    self.coolPerTurn = 3
-    self.heatMultiplier = 1.0
-
-    self.actionsPerTurn = 1
-    self.actionsRemaining = 0
-    self.turnActive = false
-
-    self.critChance = 0.05
-    self.gpuPower = 8
-    self.gpuHeat = 5
-    self.gpuTier = 0
-    self.gpuMaxTier = 0
-
-    self.showTutorial = true
-    self.tutorialPage = 0
-
+    self.components = {}
+    self.circles = {}
     self.floatingNumbers = {}
     self.barShake = 0
     self.barShakeIntensity = 0
-    self.lastDamageTime = 0
-    self.critFlash = 0
-    self.attackAnimTimer = 0
-    self.attackAnimActive = false
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
@@ -182,62 +169,76 @@ function Trabajo:getUpgrades()
     return upgMap
 end
 
-function Trabajo:recalcStats()
+function Trabajo:getComponentTier(componentId)
     local upgMap = self:getUpgrades()
+    local statMap = {
+        gpu = "display",
+        cpu = "cpu",
+        ram = "ram",
+        cooling = "cooling",
+    }
+    local stat = statMap[componentId]
+    if not stat then return 0 end
 
-    local cpuTier = 0
-    if upgMap.cpu then cpuTier = 1 end
-    local cpuData = hardwareComponents.cpu.base
-    if cpuTier == 1 then cpuData = hardwareComponents.cpu.cpu100 end
-    self.critChance = cpuData.critChance
-    self.actionsPerTurn = cpuData.actionsPerTurn
-    self.gpuMaxTier = cpuData.gpuLock
+    local tierCount = 0
+    if self.explorerRef then
+        for _, upg in ipairs(self.explorerRef.upgrades) do
+            if upg.stat == stat and upg.purchased then
+                tierCount = tierCount + 1
+            end
+        end
+    end
+    return math.min(tierCount, 4)
+end
 
-    local gpuTier = 0
-    if upgMap.display then gpuTier = 1 end
-    if gpuTier > self.gpuMaxTier then gpuTier = self.gpuMaxTier end
-    self.gpuTier = gpuTier
-    local gpuData = hardwareComponents.gpu.base
-    if gpuTier == 1 then gpuData = hardwareComponents.gpu.s3trio
-    elseif gpuTier == 2 then gpuData = hardwareComponents.gpu.virge
-    elseif gpuTier == 3 then gpuData = hardwareComponents.gpu.banshee end
-    self.gpuPower = gpuData.power
-    self.gpuHeat = gpuData.heatPerAttack
+function Trabajo:getComponentInterval(componentId)
+    local def = componentDefs[componentId]
+    local tier = self:getComponentTier(componentId)
+    if tier == 0 then return def.baseInterval end
+    return def.tiers[tier].interval
+end
 
-    local coolTier = 0
-    if upgMap.cooling then coolTier = 1 end
-    local coolData = hardwareComponents.cooling.base
-    if coolTier == 1 then coolData = hardwareComponents.cooling.cool1
-    elseif coolTier == 2 then coolData = hardwareComponents.cooling.cool2
-    elseif coolTier == 3 then coolData = hardwareComponents.cooling.cool3 end
-    self.coolPerTurn = coolData.coolPerTurn
-    self.maxHeat = coolData.maxHeatTolerance
+function Trabajo:getComponentPower(componentId)
+    local def = componentDefs[componentId]
+    local tier = self:getComponentTier(componentId)
+    if tier == 0 then return def.basePower end
+    return def.tiers[tier].power
+end
 
-    self.maxRAM = 5
-    if self.ram > self.maxRAM then self.ram = self.maxRAM end
+function Trabajo:recalcComponents()
+    self.components = {}
+    for _, id in ipairs(componentOrder) do
+        local def = componentDefs[id]
+        local tier = self:getComponentTier(id)
+        table.insert(self.components, {
+            id = id,
+            label = def.label,
+            color = def.color,
+            tier = tier,
+            timer = 0,
+            interval = self:getComponentInterval(id),
+            power = self:getComponentPower(id),
+            vibration = 0,
+        })
+    end
 end
 
 function Trabajo:startProject(projectData)
     self.activeProject = projectData.name
     self.projectDesc = projectData.desc
-    self.projectHP = projectData.hp
-    self.projectMaxHP = projectData.hp
-    self.projectDays = 0
+    self.projectProgress = 0
+    self.projectMaxProgress = 100
+    self.projectDaysLeft = projectData.days or 14
     self.projectMaxDays = projectData.days or 14
     self.projectReward = projectData.reward
-    self.turnCount = 0
     self.resultMessage = ""
     self.resultTimer = 0
     self.selectedTab = 2
-    self.lastAttackLog = ""
+    self.circles = {}
+    self.floatingNumbers = {}
+    self.barShake = 0
 
-    self:recalcStats()
-    self.ram = self.maxRAM
-    self.heat = 0
-    self.actionsRemaining = 0
-    self.turnActive = false
-    self.showTutorial = true
-    self.tutorialPage = 0
+    self:recalcComponents()
 end
 
 function Trabajo:update(dt)
@@ -288,17 +289,6 @@ function Trabajo:update(dt)
         self.barShake = self.barShake - dt
     end
 
-    if self.critFlash > 0 then
-        self.critFlash = self.critFlash - dt
-    end
-
-    if self.attackAnimTimer > 0 then
-        self.attackAnimTimer = self.attackAnimTimer - dt
-        if self.attackAnimTimer <= 0 then
-            self.attackAnimActive = false
-        end
-    end
-
     for i = #self.floatingNumbers, 1, -1 do
         local num = self.floatingNumbers[i]
         num.timer = num.timer - dt
@@ -307,123 +297,78 @@ function Trabajo:update(dt)
             table.remove(self.floatingNumbers, i)
         end
     end
-end
 
-function Trabajo:startTurn()
-    if not self.activeProject then return end
-    if self.turnActive then return end
-    self:recalcStats()
-    self.turnActive = true
-    self.actionsRemaining = self.actionsPerTurn
-end
+    if self.activeProject then
+        for _, comp in ipairs(self.components) do
+            comp.timer = comp.timer + dt
+            if comp.timer >= comp.interval then
+                comp.timer = comp.timer - comp.interval
+                self:generateCircle(comp)
+            end
+            if comp.vibration > 0 then
+                comp.vibration = comp.vibration - dt
+            end
+        end
 
-function Trabajo:endTurn()
-    if not self.activeProject then return end
-    if not self.turnActive then return end
+        for i = #self.circles, 1, -1 do
+            local circ = self.circles[i]
+            circ.x = circ.x + circ.vx * dt
+            circ.y = circ.y + circ.vy * dt
+            circ.life = circ.life - dt
+            if circ.life <= 0 then
+                self.projectProgress = self.projectProgress + circ.power
+                table.insert(self.floatingNumbers, {
+                    text = "+" .. circ.power .. "%",
+                    x = circ.targetX,
+                    y = circ.targetY,
+                    timer = 1.0,
+                    maxTimer = 1.0,
+                    vy = -40,
+                })
+                self.barShake = 0.15
+                self.barShakeIntensity = 2
+                table.remove(self.circles, i)
 
-    self.turnActive = false
-    self.actionsRemaining = 0
-    self.turnCount = self.turnCount + 1
-    self.projectDays = self.projectDays + 1
+                if self.projectProgress >= self.projectMaxProgress then
+                    self:winProject()
+                    return
+                end
+            end
+        end
 
-    self.ram = math.min(self.maxRAM, self.ram + self.ramRegen)
-
-    local coolAmount = self.coolPerTurn
-    if self.heat > self.maxHeat then
-        coolAmount = math.floor(coolAmount * 0.5)
-    end
-    self.heat = math.max(0, self.heat - coolAmount)
-
-    if self.heat >= self.maxHeat then
-        local progressLoss = math.floor(self.projectMaxHP * 0.05)
-        self.projectHP = math.min(self.projectMaxHP, self.projectHP + progressLoss)
-        self.lastAttackLog = "Sobrecalentamiento! +" .. progressLoss .. " HP al proyecto"
-        if self.achievementsRef then
-            self.achievementsRef:onOverheat()
+        self.projectDaysLeft = self.projectDaysLeft - dt * 0.05
+        if self.projectDaysLeft <= 0 then
+            self.projectDaysLeft = 0
+            self:failProject()
         end
     end
-
-    if self.projectDays >= self.projectMaxDays then
-        self:failProject()
-    end
 end
 
-function Trabajo:attackProject(attackIndex)
-    if not self.activeProject then return end
-    if not self.turnActive then return end
-    if self.actionsRemaining <= 0 then
-        self.resultMessage = "Sin acciones restantes! Termina el dia."
-        self.resultTimer = 1.5
-        return
-    end
+function Trabajo:generateCircle(comp)
+    local startX = comp.screenX or 0
+    local startY = comp.screenY or 0
+    local targetX = comp.barX or 0
+    local targetY = comp.barY or 0
 
-    local ramCost = 2
-    if self.ram < ramCost then
-        self.resultMessage = "RAM insuficiente! Necesitas " .. ramCost .. " RAM."
-        self.resultTimer = 1.5
-        return
-    end
+    local dx = targetX - startX
+    local dy = targetY - startY
+    local dist = math.sqrt(dx * dx + dy * dy)
+    local speed = 300
 
-    self.ram = self.ram - ramCost
-    self.actionsRemaining = self.actionsRemaining - 1
-
-    local damage = self.gpuPower
-    local heatGain = self.gpuHeat
-    local isCrit = math.random() < self.critChance
-
-    if isCrit then
-        damage = math.floor(damage * 1.5)
-        heatGain = math.floor(heatGain * 1.3)
-        self.lastAttackLog = "CRITICO! " .. damage .. " de daño"
-        self.critFlash = 0.3
-        if self.achievementsRef then
-            self.achievementsRef:onCrit()
-        end
-    else
-        self.lastAttackLog = "Ataque: " .. damage .. " de daño"
-    end
-
-    if self.heat >= self.maxHeat then
-        damage = math.floor(damage * 1.3)
-        heatGain = math.floor(heatGain * 1.2)
-        self.lastAttackLog = self.lastAttackLog .. " (Sobrecalentado!)"
-    end
-
-    self.heat = math.min(100, self.heat + heatGain)
-    self.projectHP = self.projectHP - damage
-
-    self.barShake = 0.3
-    self.barShakeIntensity = isCrit and 6 or 3
-    self.attackAnimTimer = 0.2
-    self.attackAnimActive = true
-
-    table.insert(self.floatingNumbers, {
-        text = "-" .. damage,
-        x = 0,
-        y = 0,
-        timer = 1.0,
-        maxTimer = 1.0,
-        isCrit = isCrit,
-        vy = -60,
+    table.insert(self.circles, {
+        x = startX,
+        y = startY,
+        vx = (dx / dist) * speed,
+        vy = (dy / dist) * speed,
+        targetX = targetX,
+        targetY = targetY,
+        color = comp.color,
+        power = comp.power,
+        life = dist / speed + 0.05,
+        radius = 5,
     })
 
-    if self.projectHP <= 0 then
-        self.projectHP = 0
-        self:winProject()
-    end
-
-    if self.achievementsRef then
-        self.achievementsRef:triggerRandomEvent(self)
-    end
-end
-
-function Trabajo:waitAction()
-    if not self.activeProject then return end
-    if not self.turnActive then return end
-
-    self.ram = math.min(self.maxRAM, self.ram + 2)
-    self.actionsRemaining = self.actionsRemaining - 1
-    self.lastAttackLog = "Descansando... +2 RAM"
+    comp.vibration = 0.2
 end
 
 function Trabajo:winProject()
@@ -434,9 +379,8 @@ function Trabajo:winProject()
     self.resultMessage = "Proyecto completado! +$" .. reward
     self.resultTimer = 3.0
 
-    local wasOverheated = self.heat >= self.maxHeat
     if self.achievementsRef then
-        self.achievementsRef:onProjectComplete(reward, wasOverheated)
+        self.achievementsRef:onProjectComplete(reward, false)
     end
 
     if self.emailRef then
@@ -474,21 +418,19 @@ end
 
 function Trabajo:clearProject()
     self.activeProject = nil
-    self.projectHP = 0
-    self.projectMaxHP = 0
-    self.projectDays = 0
+    self.projectProgress = 0
+    self.projectMaxProgress = 100
+    self.projectDaysLeft = 14
     self.projectMaxDays = 14
     self.projectReward = 0
     self.projectDesc = ""
-    self.turnCount = 0
     self.resultMessage = ""
     self.projectCooldown = 3.0
     self.selectedTab = 1
-    self.lastAttackLog = ""
-    self.heat = 0
-    self.ram = self.maxRAM
-    self.turnActive = false
-    self.actionsRemaining = 0
+    self.circles = {}
+    self.floatingNumbers = {}
+    self.components = {}
+    self.barShake = 0
 end
 
 function Trabajo:getEarningsPerClick()
@@ -679,11 +621,6 @@ function Trabajo:drawParticularTab(x, y, w, h)
         return
     end
 
-    if self.showTutorial then
-        self:drawTutorial(x, y, w, h)
-        return
-    end
-
     love.graphics.setColor(W95.text)
     love.graphics.printf("Proyecto Activo", x + 8, y + 4, w - 16, "center")
     love.graphics.setColor(W95.highlight)
@@ -711,235 +648,76 @@ function Trabajo:drawParticularTab(x, y, w, h)
     love.graphics.setColor(W95.fieldBg)
     love.graphics.rectangle("fill", barX + shakeOffsetX, barY, barW, barH)
     self:drawInset(barX + shakeOffsetX, barY, barW, barH)
-    local hpRatio = self.projectHP / self.projectMaxHP
+    local hpRatio = math.min(self.projectProgress / self.projectMaxProgress, 1)
     local barColor = hpRatio > 0.5 and W95.green or (hpRatio > 0.25 and W95.yellow or W95.red)
     love.graphics.setColor(barColor)
     love.graphics.rectangle("fill", barX + 2 + shakeOffsetX, barY + 2, (barW - 4) * hpRatio, barH - 4)
 
-    if self.critFlash > 0 then
-        love.graphics.setColor(1, 1, 1, self.critFlash * 3)
-        love.graphics.rectangle("fill", barX + 2 + shakeOffsetX, barY + 2, (barW - 4) * hpRatio, barH - 4)
-    end
-
     love.graphics.setColor(W95.white)
-    love.graphics.printf(self.projectHP .. "/" .. self.projectMaxHP, barX + shakeOffsetX, barY + 1, barW, "center")
+    love.graphics.printf(math.floor(self.projectProgress) .. "/" .. self.projectMaxProgress, barX + shakeOffsetX, barY + 1, barW, "center")
 
     for _, num in ipairs(self.floatingNumbers) do
         local alpha = num.timer / num.maxTimer
-        if num.isCrit then
-            love.graphics.setColor(1, 0.2, 0.2, alpha)
-        else
-            love.graphics.setColor(1, 1, 0.2, alpha)
-        end
-        local numX = barX + barW / 2 + num.x
-        local numY = barY + num.y
-        love.graphics.printf(num.text, numX - 30, numY, 60, "center")
+        love.graphics.setColor(0.2, 1, 0.2, alpha)
+        love.graphics.printf(num.text, num.x - 30, num.y, 60, "center")
     end
 
-    local infoY = barY + barH + 4
+    local infoY = barY + barH + 6
     love.graphics.setColor(W95.text)
-    love.graphics.print("Dia: " .. self.projectDays .. "/" .. self.projectMaxDays, x + 16, infoY)
+    love.graphics.print("Dias: " .. math.ceil(self.projectDaysLeft) .. "/" .. self.projectMaxDays, x + 16, infoY)
     love.graphics.setColor(W95.green)
     love.graphics.print("$" .. self.projectReward, x + w - 60, infoY)
 
-    local ramY = infoY + 16
-    love.graphics.setColor(W95.text)
-    love.graphics.print("RAM:", x + 16, ramY)
-    local ramBarX = x + 50
-    local ramBarW = w - 66
-    local ramBarH = 10
-    love.graphics.setColor(W95.fieldBg)
-    love.graphics.rectangle("fill", ramBarX, ramY, ramBarW, ramBarH)
-    self:drawInset(ramBarX, ramY, ramBarW, ramBarH)
-    local ramRatio = self.ram / self.maxRAM
-    love.graphics.setColor(W95.blue)
-    love.graphics.rectangle("fill", ramBarX + 1, ramY + 1, (ramBarW - 2) * ramRatio, ramBarH - 2)
-    love.graphics.setColor(W95.white)
-    love.graphics.printf(self.ram .. "/" .. self.maxRAM, ramBarX, ramY - 1, ramBarW, "center")
+    local gridY = infoY + 18
+    local gridX = x + 16
+    local boxW = (w - 40) / 2
+    local boxH = 44
+    local gapX = 8
+    local gapY = 6
 
-    local heatY = ramY + 14
-    love.graphics.setColor(W95.text)
-    love.graphics.print("Calor:", x + 16, heatY)
-    local heatBarX = x + 56
-    local heatBarW = w - 72
-    local heatBarH = 10
-    love.graphics.setColor(W95.fieldBg)
-    love.graphics.rectangle("fill", heatBarX, heatY, heatBarW, heatBarH)
-    self:drawInset(heatBarX, heatY, heatBarW, heatBarH)
-    local heatRatio = math.min(self.heat / self.maxHeat, 1)
-    local heatColor = heatRatio < 0.5 and W95.green or (heatRatio < 0.8 and W95.yellow or W95.red)
-    love.graphics.setColor(heatColor)
-    love.graphics.rectangle("fill", heatBarX + 1, heatY + 1, (heatBarW - 2) * heatRatio, heatBarH - 2)
-    love.graphics.setColor(W95.white)
-    local heatPct = math.floor(self.heat) .. "/" .. self.maxHeat
-    love.graphics.printf(heatPct, heatBarX, heatY - 1, heatBarW, "center")
+    for i, comp in ipairs(self.components) do
+        local col = (i - 1) % 2
+        local row = math.floor((i - 1) / 2)
+        local bx = gridX + col * (boxW + gapX)
+        local by = gridY + row * (boxH + gapY)
 
-    if self.heat >= self.maxHeat then
-        love.graphics.setColor(W95.red)
-        love.graphics.print("SOBRECALENTADO!", x + 16, heatY + 12)
-    end
+        local vibOff = 0
+        if comp.vibration > 0 then
+            vibOff = (math.random() - 0.5) * 4
+        end
 
-    local actY = heatY + (self.heat >= self.maxHeat and 24 or 14)
-    if self.turnActive then
+        love.graphics.setColor(W95.fieldBg)
+        love.graphics.rectangle("fill", bx + vibOff, by, boxW, boxH)
+        self:drawInset(bx + vibOff, by, boxW, boxH)
+
+        love.graphics.setColor(comp.color)
+        love.graphics.circle("fill", bx + 14 + vibOff, by + boxH / 2, 8)
+
         love.graphics.setColor(W95.text)
-        love.graphics.print("Acciones: " .. self.actionsRemaining .. "/" .. self.actionsPerTurn, x + 16, actY)
-    else
+        love.graphics.print(comp.label, bx + 26 + vibOff, by + 6)
+
+        local tierNames = {"Basico", "T1", "T2", "T3", "T4"}
         love.graphics.setColor(W95.textDim)
-        love.graphics.print("Esperando dia siguiente...", x + 16, actY)
+        love.graphics.print(tierNames[comp.tier + 1] or "Basico", bx + 26 + vibOff, by + 20)
+
+        love.graphics.setColor(comp.color)
+        love.graphics.printf(comp.power .. "%/c", bx + vibOff, by + 32, boxW, "center")
+
+        comp.screenX = bx + boxW / 2 + vibOff
+        comp.screenY = by + boxH / 2
+        comp.barX = barX + barW * hpRatio
+        comp.barY = barY + barH / 2
     end
 
-    if self.lastAttackLog ~= "" then
-        local logY = actY + 14
-        love.graphics.setColor(W95.text)
-        love.graphics.print(self.lastAttackLog, x + 16, logY)
-    end
-
-    local btnY = y + h - 50
-    love.graphics.setColor(W95.borderDark)
-    love.graphics.line(x + 8, btnY - 6, x + w - 8, btnY - 6)
-
-    if self.turnActive then
-        local atkW = (w - 32) / 2
-        local atkH = 22
-        local gap = 4
-
-        local gpuBtnX = x + 12
-        local gpuBtnY = btnY
-        local mx, my = love.mouse.getPosition()
-        local gpuHov = mx >= gpuBtnX and mx <= gpuBtnX + atkW and my >= gpuBtnY and my <= gpuBtnY + atkH
-        local gpuCanUse = self.ram >= 2 and self.actionsRemaining > 0
-        love.graphics.setColor(gpuCanUse and (gpuHov and {0.85, 0.85, 0.85} or W95.bg) or {0.6, 0.6, 0.6})
-        love.graphics.rectangle("fill", gpuBtnX, gpuBtnY, atkW, atkH)
-        self:drawBevel(gpuBtnX, gpuBtnY, atkW, atkH)
-        love.graphics.setColor(gpuCanUse and W95.text or W95.textDim)
-        love.graphics.printf("GPU [" .. self.gpuPower .. "dmg]", gpuBtnX, gpuBtnY + 3, atkW, "center")
-        if gpuCanUse then
-            table.insert(self.buttons, {x = gpuBtnX, y = gpuBtnY, w = atkW, h = atkH, action = "attack", index = 1})
-        end
-
-        local waitBtnX = x + 12 + atkW + gap
-        local waitHov = mx >= waitBtnX and mx <= waitBtnX + atkW and my >= gpuBtnY and my <= gpuBtnY + atkH
-        local waitCanUse = self.actionsRemaining > 0
-        love.graphics.setColor(waitCanUse and (waitHov and {0.85, 0.85, 0.85} or W95.bg) or {0.6, 0.6, 0.6})
-        love.graphics.rectangle("fill", waitBtnX, gpuBtnY, atkW, atkH)
-        self:drawBevel(waitBtnX, gpuBtnY, atkW, atkH)
-        love.graphics.setColor(waitCanUse and W95.text or W95.textDim)
-        love.graphics.printf("Descansar +2RAM", waitBtnX, gpuBtnY + 3, atkW, "center")
-        if waitCanUse then
-            table.insert(self.buttons, {x = waitBtnX, y = gpuBtnY, w = atkW, h = atkH, action = "wait"})
-        end
-
-        local endDayW = w - 24
-        local endDayY = gpuBtnY + atkH + gap
-        local endDayHov = mx >= x + 12 and mx <= x + 12 + endDayW and my >= endDayY and my <= endDayY + 20
-        love.graphics.setColor(endDayHov and {0.85, 0.85, 0.85} or W95.bg)
-        love.graphics.rectangle("fill", x + 12, endDayY, endDayW, 20)
-        self:drawBevel(x + 12, endDayY, endDayW, 20)
-        love.graphics.setColor(W95.orange)
-        love.graphics.printf("Terminar Dia", x + 12, endDayY + 3, endDayW, "center")
-        table.insert(self.buttons, {x = x + 12, y = endDayY, w = endDayW, h = 20, action = "endTurn"})
-    else
-        local startDayW = w - 24
-        local startDayH = 24
-        local startDayX = x + 12
-        local startDayY = btnY
-        local mx, my = love.mouse.getPosition()
-        local startHov = mx >= startDayX and mx <= startDayX + startDayW and my >= startDayY and my <= startDayY + startDayH
-        love.graphics.setColor(startHov and {0.85, 0.85, 0.85} or W95.bg)
-        love.graphics.rectangle("fill", startDayX, startDayY, startDayW, startDayH)
-        self:drawBevel(startDayX, startDayY, startDayW, startDayH)
-        love.graphics.setColor(W95.green)
-        love.graphics.printf("Iniciar Dia", startDayX, startDayY + 5, startDayW, "center")
-        table.insert(self.buttons, {x = startDayX, y = startDayY, w = startDayW, h = startDayH, action = "startTurn"})
+    for _, circ in ipairs(self.circles) do
+        love.graphics.setColor(circ.color)
+        love.graphics.circle("fill", circ.x, circ.y, circ.radius)
     end
 
     if self.resultMessage ~= "" then
         love.graphics.setColor(W95.yellow)
         love.graphics.printf(self.resultMessage, x + 8, y + h - 14, w - 16, "center")
     end
-end
-
-function Trabajo:drawTutorial(x, y, w, h)
-    love.graphics.setColor(W95.highlight)
-    love.graphics.printf("=== TUTORIAL: Combate ===", x + 8, y + 8, w - 16, "center")
-
-    local pages = {
-        {
-            "GPU (Placa de video)",
-            "Fuente principal de daño.",
-            "Cada ataque llena la barra",
-            "del proyecto. Cuanto mas",
-            "poderosa la GPU, mas daño.",
-        },
-        {
-            "CPU (Procesador)",
-            "Determina:",
-            "- Acciones por turno (1 basico)",
-            "- Chance de critico (5% basico)",
-            "- GPU maxima disponible",
-        },
-        {
-            "RAM (Memoria)",
-            "Tu maná. Empieza en 5.",
-            "Cada accion cuesta 2 RAM.",
-            "Se regenera 1 al terminar",
-            "el dia.",
-        },
-        {
-            "Refrigeracion",
-            "Cada ataque genera calor.",
-            "Si el calor supera el maximo,",
-            "pierdes progreso del proyecto.",
-            "Mejora la refrigeracion!",
-        },
-    }
-
-    local page = pages[self.tutorialPage + 1]
-    if page then
-        for i, line in ipairs(page) do
-            love.graphics.setColor(W95.text)
-            love.graphics.print(line, x + 16, y + 30 + (i - 1) * 14)
-        end
-    end
-
-    local btnY = y + h - 36
-    local btnW = 80
-    local btnH = 22
-    local mx, my = love.mouse.getPosition()
-
-    if self.tutorialPage > 0 then
-        local prevX = x + 12
-        local prevHov = mx >= prevX and mx <= prevX + btnW and my >= btnY and my <= btnY + btnH
-        love.graphics.setColor(prevHov and {0.85, 0.85, 0.85} or W95.bg)
-        love.graphics.rectangle("fill", prevX, btnY, btnW, btnH)
-        self:drawBevel(prevX, btnY, btnW, btnH)
-        love.graphics.setColor(W95.text)
-        love.graphics.printf("< Anterior", prevX, btnY + 3, btnW, "center")
-        table.insert(self.buttons, {x = prevX, y = btnY, w = btnW, h = btnH, action = "tutPrev"})
-    end
-
-    if self.tutorialPage < #pages - 1 then
-        local nextX = x + w - btnW - 12
-        local nextHov = mx >= nextX and mx <= nextX + btnW and my >= btnY and my <= btnY + btnH
-        love.graphics.setColor(nextHov and {0.85, 0.85, 0.85} or W95.bg)
-        love.graphics.rectangle("fill", nextX, btnY, btnW, btnH)
-        self:drawBevel(nextX, btnY, btnW, btnH)
-        love.graphics.setColor(W95.text)
-        love.graphics.printf("Siguiente >", nextX, btnY + 3, btnW, "center")
-        table.insert(self.buttons, {x = nextX, y = btnY, w = btnW, h = btnH, action = "tutNext"})
-    else
-        local closeX = x + (w - btnW) / 2
-        local closeHov = mx >= closeX and mx <= closeX + btnW and my >= btnY and my <= btnY + btnH
-        love.graphics.setColor(closeHov and {0.85, 0.85, 0.85} or W95.bg)
-        love.graphics.rectangle("fill", closeX, btnY, btnW, btnH)
-        self:drawBevel(closeX, btnY, btnW, btnH)
-        love.graphics.setColor(W95.green)
-        love.graphics.printf("Entendido!", closeX, btnY + 3, btnW, "center")
-        table.insert(self.buttons, {x = closeX, y = btnY, w = btnW, h = btnH, action = "tutClose"})
-    end
-
-    love.graphics.setColor(W95.textDim)
-    love.graphics.printf((self.tutorialPage + 1) .. "/" .. #pages, x + 8, y + h - 14, w - 16, "center")
 end
 
 function Trabajo:handleClick(x, y, button)
@@ -959,20 +737,6 @@ function Trabajo:handleClick(x, y, button)
                 self.currentTask = nil
                 self.taskProgress = 0
                 self.cooldown = self.cooldownMax
-            elseif btn.action == "attack" and self.activeProject then
-                self:attackProject(btn.index)
-            elseif btn.action == "wait" and self.activeProject then
-                self:waitAction()
-            elseif btn.action == "endTurn" and self.activeProject then
-                self:endTurn()
-            elseif btn.action == "startTurn" and self.activeProject then
-                self:startTurn()
-            elseif btn.action == "tutNext" then
-                self.tutorialPage = self.tutorialPage + 1
-            elseif btn.action == "tutPrev" then
-                self.tutorialPage = self.tutorialPage - 1
-            elseif btn.action == "tutClose" then
-                self.showTutorial = false
             end
             return true
         end
