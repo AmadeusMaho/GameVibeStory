@@ -17,6 +17,7 @@ local malwarePopupDuration = 3.0
 local bootSound = nil
 local clickSound = nil
 local startupSound = nil
+local errorSound = nil
 local bootFont = nil
 local desktopBg = nil
 local shader = nil
@@ -119,9 +120,17 @@ function playClick()
     end
 end
 
+function playWin95Error()
+    if errorSound then
+        errorSound:stop()
+        errorSound:play()
+    end
+end
+
 function triggerMalware()
     gameState = "malware_popup"
     malwarePopupTimer = 0
+    playWin95Error()
     if trabajo then
         local loss = math.floor(trabajo.money * (0.3 + math.random() * 0.3))
         trabajo.money = math.max(0, trabajo.money - loss)
@@ -131,32 +140,28 @@ end
 function drawBSOD()
     local w, h = love.graphics.getDimensions()
     local margin = 80
-    local colW = w - margin * 2
 
     love.graphics.setColor(0, 0, 0.65)
     love.graphics.rectangle("fill", 0, 0, w, h)
 
     love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(love.graphics.newFont(16))
-    love.graphics.print("Windows", margin, h * 0.15)
+    love.graphics.setFont(love.graphics.newFont(24))
+    love.graphics.print("Windows", margin, h * 0.12)
 
-    love.graphics.setFont(love.graphics.newFont(12))
-    love.graphics.print("Un error irrecoverable ha occurrido.", margin, h * 0.25)
-    love.graphics.print("Se ha producido un error y Windows", margin, h * 0.30)
-    love.graphics.print("ha de cerrarse para evitar danos al equipo.", margin, h * 0.33)
-    love.graphics.print("", margin, h * 0.36)
-    love.graphics.print("ERROR: 0E : 016F : BFF9B3D4", margin, h * 0.40)
-    love.graphics.print(" KERNEL32.DLL", margin, h * 0.43)
-    love.graphics.print("", margin, h * 0.46)
-    love.graphics.print("* Presione cualquier tecla para terminar", margin, h * 0.52)
-    love.graphics.print("  la sesion actual.", margin, h * 0.55)
-    love.graphics.print("", margin, h * 0.58)
-    love.graphics.print("* Reinicie el equipo. Presione F5", margin, h * 0.62)
-    love.graphics.print("  para iniciar el Modo a prueba de errores.", margin, h * 0.65)
-    love.graphics.setFont(love.graphics.newFont(10))
+    love.graphics.setFont(love.graphics.newFont(18))
+    love.graphics.print("Un error irrecoverable ha occurrido.", margin, h * 0.22)
+    love.graphics.print("Se ha producido un error y Windows", margin, h * 0.27)
+    love.graphics.print("ha de cerrarse para evitar danos al equipo.", margin, h * 0.32)
+    love.graphics.print(" ", margin, h * 0.37)
+    love.graphics.print("ERROR: 0E : 016F : BFF9B3D4", margin, h * 0.42)
+    love.graphics.print(" KERNEL32.DLL", margin, h * 0.47)
+    love.graphics.print(" ", margin, h * 0.52)
+    love.graphics.print("* Presione cualquier tecla para terminar", margin, h * 0.58)
+    love.graphics.print("  la sesion actual.", margin, h * 0.63)
+    love.graphics.setFont(love.graphics.newFont(14))
     love.graphics.print("Informacion de depuracion:", margin, h * 0.75)
-    love.graphics.print("  Filtros=00000001 Dispositivo=00000000", margin, h * 0.78)
-    love.graphics.print("  Carga de la direccion de comandos no disponible", margin, h * 0.81)
+    love.graphics.print("  Filtros=00000001 Dispositivo=00000000", margin, h * 0.79)
+    love.graphics.print("  Carga de la direccion de comandos no disponible", margin, h * 0.83)
 end
 
 function drawMalwarePopup()
@@ -345,8 +350,10 @@ function toggleApp(appId)
         if not winamp.window.visible then
             winamp.window.x, winamp.window.y = getNextCascadePosition(winamp.window.w, winamp.window.h)
             winamp:toggleVisible()
+            bringToFront("winamp")
         elseif winamp.window.minimized then
             winamp.window.minimized = false
+            bringToFront("winamp")
         else
             winamp.window.minimized = true
         end
@@ -354,8 +361,10 @@ function toggleApp(appId)
         if not mypc.window.visible then
             mypc.window.x, mypc.window.y = getNextCascadePosition(mypc.window.w, mypc.window.h)
             mypc:toggleVisible()
+            bringToFront("mypc")
         elseif mypc.window.minimized then
             mypc.window.minimized = false
+            bringToFront("mypc")
         else
             mypc.window.minimized = true
         end
@@ -363,8 +372,10 @@ function toggleApp(appId)
         if not explorer.window.visible then
             explorer.window.x, explorer.window.y = getNextCascadePosition(explorer.window.w, explorer.window.h)
             explorer:toggleVisible()
+            bringToFront("explorer")
         elseif explorer.window.minimized then
             explorer.window.minimized = false
+            bringToFront("explorer")
         else
             explorer.window.minimized = true
         end
@@ -372,8 +383,10 @@ function toggleApp(appId)
         if not notepad.window.visible then
             notepad.window.x, notepad.window.y = getNextCascadePosition(notepad.window.w, notepad.window.h)
             notepad:toggleVisible()
+            bringToFront("notepad")
         elseif notepad.window.minimized then
             notepad.window.minimized = false
+            bringToFront("notepad")
         else
             notepad.window.minimized = true
         end
@@ -381,8 +394,10 @@ function toggleApp(appId)
         if not trabajo.window.visible then
             trabajo.window.x, trabajo.window.y = getNextCascadePosition(trabajo.window.w, trabajo.window.h)
             trabajo:toggleVisible()
+            bringToFront("trabajo")
         elseif trabajo.window.minimized then
             trabajo.window.minimized = false
+            bringToFront("trabajo")
         else
             trabajo.window.minimized = true
         end
@@ -390,8 +405,10 @@ function toggleApp(appId)
         if not email.window.visible then
             email.window.x, email.window.y = getNextCascadePosition(email.window.w, email.window.h)
             email:toggleVisible()
+            bringToFront("email")
         elseif email.window.minimized then
             email.window.minimized = false
+            bringToFront("email")
         else
             email.window.minimized = true
         end
@@ -399,8 +416,10 @@ function toggleApp(appId)
         if not recyclebin.window.visible then
             recyclebin.window.x, recyclebin.window.y = getNextCascadePosition(recyclebin.window.w, recyclebin.window.h)
             recyclebin:toggleVisible()
+            bringToFront("recyclebin")
         elseif recyclebin.window.minimized then
             recyclebin.window.minimized = false
+            bringToFront("recyclebin")
         else
             recyclebin.window.minimized = true
         end
@@ -408,8 +427,10 @@ function toggleApp(appId)
         if not personal.window.visible then
             personal.window.x, personal.window.y = getNextCascadePosition(personal.window.w, personal.window.h)
             personal:toggleVisible()
+            bringToFront("personal")
         elseif personal.window.minimized then
             personal.window.minimized = false
+            bringToFront("personal")
         else
             personal.window.minimized = true
         end
@@ -417,8 +438,10 @@ function toggleApp(appId)
         if not achievements.window.visible then
             achievements.window.x, achievements.window.y = getNextCascadePosition(achievements.window.w, achievements.window.h)
             achievements:toggleVisible()
+            bringToFront("achievements")
         elseif achievements.window.minimized then
             achievements.window.minimized = false
+            bringToFront("achievements")
         else
             achievements.window.minimized = true
         end
@@ -502,6 +525,12 @@ function love.load()
     if ok3 then
         startupSound = snd3
         startupSound:setVolume(0.6)
+    end
+
+    local okErr, sndErr = pcall(love.audio.newSource, "assets/sounds/errorw95.wav", "static")
+    if okErr then
+        errorSound = sndErr
+        errorSound:setVolume(0.6)
     end
 
     local ok4, img4 = pcall(love.graphics.newImage, "assets/sprites/bg.jpg")
