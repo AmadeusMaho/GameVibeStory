@@ -344,7 +344,7 @@ function Trabajo:update(dt)
         job.progress = job.progress + dt
         local adjustedTime = job.task.time * self:getTaskTimeMultiplier()
         if job.progress >= adjustedTime then
-            local baseReward = job.task.reward
+            local baseReward = self:getBaseRewardPerTask()
             local comboMult = 1.0
             if self.achievementsRef then
                 comboMult = self.achievementsRef.comboMultiplier or 1.0
@@ -586,13 +586,8 @@ function Trabajo:checkDifficultyUnlocks()
 end
 
 function Trabajo:getEarningsPerClick()
-    local available = self:getAvailableTasks()
-    if #available == 0 then return 1 end
-    local totalReward = 0
-    for _, task in ipairs(available) do
-        totalReward = totalReward + task.reward
-    end
-    return math.floor(totalReward / #available * self:getTaskRewardMultiplier())
+    local baseReward = self:getBaseRewardPerTask()
+    return math.floor(baseReward * self:getTaskRewardMultiplier())
 end
 
 function Trabajo:getTaskTimeMultiplier()
@@ -607,10 +602,16 @@ function Trabajo:getTaskTimeMultiplier()
     return mult
 end
 
+function Trabajo:getBaseRewardPerTask()
+    local gpuRewards = {1, 2, 4, 8, 16}
+    local upgMap = self:getUpgrades()
+    local gpuLevel = upgMap.display or 0
+    return gpuRewards[gpuLevel + 1] or 1
+end
+
 function Trabajo:getTaskRewardMultiplier()
     local mult = 1.0
     local upgMap = self:getUpgrades()
-    if upgMap.display then mult = mult + 0.40 * upgMap.display end
     if upgMap.cooling then
         local coolingBoost = 0.10 + (upgMap.cooling - 1) * 0.20
         mult = mult * (1.0 + coolingBoost)

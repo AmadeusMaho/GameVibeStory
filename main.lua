@@ -1758,6 +1758,10 @@ function love.mousemoved(x, y)
 end
 
 function love.keypressed(key)
+    if key == "f1" and trabajo then
+        trabajo.money = trabajo.money + 1000
+        trabajo.totalEarned = trabajo.totalEarned + 1000
+    end
 end
 
 function love.wheelmoved(x, y)
