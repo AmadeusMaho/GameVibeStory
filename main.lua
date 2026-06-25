@@ -794,7 +794,7 @@ end
 function drawAMIBIOSLogo(x, y)
     if biosLogo then
         local imgW, imgH = biosLogo:getDimensions()
-        local scale = math.min(390 / imgW, 104 / imgH)
+        local scale = math.min(585 / imgW, 156 / imgH)
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(biosLogo, x, y, 0, scale, scale)
     else
