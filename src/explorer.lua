@@ -63,6 +63,10 @@ function Explorer.new(x, y)
 
     self.jobBoard = {}
     self.selectedJob = nil
+    self.refreshAttempts = 3
+    self.maxRefreshAttempts = 3
+    self.refreshCooldown = 0
+    self.refreshCooldownMax = 30
 
     self.appStore = {
         {
@@ -301,6 +305,12 @@ function Explorer:update(dt)
     end
     if self.purchaseMsgTimer and self.purchaseMsgTimer > 0 then
         self.purchaseMsgTimer = self.purchaseMsgTimer - dt
+    end
+    if self.refreshCooldown > 0 then
+        self.refreshCooldown = self.refreshCooldown - dt
+        if self.refreshCooldown <= 0 then
+            self.refreshAttempts = self.maxRefreshAttempts
+        end
     end
 end
 
@@ -772,18 +782,26 @@ function Explorer:drawJobsPage(x, y, w, h)
 
     love.graphics.setScissor()
 
-    local refreshBtnW = 120
+    local refreshBtnW = 140
     local refreshBtnH = 24
     local refreshBtnX = x + w - refreshBtnW - 10
     local refreshBtnY = y + h - 35
     local refreshHov = self.lastMX >= refreshBtnX and self.lastMX <= refreshBtnX + refreshBtnW and self.lastMY >= refreshBtnY and self.lastMY <= refreshBtnY + refreshBtnH
 
-    love.graphics.setColor(refreshHov and {0.85, 0.85, 0.85} or W95.bg)
-    love.graphics.rectangle("fill", refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
-    self:drawBevel(refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
-    love.graphics.setColor(W95.text)
-    love.graphics.printf("Actualizar", refreshBtnX, refreshBtnY + 5, refreshBtnW, "center")
-    table.insert(self.buttons, {x = refreshBtnX, y = refreshBtnY, w = refreshBtnW, h = refreshBtnH, action = "refreshjobs"})
+    if self.refreshAttempts > 0 then
+        love.graphics.setColor(refreshHov and {0.85, 0.85, 0.85} or W95.bg)
+        love.graphics.rectangle("fill", refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
+        self:drawBevel(refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
+        love.graphics.setColor(W95.text)
+        love.graphics.printf("Actualizar (" .. self.refreshAttempts .. ")", refreshBtnX, refreshBtnY + 5, refreshBtnW, "center")
+        table.insert(self.buttons, {x = refreshBtnX, y = refreshBtnY, w = refreshBtnW, h = refreshBtnH, action = "refreshjobs"})
+    else
+        love.graphics.setColor(W95.textDim)
+        love.graphics.rectangle("fill", refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
+        self:drawBevel(refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
+        love.graphics.setColor(W95.red)
+        love.graphics.printf("Cooldown: " .. math.ceil(self.refreshCooldown) .. "s", refreshBtnX, refreshBtnY + 5, refreshBtnW, "center")
+    end
 
     if self.selectedJob then
         love.graphics.setColor(W95.borderDark)
@@ -1091,7 +1109,13 @@ function Explorer:handleClick(x, y, button)
                     self.selectedJob = nil
                 end
             elseif btn.action == "refreshjobs" then
-                self:refreshJobBoard()
+                if self.refreshAttempts > 0 then
+                    self:refreshJobBoard()
+                    self.refreshAttempts = self.refreshAttempts - 1
+                    if self.refreshAttempts == 0 then
+                        self.refreshCooldown = self.refreshCooldownMax
+                    end
+                end
             elseif btn.action == "buy" then
                 if btn.stat and btn.tierIndex then
                     local stat = btn.stat

@@ -872,6 +872,8 @@ local function saveGame(slot)
             upgradeLevels = explorer.upgradeLevels,
             appStore = {},
             musicSongs = {},
+            refreshAttempts = explorer.refreshAttempts,
+            refreshCooldown = explorer.refreshCooldown,
         },
         
         email = {
@@ -963,6 +965,12 @@ local function loadGame(slot)
                 end
             end
         end
+        if data.explorer.refreshAttempts then
+            explorer.refreshAttempts = data.explorer.refreshAttempts
+        end
+        if data.explorer.refreshCooldown then
+            explorer.refreshCooldown = data.explorer.refreshCooldown
+        end
     end
     
     if data.email then
@@ -997,6 +1005,14 @@ local function loadGame(slot)
             end
         end
         desktopIcons = getDesktopIcons()
+    end
+
+    if data.achievementsData and data.achievementsData.unlocked and achievements then
+        for id, unlocked in pairs(data.achievementsData.unlocked) do
+            if achievements.unlocked then
+                achievements.unlocked[id] = unlocked
+            end
+        end
     end
     
     if data.pcStats then

@@ -348,7 +348,7 @@ function Trabajo:update(dt)
                     local available = self:getAvailableTasks()
                     if #available > 0 then
                         local task = available[math.random(#available)]
-                        self.activeJobs[slot] = {task = task, progress = 0}
+                        self.activeJobs[slot] = {task = task, progress = 0, auto = true}
                     end
                     break
                 end
@@ -383,7 +383,7 @@ function Trabajo:update(dt)
                 self.money = self.money + reward
                 self.totalEarned = self.totalEarned + reward
                 self.tasksCompleted = self.tasksCompleted + 1
-                if self.moneySounds and #self.moneySounds > 0 then
+                if not job.auto and self.moneySounds and #self.moneySounds > 0 then
                     local snd = self.moneySounds[math.random(#self.moneySounds)]
                     snd:stop()
                     snd:play()
