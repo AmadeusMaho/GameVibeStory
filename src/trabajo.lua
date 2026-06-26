@@ -738,24 +738,59 @@ function Trabajo:drawFreelanceTab(x, y, w, h)
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(x + 8, y + 60, x + w - 8, y + 60)
 
-    local slotH = 60
-    local slotStartY = y + 64
+    local emptySlots = 0
+    for slot = 1, self.maxJobs do
+        if not self.activeJobs[slot] then emptySlots = emptySlots + 1 end
+    end
+    local hasEmptySlots = emptySlots > 0
+
+    local earnings = self:getEarningsPerClick()
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Ganancia: $" .. earnings .. "/tarea | Slots: " .. self.maxJobs, x + 8, y + 64, w - 16, "center")
+
+    local btnW = 140
+    local btnH = 28
+    local btnX = x + (w - btnW) / 2
+    local btnY = y + 82
+    local mx, my = love.mouse.getPosition()
+    local btnHov = mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH
+
+    if hasEmptySlots then
+        love.graphics.setColor(btnHov and {0.85, 0.85, 0.85} or W95.bg)
+        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+        self:drawBevel(btnX, btnY, btnW, btnH)
+        love.graphics.setColor(W95.green)
+        love.graphics.printf("Trabajar (" .. emptySlots .. ")", btnX, btnY + 6, btnW, "center")
+        table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "work_all"})
+    else
+        love.graphics.setColor(W95.textDim)
+        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+        self:drawBevel(btnX, btnY, btnW, btnH)
+        love.graphics.setColor(W95.textDim)
+        love.graphics.printf("Todos ocupados", btnX, btnY + 6, btnW, "center")
+    end
+
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x + 8, y + 116, x + w - 8, y + 116)
+
+    local slotH = 36
+    local slotStartY = y + 120
     
     for slot = 1, self.maxJobs do
         local slotY = slotStartY + (slot - 1) * slotH
         local job = self.activeJobs[slot]
         
-        love.graphics.setColor(W95.text)
-        love.graphics.printf("Slot " .. slot, x + 8, slotY, w - 16, "center")
+        love.graphics.setColor(W95.textDim)
+        love.graphics.print("Slot " .. slot .. ":", x + 8, slotY + 2)
         
         if job then
-            love.graphics.setColor(W95.textDim)
-            love.graphics.printf(job.task.name, x + 8, slotY + 14, w - 16, "center")
+            love.graphics.setColor(W95.text)
+            love.graphics.print(job.task.name, x + 55, slotY + 2)
             
-            local barX = x + 20
-            local barY = slotY + 28
-            local barW = w - 40
-            local barH = 16
+            local barX = x + 55
+            local barY = slotY + 16
+            local barW = w - 75
+            local barH = 14
 
             love.graphics.setColor(W95.fieldBg)
             love.graphics.rectangle("fill", barX, barY, barW, barH)
@@ -766,25 +801,10 @@ function Trabajo:drawFreelanceTab(x, y, w, h)
             love.graphics.rectangle("fill", barX + 2, barY + 2, (barW - 4) * progress, barH - 4)
 
             love.graphics.setColor(W95.white)
-            love.graphics.printf(math.floor(progress * 100) .. "%", barX, barY + 1, barW, "center")
+            love.graphics.printf(math.floor(progress * 100) .. "%", barX, barY, barW, "center")
         else
-            local earnings = self:getEarningsPerClick()
             love.graphics.setColor(W95.textDim)
-            love.graphics.printf("$" .. earnings .. "/tarea", x + 8, slotY + 14, w - 16, "center")
-            
-            local btnW = 100
-            local btnH = 24
-            local btnX = x + (w - btnW) / 2
-            local btnY = slotY + 30
-            local mx, my = love.mouse.getPosition()
-            local btnHov = mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH
-            
-            love.graphics.setColor(btnHov and {0.85, 0.85, 0.85} or W95.bg)
-            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
-            self:drawBevel(btnX, btnY, btnW, btnH)
-            love.graphics.setColor(W95.green)
-            love.graphics.printf("Trabajar", btnX, btnY + 5, btnW, "center")
-            table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "work_slot", slot = slot})
+            love.graphics.print("[Vacio]", x + 55, slotY + 2)
         end
     end
 
@@ -1022,14 +1042,16 @@ function Trabajo:handleClick(x, y, button)
 
     for _, btn in ipairs(self.buttons) do
         if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-            if btn.action == "work_slot" and btn.slot then
+            if btn.action == "work_all" then
                 local available = self:getAvailableTasks()
-                if #available > 0 and not self.activeJobs[btn.slot] then
-                    local task = available[math.random(#available)]
-                    self.activeJobs[btn.slot] = {task = task, progress = 0}
+                if #available > 0 then
+                    for slot = 1, self.maxJobs do
+                        if not self.activeJobs[slot] then
+                            local task = available[math.random(#available)]
+                            self.activeJobs[slot] = {task = task, progress = 0}
+                        end
+                    end
                 end
-            elseif btn.action == "cancel_slot" and btn.slot then
-                self.activeJobs[btn.slot] = nil
             end
             return true
         end
