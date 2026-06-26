@@ -1018,6 +1018,28 @@ function love.load()
     countdownValue = 3
     countdownTimer = 0
 
+    local autoLoaded = false
+    local latestSlot = nil
+    local latestTimestamp = 0
+    for i = 1, 3 do
+        local info = getSaveSlotInfo(i)
+        if info and info.timestamp and info.timestamp > latestTimestamp then
+            latestTimestamp = info.timestamp
+            latestSlot = i
+        end
+    end
+    if latestSlot then
+        local ok = loadGame(latestSlot)
+        if ok then
+            autoLoaded = true
+            gameState = "desktop"
+            firstBootDone = true
+            if email then
+                email.window.visible = false
+            end
+        end
+    end
+
     local ok, snd = pcall(love.audio.newSource, "assets/sounds/start.wav", "static")
     if ok then
         bootSound = snd
