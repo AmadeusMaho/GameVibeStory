@@ -756,11 +756,9 @@ function Coding:drawCoding(x, y, w, h)
 
     local currentLineY = (self.codeIndex - 1) * lineH
     local viewH = codeH - 4
-    if currentLineY > self.scrollY + viewH - lineH * 3 then
+    local bottomLine = self.scrollY + viewH - lineH * 2
+    if currentLineY > bottomLine then
         self.scrollY = currentLineY - viewH + lineH * 3
-    end
-    if currentLineY < self.scrollY + lineH then
-        self.scrollY = currentLineY - lineH
     end
     if self.scrollY < 0 then self.scrollY = 0 end
 
@@ -968,9 +966,11 @@ end
 function Coding:mousemoved(x, y)
     self.lastMX = x
     self.lastMY = y
+    self.window:mousemoved(x, y)
 end
 
 function Coding:mousereleased(x, y, button)
+    self.window:mousereleased(x, y, button)
 end
 
 function Coding:draw(mx, my)
