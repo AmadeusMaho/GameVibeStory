@@ -2113,7 +2113,7 @@ function love.mousepressed(x, y, button)
         local appMap = {
             mypc = mypc, explorer = explorer, notepad = notepad,
             winamp = winamp, trabajo = trabajo, email = email, recyclebin = recyclebin,
-            personal = personal, achievements = achievements,
+            personal = personal, achievements = achievements, coding = coding,
             particular = particularApp,
         }
         for i = #windowOrder, 1, -1 do
