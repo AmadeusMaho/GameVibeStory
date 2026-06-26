@@ -50,12 +50,7 @@ local coding = nil
 local keyboardSounds = {}
 local currentKeyboard = 1
 local keyboardNames = {
-    "Topre Purple Hybrid - PBT keycaps",
     "NK Cream (original by Ryan)",
-    "EG Oreo",
-    "EG Crystal Purple",
-    "CherryMX Black - ABS keycaps",
-    "CherryMX Blue - PBT keycaps",
 }
 
 local pcStats = {
@@ -1475,45 +1470,44 @@ function love.load()
     end
 
     local kbdPath = "assets/sounds/keyboard/"
-    for i = 1, 6 do
-        local pack = {sources = {}, currentIndex = 1, name = keyboardNames[i] or "Teclado " .. i, owned = (i == 1), keyMap = {}}
-        local dirPath = kbdPath .. i
-        local files = love.filesystem.getDirectoryItems(dirPath)
-        
-        local wavFiles = {}
+    local pack = {name = keyboardNames[1], owned = true, keySounds = {}}
+    local dirPath = kbdPath .. "2"
+    local files = love.filesystem.getDirectoryItems(dirPath)
+    
+    local loveToFile = {
+        a="a", b="b", c="c", d="d", e="e", f="f", g="g", h="h", i="i", j="j",
+        k="k", l="l", m="m", n="n", o="o", p="p", q="q", r="r", s="s", t="t",
+        u="u", v="v", w="w", x="x", y="y", z="z",
+        ["1"]="1", ["2"]="2", ["3"]="3", ["4"]="4", ["5"]="5", ["6"]="6", ["7"]="7", ["8"]="8", ["9"]="9", ["0"]="0",
+        ["-"]="-", ["="]="=", ["["]="[", ["]"]="]", ["\\"]="\\",
+        [";"]=";", ["'"]="'", [","]=",", ["."]=".", ["/"]="/",
+        ["`"]="`",
+        space="space", backspace="backspace", return="enter",
+        tab="tab", capslock="caps lock", lshift="shift", rshift="shift",
+    }
+    
+    local loaded = 0
+    for key, wavName in pairs(loveToFile) do
+        local filename = wavName .. ".wav"
+        local found = false
         for _, f in ipairs(files) do
-            if f:match("%.wav$") then
-                table.insert(wavFiles, f)
+            if f == filename then
+                found = true
+                break
             end
         end
-        
-        if #wavFiles > 0 then
-            for _, f in ipairs(wavFiles) do
-                local keyName = f:gsub("%.wav$", "")
-                local ok, src = pcall(love.audio.newSource, dirPath .. "/" .. f, "static")
-                if ok then
-                    src:setVolume(0.3)
-                    pack.keyMap[keyName] = src
-                end
-            end
-            if next(pack.keyMap) then
-                table.insert(keyboardSounds, pack)
-            end
-        else
-            for _, f in ipairs(files) do
-                if f:match("%.ogg$") then
-                    local ok, src = pcall(love.audio.newSource, dirPath .. "/" .. f, "static")
-                    if ok then
-                        src:setVolume(0.3)
-                        pack.keyMap["default"] = src
-                        break
-                    end
-                end
-            end
-            if pack.keyMap["default"] then
-                table.insert(keyboardSounds, pack)
+        if found then
+            local ok, src = pcall(love.audio.newSource, dirPath .. "/" .. filename, "static")
+            if ok then
+                src:setVolume(0.3)
+                pack.keySounds[key] = src
+                loaded = loaded + 1
             end
         end
+    end
+    
+    if loaded > 0 then
+        table.insert(keyboardSounds, pack)
     end
 end
 
@@ -2421,7 +2415,7 @@ function love.keypressed(key)
         if not skipKeys[key] then
             local pack = keyboardSounds[currentKeyboard]
             if pack and pack.owned then
-                local src = pack.keyMap[key] or pack.keyMap["default"]
+                local src = pack.keySounds[key] or pack.keySounds["default"]
                 if src then
                     src:stop()
                     src:play()

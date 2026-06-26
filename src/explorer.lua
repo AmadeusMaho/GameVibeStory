@@ -876,11 +876,7 @@ function Explorer:drawShopGrid(x, y, w, h)
     love.graphics.printf("Consumo: " .. totalWatts .. "W / " .. psuCap .. "W", x, y - 16, w, "center")
 
     local kbdItems = {
-        {index = 2, name = "NK Cream", price = 200},
-        {index = 3, name = "EG Oreo", price = 250},
-        {index = 4, name = "Crystal Purple", price = 300},
-        {index = 5, name = "CherryMX Black", price = 350},
-        {index = 6, name = "CherryMX Blue", price = 400},
+        {index = 1, name = "NK Cream", price = 200},
     }
 
     local componentRows = math.ceil(#componentOrder / cols)
