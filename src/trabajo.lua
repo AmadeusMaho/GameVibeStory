@@ -27,10 +27,10 @@ local W95 = {
 
 local projectDifficulties = {
     {id = "facil", label = "Fácil", color = {0.2, 0.8, 0.2}, hpMult = 1.0, rewardMult = 1.0},
-    {id = "normal", label = "Normal", color = {0.9, 0.9, 0.2}, hpMult = 2.67, rewardMult = 1.4},
-    {id = "dificil", label = "Difícil", color = {0.9, 0.6, 0.2}, hpMult = 4.67, rewardMult = 1.8},
-    {id = "muy_dificil", label = "Muy Difícil", color = {0.9, 0.3, 0.3}, hpMult = 7.33, rewardMult = 2.3},
-    {id = "pesadilla", label = "Pesadilla", color = {0.6, 0.0, 0.6}, hpMult = 10.67, rewardMult = 3.0},
+    {id = "normal", label = "Normal", color = {0.9, 0.9, 0.2}, hpMult = 2.67, rewardMult = 1.0},
+    {id = "dificil", label = "Difícil", color = {0.9, 0.6, 0.2}, hpMult = 4.67, rewardMult = 1.0},
+    {id = "muy_dificil", label = "Muy Difícil", color = {0.9, 0.3, 0.3}, hpMult = 7.33, rewardMult = 1.0},
+    {id = "pesadilla", label = "Pesadilla", color = {0.6, 0.0, 0.6}, hpMult = 10.67, rewardMult = 1.0},
 }
 
 local freelanceTasks = {
