@@ -1123,9 +1123,7 @@ function love.load()
 
     local virtualW = 1920
     local virtualH = 1080
-    local pad = 0.15
-    mainCanvas = love.graphics.newCanvas(virtualW * (1 + pad * 2), virtualH * (1 + pad * 2))
-    mainCanvas:setWrap("repeat", "repeat")
+    mainCanvas = love.graphics.newCanvas(virtualW, virtualH)
 
     local font = love.graphics.newFont(16)
     love.graphics.setFont(font)
@@ -1580,19 +1578,13 @@ local function getVirtualMouse()
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
     local virtualW = 1920
     local virtualH = 1080
-    local pad = 0.15
-    local canvasW = virtualW * (1 + pad * 2)
-    local canvasH = virtualH * (1 + pad * 2)
-    local scaleX = screenW / canvasW
-    local scaleY = screenH / canvasH
+    local scaleX = screenW / virtualW
+    local scaleY = screenH / virtualH
     local scale = math.min(scaleX, scaleY)
-    local offsetX = (screenW - canvasW * scale) / 2
-    local offsetY = (screenH - canvasH * scale) / 2
+    local offsetX = (screenW - virtualW * scale) / 2
+    local offsetY = (screenH - virtualH * scale) / 2
     local mx, my = love.mouse.getPosition()
-    local vx = (mx - offsetX) / scale
-    local vy = (my - offsetY) / scale
-    local padPixels = virtualW * pad
-    return vx - padPixels, vy - padPixels
+    return (mx - offsetX) / scale, (my - offsetY) / scale
 end
 
 function drawDesktop()
@@ -1858,12 +1850,9 @@ function love.draw()
     local virtualH = 1080
     local canvasW = mainCanvas:getWidth()
     local canvasH = mainCanvas:getHeight()
-    local pad = canvasW * 0.065
 
     love.graphics.setCanvas(mainCanvas)
     love.graphics.clear(0, 0, 0)
-    love.graphics.push()
-    love.graphics.translate(pad, pad)
 
     if gameState == "boot" then
         drawAMIBIOSLogo(80, 10)
@@ -1905,7 +1894,6 @@ function love.draw()
 
     end
 
-    love.graphics.pop()
     love.graphics.setCanvas()
 
     local scaleX = screenW / canvasW
@@ -1922,7 +1910,6 @@ function love.draw()
     end
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(mainCanvas, offsetX, offsetY, 0, scale, scale)
-    love.graphics.setShader()
     love.graphics.setShader()
     if gameState == "desktop" then
         local appDrawMap = {
