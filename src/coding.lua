@@ -714,6 +714,15 @@ function Coding:drawBevel(x, y, w, h)
     love.graphics.line(x, y + h, x + w, y + h)
 end
 
+function Coding:drawInset(x, y, w, h)
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x, y, x + w, y)
+    love.graphics.line(x, y, x, y + h)
+    love.graphics.setColor(W95.borderLight)
+    love.graphics.line(x + w, y, x + w, y + h)
+    love.graphics.line(x, y + h, x + w, y + h)
+end
+
 function Coding:mousemoved(x, y)
     self.lastMX = x
     self.lastMY = y
