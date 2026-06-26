@@ -1848,8 +1848,12 @@ function love.draw()
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
     local virtualW = 1920
     local virtualH = 1080
-    local canvasW = mainCanvas:getWidth()
-    local canvasH = mainCanvas:getHeight()
+
+    local scaleX = screenW / virtualW
+    local scaleY = screenH / virtualH
+    local scale = math.min(scaleX, scaleY)
+    local offsetX = (screenW - virtualW * scale) / 2
+    local offsetY = (screenH - virtualH * scale) / 2
 
     love.graphics.setCanvas(mainCanvas)
     love.graphics.clear(0, 0, 0)
@@ -1896,14 +1900,10 @@ function love.draw()
 
     love.graphics.setCanvas()
 
-    local scaleX = screenW / canvasW
-    local scaleY = screenH / canvasH
-    local scale = math.min(scaleX, scaleY)
-    local offsetX = (screenW - canvasW * scale) / 2
-    local offsetY = (screenH - canvasH * scale) / 2
+    love.graphics.clear(0, 0, 0)
 
     if shader then
-        shader:send("screen_size", {canvasW, canvasH})
+        shader:send("screen_size", {virtualW, virtualH})
         shader:send("time", love.timer.getTime())
         shader:send("curvature", CURVATURE)
         love.graphics.setShader(shader)
@@ -1911,6 +1911,7 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(mainCanvas, offsetX, offsetY, 0, scale, scale)
     love.graphics.setShader()
+
     if gameState == "desktop" then
         local appDrawMap = {
             winamp = winamp, mypc = mypc, explorer = explorer,
