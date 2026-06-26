@@ -53,12 +53,19 @@ function Explorer.new(x, y)
     self.favorites = {
         {label = "Tienda", page = "upgrades"},
         {label = "Apps", page = "apps"},
+        {label = "Bolsa de Trabajo", page = "jobs"},
         {label = "Windows Update", page = "update"},
         {label = "Musica", page = "music", unlocked = false},
         {label = "Fondo de escritorio", page = "wallpaper", unlocked = false},
         {label = "MSN", page = "msn", unlocked = false},
     }
-    self.unlockedPages = {upgrades = true, update = true, apps = true}
+    self.unlockedPages = {upgrades = true, update = true, apps = true, jobs = true}
+
+    self.jobBoard = {}
+    self.jobBoardRefreshTimer = 0
+    self.jobBoardRefreshTime = 30
+    self.selectedJob = nil
+    self:refreshJobBoard()
 
     self.appStore = {
         {
@@ -101,44 +108,70 @@ function Explorer.new(x, y)
     self.appStoreScrollY = 0
     self.selectedApp = nil
 
+    self.allProjects = {
+        {name = "Digitacion de formularios", desc = "Digitar 200 formularios\nde seguros.", baseHp = 150, days = 14, reward = 70, difficulty = "facil"},
+        {name = "Clasificacion de archivos", desc = "Clasificar 500 archivos\npor categoria y fecha.", baseHp = 150, days = 14, reward = 75, difficulty = "facil"},
+        {name = "Traduccion de documentos", desc = "Traducir 10 documentos\nlegales al espanol.", baseHp = 150, days = 14, reward = 90, difficulty = "facil"},
+        {name = "Soporte tecnico", desc = "Dar soporte tecnico\npor telefono a clientes.", baseHp = 150, days = 14, reward = 80, difficulty = "facil"},
+        {name = "Revision de facturas", desc = "Revisar 150 facturas\npor errores.", baseHp = 150, days = 14, reward = 70, difficulty = "facil"},
+        {name = "Copia de documentos", desc = "Digitalizar 300 documentos\ncon scanner.", baseHp = 150, days = 14, reward = 105, difficulty = "normal"},
+        {name = "Inventario de almacen", desc = "Inventariar productos\ndel almacen.", baseHp = 150, days = 14, reward = 100, difficulty = "normal"},
+        {name = "Procesamiento de nominas", desc = "Calcular nominas de\n50 empleados.", baseHp = 150, days = 14, reward = 135, difficulty = "normal"},
+        {name = "Help Desk interno", desc = "Resolver tickets de soporte\ninterno.", baseHp = 150, days = 14, reward = 125, difficulty = "normal"},
+        {name = "Redaccion de cartas", desc = "Redactar 50 cartas\ncomerciales.", baseHp = 150, days = 14, reward = 105, difficulty = "normal"},
+        {name = "Archivo de correspondencia", desc = "Archivar 400 cartas\ny documentos.", baseHp = 150, days = 14, reward = 130, difficulty = "dificil"},
+        {name = "Base de datos de clientes", desc = "Crear BD de 200 clientes\nen Access.", baseHp = 150, days = 14, reward = 160, difficulty = "dificil"},
+        {name = "Revision de impresiones", desc = "Revisar documentos\nimpresos por erratas.", baseHp = 150, days = 14, reward = 130, difficulty = "dificil"},
+        {name = "Base de datos Access", desc = "Crear sistema de inventario\npara empresa local.", baseHp = 150, days = 14, reward = 200, difficulty = "dificil"},
+        {name = "Pagina web corporativa", desc = "Diseno de sitio web\ncon HTML y tablas.", baseHp = 150, days = 14, reward = 245, difficulty = "dificil"},
+        {name = "Reporte de nominas", desc = "Sistema de nomina\nen Hoja de calculo.", baseHp = 150, days = 14, reward = 185, difficulty = "muy_dificil"},
+        {name = "Presentacion multimedia", desc = "Slides con animaciones\ny transiciones.", baseHp = 150, days = 14, reward = 220, difficulty = "muy_dificil"},
+        {name = "Soporte de red", desc = "Configurar red local\nentre 5 computadoras.", baseHp = 150, days = 14, reward = 275, difficulty = "muy_dificil"},
+        {name = "App de inventario", desc = "Programa de control\nde stock en Visual Basic.", baseHp = 150, days = 14, reward = 370, difficulty = "muy_dificil"},
+        {name = "Sistema de facturacion", desc = "Generador de facturas\ncon base de datos.", baseHp = 150, days = 14, reward = 450, difficulty = "pesadilla"},
+        {name = "Conversor de formatos", desc = "Herramienta para convertir\narchivos entre formatos.", baseHp = 150, days = 14, reward = 210, difficulty = "pesadilla"},
+    }
+
     self.upgradeTiers = {
         cpu = {
-            {from = "Pentium 75MHz", to = "Pentium 100MHz", price = 80, watts = 30},
-            {from = "Pentium 100MHz", to = "Pentium 133MHz", price = 160, watts = 40},
-            {from = "Pentium 133MHz", to = "Pentium 200MHz", price = 352, watts = 55},
-            {from = "Pentium 200MHz", to = "Pentium MMX 233", price = 800, watts = 70},
+            {from = "Pentium 75MHz", to = "Pentium 100MHz", basePrice = 80, watts = 30},
+            {from = "Pentium 100MHz", to = "Pentium 133MHz", basePrice = 80, watts = 40},
+            {from = "Pentium 133MHz", to = "Pentium 200MHz", basePrice = 80, watts = 55},
+            {from = "Pentium 200MHz", to = "Pentium MMX 233", basePrice = 80, watts = 70},
         },
         ram = {
-            {from = "16 MB", to = "32 MB", price = 200, watts = 3},
-            {from = "32 MB", to = "64 MB", price = 500, watts = 5},
-            {from = "64 MB", to = "128 MB", price = 1200, watts = 8},
-            {from = "128 MB", to = "256 MB", price = 3000, watts = 12},
+            {from = "16 MB", to = "32 MB", basePrice = 200, watts = 3},
+            {from = "32 MB", to = "64 MB", basePrice = 200, watts = 5},
+            {from = "64 MB", to = "128 MB", basePrice = 200, watts = 8},
+            {from = "128 MB", to = "256 MB", basePrice = 200, watts = 12},
         },
         disk = {
-            {from = "850 MB", to = "1.2 GB", price = 90, watts = 8},
-            {from = "1.2 GB", to = "2.1 GB", price = 189, watts = 10},
-            {from = "2.1 GB", to = "4.3 GB", price = 397, watts = 12},
-            {from = "4.3 GB", to = "8.4 GB", price = 834, watts = 15},
+            {from = "850 MB", to = "1.2 GB", basePrice = 90, watts = 8},
+            {from = "1.2 GB", to = "2.1 GB", basePrice = 90, watts = 10},
+            {from = "2.1 GB", to = "4.3 GB", basePrice = 90, watts = 12},
+            {from = "4.3 GB", to = "8.4 GB", basePrice = 90, watts = 15},
         },
         display = {
-            {from = "Standard VGA", to = "S3 Trio64", price = 100, watts = 10},
-            {from = "S3 Trio64", to = "S3 ViRGE", price = 220, watts = 15},
-            {from = "S3 ViRGE", to = "3dfx Banshee", price = 484, watts = 25},
-            {from = "3dfx Banshee", to = "Voodoo 3 3000", price = 1065, watts = 40},
+            {from = "Standard VGA", to = "S3 Trio64", basePrice = 100, watts = 10},
+            {from = "S3 Trio64", to = "S3 ViRGE", basePrice = 100, watts = 15},
+            {from = "S3 ViRGE", to = "3dfx Banshee", basePrice = 100, watts = 25},
+            {from = "3dfx Banshee", to = "Voodoo 3 3000", basePrice = 100, watts = 40},
         },
         cooling = {
-            {from = "Disipador basico", to = "Ventilador activo", price = 75, watts = 2},
-            {from = "Ventilador activo", to = "Cooler Turbo", price = 143, watts = 4},
-            {from = "Cooler Turbo", to = "Refrigeracion liquida", price = 271, watts = 8},
-            {from = "Refrigeracion liquida", to = "Sistema custom", price = 515, watts = 12},
+            {from = "Disipador basico", to = "Ventilador activo", basePrice = 75, watts = 2},
+            {from = "Ventilador activo", to = "Cooler Turbo", basePrice = 75, watts = 4},
+            {from = "Cooler Turbo", to = "Refrigeracion liquida", basePrice = 75, watts = 8},
+            {from = "Refrigeracion liquida", to = "Sistema custom", basePrice = 75, watts = 12},
         },
         psu = {
-            {from = "Fuente 150W", to = "Fuente 200W", price = 60, capacity = 200},
-            {from = "Fuente 200W", to = "Fuente 250W", price = 120, capacity = 250},
-            {from = "Fuente 250W", to = "Fuente 300W", price = 240, capacity = 300},
-            {from = "Fuente 300W", to = "Fuente 350W", price = 480, capacity = 350},
+            {from = "Fuente 150W", to = "Fuente 200W", basePrice = 60, capacity = 200},
+            {from = "Fuente 200W", to = "Fuente 250W", basePrice = 60, capacity = 250},
+            {from = "Fuente 250W", to = "Fuente 300W", basePrice = 60, capacity = 300},
+            {from = "Fuente 300W", to = "Fuente 350W", basePrice = 60, capacity = 350},
         },
     }
+    
+    self.exponentialMultiplier = 2.5
 
     self.upgradeLevels = {
         cpu = 0, ram = 0, disk = 0, display = 0, cooling = 0, psu = 0,
@@ -181,6 +214,13 @@ function Explorer.new(x, y)
     return self
 end
 
+function Explorer:getUpgradePrice(stat, level)
+    local tiers = self.upgradeTiers[stat]
+    if not tiers or not tiers[level + 1] then return 0 end
+    local basePrice = tiers[level + 1].basePrice or 0
+    return math.floor(basePrice * math.pow(self.exponentialMultiplier, level))
+end
+
 function Explorer:getVisibleUpgrades()
     local visible = {}
     local names = {cpu = "Procesador", ram = "Memoria RAM", disk = "Disco Duro", display = "Placa de Video", cooling = "Refrigeracion", monitor = "Monitor"}
@@ -192,7 +232,7 @@ function Explorer:getVisibleUpgrades()
                 name = names[stat],
                 current = tier.from,
                 upgrade = tier.to,
-                price = tier.price,
+                price = self:getUpgradePrice(stat, level),
                 stat = stat,
                 purchased = false,
                 tier = level + 1,
@@ -201,6 +241,19 @@ function Explorer:getVisibleUpgrades()
     end
     table.sort(visible, function(a, b) return a.price < b.price end)
     return visible
+end
+
+function Explorer:refreshJobBoard()
+    self.jobBoard = {}
+    local available = {}
+    for _, project in ipairs(self.allProjects) do
+        table.insert(available, project)
+    end
+    for i = 1, math.min(5, #available) do
+        local idx = math.random(#available)
+        table.insert(self.jobBoard, available[idx])
+        table.remove(available, idx)
+    end
 end
 
 function Explorer:toggleVisible()
@@ -441,6 +494,8 @@ function Explorer:drawContent(cx, cy, cw, ch)
             self:drawUpgradesPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
         elseif self.currentPage == "apps" then
             self:drawAppsPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
+        elseif self.currentPage == "jobs" then
+            self:drawJobsPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
         elseif self.currentPage == "music" and self.unlockedPages.music then
             self:drawMusicPage(pageX + 10, contentY + 10, pageW - 20, contentH - 20)
         elseif self.currentPage == "wallpaper" and self.unlockedPages.wallpaper then
@@ -621,6 +676,117 @@ function Explorer:drawAppsPage(x, y, w, h)
     end
 end
 
+function Explorer:drawJobsPage(x, y, w, h)
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Bolsa de Trabajo", x, y, w, "center")
+
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x + 10, y + 20, x + w - 10, y + 20)
+
+    love.graphics.setColor(W95.textDim)
+    love.graphics.printf("Proyectos disponibles: " .. #self.jobBoard, x, y + 24, w, "center")
+
+    local cols = 2
+    local cellW = 200
+    local cellH = 100
+    local padding = 16
+    local startX = x + (w - cols * (cellW + padding) + padding) / 2
+
+    love.graphics.setScissor(x, y + 44, w, h - 44)
+
+    local scrollOffset = 0
+
+    for i, job in ipairs(self.jobBoard) do
+        local col = (i - 1) % cols
+        local row = math.floor((i - 1) / cols)
+        local cx = startX + col * (cellW + padding)
+        local cy = y + 52 + row * (cellH + padding) + scrollOffset
+
+        if cy + cellH > y + 44 and cy < y + h then
+            local isSelected = self.selectedJob and self.selectedJob.name == job.name
+            local hovered = self.lastMX >= cx and self.lastMX <= cx + cellW and self.lastMY >= cy and self.lastMY <= cy + cellH
+
+            love.graphics.setColor(isSelected and {0.9, 0.9, 1.0} or (hovered and {0.85, 0.85, 0.85} or W95.bg))
+            love.graphics.rectangle("fill", cx, cy, cellW, cellH)
+            self:drawBevel(cx, cy, cellW, cellH)
+
+            love.graphics.setColor(W95.text)
+            love.graphics.printf(job.name, cx + 8, cy + 8, cellW - 16, "center")
+
+            local diffColors = {
+                facil = {0.2, 0.8, 0.2},
+                normal = {0.9, 0.9, 0.2},
+                dificil = {0.9, 0.6, 0.2},
+                muy_dificil = {0.9, 0.3, 0.3},
+                pesadilla = {0.6, 0.0, 0.6},
+            }
+            local diffLabels = {
+                facil = "Facil",
+                normal = "Normal",
+                dificil = "Dificil",
+                muy_dificil = "Muy Dificil",
+                pesadilla = "Pesadilla",
+            }
+            love.graphics.setColor(diffColors[job.difficulty] or W95.text)
+            love.graphics.printf(diffLabels[job.difficulty] or job.difficulty, cx + 8, cy + 28, cellW - 16, "center")
+
+            love.graphics.setColor(W95.green)
+            love.graphics.printf("$" .. job.reward, cx + 8, cy + 45, cellW - 16, "center")
+
+            love.graphics.setColor(W95.textDim)
+            love.graphics.printf(job.days .. " dias", cx + 8, cy + 60, cellW - 16, "center")
+
+            local btnW = 80
+            local btnH = 20
+            local btnX = cx + (cellW - btnW) / 2
+            local btnY = cy + cellH - 28
+            local btnHov = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
+            local canAccept = self.trabajoRef and not self.trabajoRef.activeProject
+
+            if canAccept then
+                love.graphics.setColor(btnHov and {0.85, 0.85, 0.85} or W95.bg)
+                love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+                self:drawBevel(btnX, btnY, btnW, btnH)
+                love.graphics.setColor(W95.green)
+                love.graphics.printf("Aceptar", btnX, btnY + 3, btnW, "center")
+                table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "acceptjob", index = i})
+            else
+                love.graphics.setColor(W95.textDim)
+                love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+                self:drawBevel(btnX, btnY, btnW, btnH)
+                love.graphics.setColor(W95.textDim)
+                love.graphics.printf("Aceptar", btnX, btnY + 3, btnW, "center")
+            end
+
+            table.insert(self.buttons, {x = cx, y = cy, w = cellW, h = cellH - 30, action = "selectjob", index = i})
+        end
+    end
+
+    love.graphics.setScissor()
+
+    local refreshBtnW = 120
+    local refreshBtnH = 24
+    local refreshBtnX = x + w - refreshBtnW - 10
+    local refreshBtnY = y + h - 35
+    local refreshHov = self.lastMX >= refreshBtnX and self.lastMX <= refreshBtnX + refreshBtnW and self.lastMY >= refreshBtnY and self.lastMY <= refreshBtnY + refreshBtnH
+
+    love.graphics.setColor(refreshHov and {0.85, 0.85, 0.85} or W95.bg)
+    love.graphics.rectangle("fill", refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
+    self:drawBevel(refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Actualizar", refreshBtnX, refreshBtnY + 5, refreshBtnW, "center")
+    table.insert(self.buttons, {x = refreshBtnX, y = refreshBtnY, w = refreshBtnW, h = refreshBtnH, action = "refreshjobs"})
+
+    if self.selectedJob then
+        love.graphics.setColor(W95.borderDark)
+        love.graphics.line(x + 10, y + h - 70, x + w - 10, y + h - 70)
+        love.graphics.setColor(W95.text)
+        love.graphics.printf(self.selectedJob.name, x, y + h - 65, w, "center")
+        love.graphics.setColor(W95.textDim)
+        love.graphics.printf(self.selectedJob.desc, x, y + h - 50, w, "center")
+    end
+end
+
 function Explorer:drawPlaceholderPage(x, y, w, h, title, desc)
     love.graphics.setColor(W95.text)
     love.graphics.printf(title, x, y, w, "center")
@@ -718,15 +884,15 @@ function Explorer:drawShopGrid(x, y, w, h)
                 love.graphics.setColor(W95.green)
                 love.graphics.printf("MAX", cx, cy + 54, cellW, "center")
             else
-                local nextTier = tiers[level + 1]
-                local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= nextTier.price
-                local canBuyWatts = stat == "psu" or self:canAffordWatts(nextTier.watts or 0)
+                local price = self:getUpgradePrice(stat, level)
+                local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= price
+                local canBuyWatts = stat == "psu" or self:canAffordWatts(tiers[level + 1].watts or 0)
                 if canBuyMoney and canBuyWatts then
                     love.graphics.setColor(W95.green)
                 else
                     love.graphics.setColor({0.8, 0, 0})
                 end
-                love.graphics.printf("$" .. nextTier.price, cx, cy + 54, cellW, "center")
+                love.graphics.printf("$" .. price, cx, cy + 54, cellW, "center")
             end
 
             if stat == "psu" then
@@ -829,14 +995,15 @@ function Explorer:drawShopDetail(x, y, w, h)
         end
         rx = rx + colW2[2]
 
-        local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= tier.price
+        local price = self:getUpgradePrice(stat, i - 1)
+        local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= price
         local canBuyWatts = isPsu or self:canAffordWatts(tier.watts or 0)
         if canBuyMoney and canBuyWatts then
             love.graphics.setColor(W95.green)
         else
             love.graphics.setColor({0.8, 0, 0})
         end
-        love.graphics.print("$" .. tier.price, rx, ry + 8)
+        love.graphics.print("$" .. price, rx, ry + 8)
         rx = rx + colW2[3]
 
         if isOwned then
@@ -866,12 +1033,12 @@ function Explorer:drawShopDetail(x, y, w, h)
     love.graphics.line(x + 10, descY, x + w - 10, descY)
 
     local descriptions = {
-        cpu = "Freelance: -20% tiempo de tarea por upgrade\nProyecto: Genera circulos mas rapido\n\nBase: 35% mas lento sin upgrades.\nCada nivel de CPU reduce el tiempo\nentre tareas y acelera la generacion\nde circulos en proyectos.",
-        ram = "Freelance: +1 trabajo simultaneo por upgrade\nProyecto: +25% puntos por circulo\n\nCada nivel de RAM permite hacer\nmas trabajos a la vez y aumenta\nlos puntos que dan los circulos.",
-        disk = "Almacenamiento del sistema\nDetermina cuantas apps puedes tener\n\nCada nivel de HDD desbloquea\nnuevas aplicaciones y funciones.",
-        display = "Freelance: +40% dinero por tarea por upgrade\nProyecto: Mayor daño por circulo\n\nCada nivel de GPU aumenta el dinero\npor tarea y el daño de los circulos\nen proyectos.",
-        cooling = "Freelance: +10% GPU y CPU, +20% por upgrade\nProyecto: Reduce bugs en circulos\n\nCada nivel de cooling potencia\nla GPU y CPU, y reduce la\nprobabilidad de bugs.",
-        psu = "Fuente de alimentacion\nDetermina la capacidad maxima de watts\n\nPermite instalar componentes mas\npotentes sin exceder el limite.",
+        cpu = "Freelance: -30% tiempo de tarea por nivel\nProyecto: Genera circulos mas rapido\n\nEl CPU determina la velocidad\na la que completas tareas.\nCada nivel reduce significativamente\nel tiempo de cada tarea.",
+        ram = "Freelance: +1 slot de trabajo por nivel\nProyecto: +25% puntos por circulo\n\nLa RAM permite hacer multiples\ntrabajos simultaneamente.\nMas RAM = mas dinero por segundo.",
+        disk = "Almacenamiento del sistema\nDetermina cuantas apps puedes tener\n\nEl disco duro permite instalar\nmas aplicaciones y funciones\navanzadas del sistema.",
+        display = "Freelance: $1/$2/$4/$8/$16 por tarea\nProyecto: +30% daño por circulo\n\nLa GPU determina cuanto dinero\nganas por cada tarea completada.\nUpgrade mas impactante del juego.",
+        cooling = "Freelance: +10% boost a GPU y CPU\nProyecto: -2% bugs por circulo/nivel\n\nLa refrigeracion potencia otros\ncomponentes y reduce errores.\nComplementa GPU y CPU.",
+        psu = "Fuente de alimentacion\nDetermina la capacidad maxima de watts\n\nPermite instalar componentes mas\npotentes sin exceder el limite.\nSin PSU suficiente no puedes\ncomprar upgrades.",
     }
 
     love.graphics.setColor(W95.text)
@@ -903,6 +1070,20 @@ function Explorer:handleClick(x, y, button)
                 if app then
                     self.selectedApp = app
                 end
+            elseif btn.action == "selectjob" then
+                local job = self.jobBoard[btn.index]
+                if job then
+                    self.selectedJob = job
+                end
+            elseif btn.action == "acceptjob" then
+                local job = self.jobBoard[btn.index]
+                if job and self.trabajoRef and not self.trabajoRef.activeProject then
+                    self.trabajoRef:startProject(job)
+                    table.remove(self.jobBoard, btn.index)
+                    self.selectedJob = nil
+                end
+            elseif btn.action == "refreshjobs" then
+                self:refreshJobBoard()
             elseif btn.action == "buy" then
                 if btn.stat and btn.tierIndex then
                     local stat = btn.stat
@@ -911,10 +1092,11 @@ function Explorer:handleClick(x, y, button)
                     local level = self.upgradeLevels[stat] or 0
                     if tierIndex == level + 1 and tiers[tierIndex] then
                         local tier = tiers[tierIndex]
-                        local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= tier.price
+                        local price = self:getUpgradePrice(stat, level)
+                        local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= price
                         local canBuyWatts = self:canAffordWatts(tier.watts or 0)
                         if canBuyMoney and canBuyWatts then
-                            self.trabajoRef.money = self.trabajoRef.money - tier.price
+                            self.trabajoRef.money = self.trabajoRef.money - price
                             self.upgradeLevels[stat] = level + 1
                             local names = {cpu = "Procesador", ram = "Memoria RAM", disk = "Disco Duro", display = "Placa de Video", cooling = "Refrigeracion", psu = "Fuente de Poder"}
                             self.purchaseMessage = names[stat] .. " mejorado a " .. tier.to .. "!"
@@ -935,7 +1117,7 @@ function Explorer:handleClick(x, y, button)
                             end
                             self.upgrades = self:getVisibleUpgrades()
                         elseif not canBuyMoney then
-                            self.purchaseMessage = "Dinero insuficiente. Necesitas $" .. tier.price
+                            self.purchaseMessage = "Dinero insuficiente. Necesitas $" .. price
                             self.purchaseMsgTimer = 2.0
                         elseif not canBuyWatts then
                             self.purchaseMessage = "Fuente de poder insuficiente. Necesita mas watts."
