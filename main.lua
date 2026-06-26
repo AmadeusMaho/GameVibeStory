@@ -83,35 +83,35 @@ bottomLines = {
     "08/06/2011-Soon-in-Tokyo-Rehab-Studio"
 }
 
-local bootLineIndex = 0
-local bootCharIndex = 0
-local bootDone = false
-local bootLineDelay = 0.15
-local bootCharDelay = 0.02
-local bootTimerAccum = 0
-local showAllLines = false
-local showBottom = false
+bootLineIndex = 0
+bootCharIndex = 0
+bootDone = false
+bootLineDelay = 0.15
+bootCharDelay = 0.02
+bootTimerAccum = 0
+showAllLines = false
+showBottom = false
 
-local countdownActive = false
-local countdownValue = 3
-local countdownTimer = 0
+countdownActive = false
+countdownValue = 3
+countdownTimer = 0
 
-local startMenuOpen = false
-local saveMessage = ""
-local saveMessageTimer = 0
+startMenuOpen = false
+saveMessage = ""
+saveMessageTimer = 0
 
-local popupActive = false
-local popupType = nil
-local popupSelectedSlot = 1
-local popupConfirmStep = 0
-local lastClickTime = 0
-local doubleClickTime = 0.4
-local taskbarApps = {}
-local winampMusic2 = nil
-local firstBootDone = false
+popupActive = false
+popupType = nil
+popupSelectedSlot = 1
+popupConfirmStep = 0
+lastClickTime = 0
+doubleClickTime = 0.4
+taskbarApps = {}
+winampMusic2 = nil
+firstBootDone = false
 
-local iconImages = {}
-local winampMusic = nil
+iconImages = {}
+winampMusic = nil
 
 dynamicIcons = {}
 local dynamicIconOrder = {}
@@ -134,7 +134,7 @@ addDynamicIcon("personal", "Personal", "staff", 240, 240, nil)
 addDynamicIcon("coding", "Coding", "coding", 340, 240, nil)
 addDynamicIcon("download", "WinOptimizer", "download", 340, 40, nil)
 
-local baseDesktopIcons = {
+baseDesktopIcons = {
     {label = "Mi PC", icon = "mypc"},
     {label = "Trabajo", icon = "trabajo", iconScale = 1.4},
     {label = "Correo", icon = "email", iconScale = 1.4},
