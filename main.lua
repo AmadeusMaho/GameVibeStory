@@ -47,6 +47,17 @@ local personal = nil
 local achievements = nil
 local coding = nil
 
+local keyboardSounds = {}
+local currentKeyboard = 1
+local keyboardNames = {
+    "Topre Purple Hybrid - PBT keycaps",
+    "NK Cream (original by Ryan)",
+    "EG Oreo",
+    "EG Crystal Purple",
+    "CherryMX Black - ABS keycaps",
+    "CherryMX Blue - PBT keycaps",
+}
+
 local pcStats = {
     cpu = "Intel Pentium 75MHz",
     ram = "16 MB",
@@ -900,7 +911,7 @@ local function saveGame(slot)
             codingLevel = coding.codingLevel,
             codingXP = coding.codingXP,
             publishedApps = {},
-            currentKeyboard = coding.currentKeyboard,
+            currentKeyboard = currentKeyboard,
             ownedKeyboards = {},
         },
         
@@ -934,7 +945,7 @@ local function saveGame(slot)
         })
     end
 
-    for i, kbd in ipairs(coding.keyboardSounds) do
+    for i, kbd in ipairs(keyboardSounds) do
         if kbd.owned then
             table.insert(saveData.codingData.ownedKeyboards, i)
         end
@@ -1044,11 +1055,11 @@ local function loadGame(slot)
     if data.codingData and coding then
         coding.codingLevel = data.codingData.codingLevel or 1
         coding.codingXP = data.codingData.codingXP or 0
-        coding.currentKeyboard = data.codingData.currentKeyboard or 1
+        currentKeyboard = data.codingData.currentKeyboard or 1
         if data.codingData.ownedKeyboards then
             for _, idx in ipairs(data.codingData.ownedKeyboards) do
-                if coding.keyboardSounds[idx] then
-                    coding.keyboardSounds[idx].owned = true
+                if keyboardSounds[idx] then
+                    keyboardSounds[idx].owned = true
                 end
             end
         end
@@ -1291,6 +1302,7 @@ function love.load()
     explorer.trabajoRef = trabajo
     explorer.pcStatsRef = pcStats
     explorer.winampRef = winamp
+    explorer.keyboardSoundsRef = keyboardSounds
     explorer.iconImagesRef = iconImages
     explorer.window.onClose = function()
         updateTaskbar()
@@ -1460,6 +1472,34 @@ function love.load()
         bootLines[8] = {text = "HDD: " .. pcStats.disk, x = 80, y = 375, color = {0.8, 0.8, 0.8}}
         bootLines[9] = {text = "Video: " .. pcStats.display, x = 80, y = 400, color = {0.8, 0.8, 0.8}}
         bootLines[10] = {text = "Cooling: " .. pcStats.cooling, x = 80, y = 425, color = {0.8, 0.8, 0.8}}
+    end
+
+    local kbdPath = "assets/sounds/keyboard/"
+    for i = 1, 6 do
+        local pack = {}
+        local ok, src = pcall(love.audio.newSource, kbdPath .. i .. "/pbt.ogg", "static")
+        if ok then
+            pack.source = src
+            pack.name = keyboardNames[i] or "Teclado " .. i
+            pack.owned = (i == 1)
+        else
+            local files = love.filesystem.getDirectoryItems(kbdPath .. i)
+            for _, f in ipairs(files) do
+                if f:match("%.ogg$") then
+                    local ok2, src2 = pcall(love.audio.newSource, kbdPath .. i .. "/" .. f, "static")
+                    if ok2 then
+                        pack.source = src2
+                        pack.name = keyboardNames[i] or "Teclado " .. i
+                        pack.owned = (i == 1)
+                        break
+                    end
+                end
+            end
+        end
+        if pack.source then
+            pack.source:setVolume(0.3)
+            table.insert(keyboardSounds, pack)
+        end
     end
 end
 
@@ -2361,6 +2401,18 @@ function love.keypressed(key)
         trabajo.money = trabajo.money + 1000
         trabajo.totalEarned = trabajo.totalEarned + 1000
     end
+
+    if gameState == "desktop" then
+        local skipKeys = {lshift=true, rshift=true, lctrl=true, rctrl=true, lalt=true, ralt=true, escape=true, tab=true, capslock=true}
+        if not skipKeys[key] then
+            local pack = keyboardSounds[currentKeyboard]
+            if pack and pack.source and pack.owned then
+                pack.source:stop()
+                pack.source:play()
+            end
+        end
+    end
+
     if coding and coding.window.visible and not coding.window.minimized then
         coding:keypressed(key)
     end

@@ -105,6 +105,61 @@ function Explorer.new(x, y)
             purchased = false,
             milestone = "locked",
         },
+        {
+            id = "kbd_2",
+            name = "NK Cream",
+            desc = "Teclado mecanico con switches NK Cream.\nSonido unico y satisfactorio.\n\nReproduce sonido al escribir.",
+            price = 200,
+            icon = "winamp",
+            purchased = false,
+            milestone = nil,
+            isKeyboard = true,
+            keyboardIndex = 2,
+        },
+        {
+            id = "kbd_3",
+            name = "EG Oreo",
+            desc = "Teclado mecanico con switches EG Oreo.\nSonido suave y consistente.\n\nReproduce sonido al escribir.",
+            price = 250,
+            icon = "winamp",
+            purchased = false,
+            milestone = nil,
+            isKeyboard = true,
+            keyboardIndex = 3,
+        },
+        {
+            id = "kbd_4",
+            name = "EG Crystal Purple",
+            desc = "Teclado mecanico con switches Crystal Purple.\nSonido profundo y resonante.\n\nReproduce sonido al escribir.",
+            price = 300,
+            icon = "winamp",
+            purchased = false,
+            milestone = nil,
+            isKeyboard = true,
+            keyboardIndex = 4,
+        },
+        {
+            id = "kbd_5",
+            name = "CherryMX Black",
+            desc = "Teclado con switches CherryMX Black.\nSonido suave y lineal.\n\nReproduce sonido al escribir.",
+            price = 350,
+            icon = "winamp",
+            purchased = false,
+            milestone = nil,
+            isKeyboard = true,
+            keyboardIndex = 5,
+        },
+        {
+            id = "kbd_6",
+            name = "CherryMX Blue",
+            desc = "Teclado con switches CherryMX Blue.\nSonido clicky y tactil.\n\nReproduce sonido al escribir.",
+            price = 400,
+            icon = "winamp",
+            purchased = false,
+            milestone = nil,
+            isKeyboard = true,
+            keyboardIndex = 6,
+        },
     }
     self.appStoreScrollY = 0
     self.selectedApp = nil
@@ -1196,6 +1251,11 @@ function Explorer:handleClick(x, y, button)
                         app.purchased = true
                         self.purchaseMessage = app.name .. " instalado!"
                         self.purchaseMsgTimer = 2.0
+                        if app.isKeyboard and app.keyboardIndex and self.keyboardSoundsRef then
+                            if self.keyboardSoundsRef[app.keyboardIndex] then
+                                self.keyboardSoundsRef[app.keyboardIndex].owned = true
+                            end
+                        end
                         if self.onAppPurchased then self.onAppPurchased(app.id) end
                     else
                         self.purchaseMessage = "Dinero insuficiente."
