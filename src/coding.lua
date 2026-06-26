@@ -53,10 +53,30 @@ function Coding.new(x, y)
     self.projectProgress = 0
     self.projectMaxProgress = 100
     self.moneySpent = 0
-    self.moneyPerSecond = 0
+    self.costPerSecond = 0
     self.projectDaysLeft = 0
     self.projectMaxDays = 0
-    self.costPerDay = 0
+
+    self.milestoneTargets = {0.25, 0.50, 0.75}
+    self.nextMilestone = 1
+    self.milestoneActive = false
+    self.codeLines = {}
+    self.codeLineIndex = 1
+    self.codeCharIndex = 0
+    self.codeProgress = 0
+    self.codeScrollY = 0
+    self.codeTargetScrollY = 0
+    self.codeFont = love.graphics.newFont(12)
+    self.codeComplete = false
+    self.cursorBlink = 0
+
+    local codeSnippets = {
+        {'def calculate_total(items):', '    total = 0', '    for item in items:', '        total += item.price', '    return total', '', 'def save_report(data):', '    with open("report.txt", "w") as f:', '        f.write(str(data))'},
+        {'class Database:', '    def __init__(self, name):', '        self.name = name', '        self.tables = {}', '', '    def create_table(self, name, cols):', '        table = {"name": name, "columns": cols}', '        self.tables[name] = table'},
+        {'function processData(input) {', '    const result = [];', '    for (let i = 0; i < input.length; i++) {', '        if (input[i].valid) {', '            result.push(transform(input[i]));', '        }', '    }', '    return result;', '}'},
+        {'#include <stdlib.h>', '#include <string.h>', '', 'typedef struct {', '    char *name;', '    int id;', '    float value;', '} Record;', '', 'Record* create_record(const char *n) {', '    Record *r = malloc(sizeof(Record));', '    r->name = strdup(n);', '    return r;', '}'},
+    }
+    self.codeSnippets = codeSnippets
 
     self.circles = {}
     self.floatingNumbers = {}
@@ -132,6 +152,10 @@ function Coding:startProject(index)
     self.costPerSecond = projectType.baseCost / 60
     self.projectDaysLeft = 14
     self.projectMaxDays = 14
+
+    self.nextMilestone = 1
+    self.milestoneActive = false
+    self.codeProgress = 0
 
     self.circles = {}
     self.floatingNumbers = {}
@@ -227,6 +251,7 @@ function Coding:update(dt)
     self:refreshCooldownUpdate(dt)
     self:activeProjectUpdate(dt)
     self:publishedAppsUpdate(dt)
+    self:updateMinigame(dt)
 
     for i = #self.floatingNumbers, 1, -1 do
         local num = self.floatingNumbers[i]
@@ -250,6 +275,7 @@ end
 function Coding:activeProjectUpdate(dt)
     if self.state ~= "coding" then return end
     if not self.activeProject then return end
+    if self.milestoneActive then return end
 
     local costPerFrame = self.costPerSecond * dt
     if self.trabajoRef.money >= costPerFrame then
@@ -289,6 +315,13 @@ function Coding:activeProjectUpdate(dt)
         end
     end
 
+    if self.nextMilestone <= #self.milestoneTargets then
+        local target = self.milestoneTargets[self.nextMilestone]
+        if self.projectProgress / self.projectMaxProgress >= target then
+            self:triggerMilestone()
+        end
+    end
+
     self.projectDaysLeft = self.projectDaysLeft - dt * 0.05
     if self.projectDaysLeft <= 0 then
         self:cancelProject()
@@ -297,6 +330,23 @@ function Coding:activeProjectUpdate(dt)
     if self.barShake > 0 then
         self.barShake = self.barShake - dt
     end
+end
+
+function Coding:triggerMilestone()
+    self.milestoneActive = true
+    self.codeLines = self.codeSnippets[math.random(#self.codeSnippets)]
+    self.codeLineIndex = 1
+    self.codeCharIndex = 0
+    self.codeProgress = 0
+    self.codeScrollY = 0
+    self.codeTargetScrollY = 0
+    self.codeComplete = false
+    self.nextMilestone = self.nextMilestone + 1
+end
+
+function Coding:updateMinigame(dt)
+    self.cursorBlink = self.cursorBlink + dt
+    self.codeScrollY = self.codeScrollY + (self.codeTargetScrollY - self.codeScrollY) * dt * 10
 end
 
 function Coding:publishedAppsUpdate(dt)
@@ -347,7 +397,11 @@ function Coding:drawContent(cx, cy, cw, ch)
     if self.state == "browse" then
         self:drawBrowse(cx, cy, cw, ch)
     elseif self.state == "coding" then
-        self:drawCoding(cx, cy, cw, ch)
+        if self.milestoneActive then
+            self:drawMinigame(cx, cy, cw, ch)
+        else
+            self:drawCoding(cx, cy, cw, ch)
+        end
     elseif self.state == "sell" then
         self:drawSell(cx, cy, cw, ch)
     elseif self.state == "manage" then
@@ -543,6 +597,91 @@ function Coding:drawCoding(x, y, w, h)
 
     love.graphics.setColor(W95.textDim)
     love.graphics.printf("Cancelas y recuperas 30%", x + 16, y + h - 28, w / 2 - 20, "left")
+end
+
+function Coding:drawMinigame(x, y, w, h)
+    love.graphics.setColor({0.15, 0.16, 0.18})
+    love.graphics.rectangle("fill", x + 6, y + 4, w - 12, h - 8)
+    self:drawBevel(x + 6, y + 4, w - 12, h - 8)
+
+    love.graphics.setColor(W95.yellow)
+    love.graphics.setFont(self.smallFont or love.graphics.newFont(11))
+    love.graphics.printf("Escribe el codigo para completar el milestone", x + 8, y + 8, w - 16, "center")
+
+    local codeX = x + 12
+    local codeY = y + 24
+    local codeW = w - 24
+    local codeH = h - 50
+
+    love.graphics.setColor({0.1, 0.1, 0.1})
+    love.graphics.rectangle("fill", codeX, codeY, codeW, codeH)
+    self:drawBevel(codeX, codeY, codeW, codeH)
+
+    love.graphics.setScissor(codeX + 1, codeY + 1, codeW - 2, codeH - 2)
+    love.graphics.setFont(self.codeFont)
+    local lineH = 16
+    local maxLines = math.floor((codeH - 4) / lineH)
+
+    local startLine = math.max(1, math.floor(self.codeScrollY / lineH) + 1)
+    local endLine = math.min(#self.codeLines, startLine + maxLines)
+
+    for i = startLine, endLine do
+        local lineY = codeY + 2 + (i - startLine) * lineH
+        love.graphics.setColor({0.4, 0.4, 0.4})
+        love.graphics.printf(i, codeX + 4, lineY, 30, "right")
+
+        local lineText = ""
+        if i < self.codeLineIndex then
+            lineText = self.codeLines[i]
+        elseif i == self.codeLineIndex then
+            lineText = self.codeLines[i]:sub(1, self.codeCharIndex)
+        end
+
+        if #lineText > 0 then
+            local tokens = {}
+            local current = ""
+            for c in lineText:gmatch(".") do
+                if c:match("[%s%(%)%[%]{};,:%.]") then
+                    if #current > 0 then
+                        table.insert(tokens, current)
+                        current = ""
+                    end
+                    table.insert(tokens, c)
+                else
+                    current = current .. c
+                end
+            end
+            if #current > 0 then table.insert(tokens, current) end
+
+            local keywords = {"if", "else", "for", "while", "return", "function", "class", "def", "import", "from", "const", "let", "var", "int", "char", "void", "struct", "typedef", "include", "define", "malloc", "free"}
+            local drawX = codeX + 38
+            for _, token in ipairs(tokens) do
+                local color = {0.97, 0.97, 0.94}
+                if token:match("^%d+$") then color = {0.68, 0.45, 0.97}
+                elseif token:match('".*"') or token:match("'.*'") then color = {0.90, 0.78, 0.35}
+                elseif token:match("^//") or token:match("^#") then color = {0.50, 0.52, 0.54}
+                else
+                    for _, kw in ipairs(keywords) do
+                        if token == kw then color = {0.98, 0.45, 0.36}; break end
+                    end
+                end
+                love.graphics.setColor(color)
+                love.graphics.print(token, drawX, lineY)
+                drawX = drawX + self.codeFont:getWidth(token)
+            end
+        end
+
+        if i == self.codeLineIndex and not self.codeComplete and math.floor(self.cursorBlink * 2) % 2 == 0 then
+            local cursorX = codeX + 38 + self.codeFont:getWidth(self.codeLines[i]:sub(1, self.codeCharIndex))
+            love.graphics.setColor({0.97, 0.97, 0.94})
+            love.graphics.rectangle("fill", cursorX, lineY, 8, 14)
+        end
+    end
+    love.graphics.setScissor()
+
+    love.graphics.setColor(W95.textDim)
+    love.graphics.setFont(self.smallFont or love.graphics.newFont(11))
+    love.graphics.printf("Presiona cualquier tecla para escribir codigo", x + 12, y + h - 14, w - 24, "center")
 end
 
 function Coding:drawSell(x, y, w, h)
@@ -743,6 +882,50 @@ end
 
 function Coding:mousepressed(x, y, button)
     return self.window:mousepressed(x, y, button)
+end
+
+function Coding:keypressed(key)
+    if self.state ~= "coding" or not self.milestoneActive then return end
+    if key == "lshift" or key == "rshift" or key == "lctrl" or key == "rctrl" or
+       key == "lalt" or key == "ralt" or key == "escape" or key == "tab" or
+       key == "capslock" or key == "return" or key == "up" or key == "down" or
+       key == "left" or key == "right" or key == "home" or key == "end" then
+        return
+    end
+
+    local charsPerKey = 1 + self.codingLevel
+    for i = 1, charsPerKey do
+        if self.codeLineIndex <= #self.codeLines then
+            local currentLine = self.codeLines[self.codeLineIndex]
+            if self.codeCharIndex < #currentLine then
+                self.codeCharIndex = self.codeCharIndex + 1
+            else
+                self.codeLineIndex = self.codeLineIndex + 1
+                self.codeCharIndex = 0
+                self.codeTargetScrollY = self.codeTargetScrollY + 16
+            end
+        end
+    end
+
+    local totalChars = 0
+    for _, line in ipairs(self.codeLines) do
+        totalChars = totalChars + #line + 1
+    end
+    local typedChars = 0
+    for i = 1, self.codeLineIndex - 1 do
+        typedChars = typedChars + #self.codeLines[i] + 1
+    end
+    typedChars = typedChars + self.codeCharIndex
+    self.codeProgress = math.min(1, typedChars / totalChars)
+
+    if self.codeLineIndex > #self.codeLines then
+        self.milestoneActive = false
+        self.codeComplete = false
+        local bonus = math.floor(self.activeProject.baseHp * 0.1)
+        self.projectProgress = self.projectProgress + bonus
+        self.codingXP = self.codingXP + 10
+        self:checkLevelUp()
+    end
 end
 
 function Coding:textinput(text)
