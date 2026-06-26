@@ -125,7 +125,7 @@ addDynamicIcon("explorer", "Internet Explorer", "explorer", 40, 140, nil)
 addDynamicIcon("winamp", "Winamp", "winamp", 40, 240, nil)
 addDynamicIcon("notepad", "Objetivos", "text", 140, 140, nil)
 addDynamicIcon("personal", "Personal", "staff", 240, 240, nil)
-addDynamicIcon("coding", "Coding", "text", 340, 240, nil)
+addDynamicIcon("coding", "Coding", "coding", 340, 240, nil)
 addDynamicIcon("download", "WinOptimizer", "download", 340, 40, nil)
 
 local baseDesktopIcons = {
@@ -1129,6 +1129,8 @@ function love.load()
     if ok16 then iconImages["download"] = img16 end
     local ok17, img17 = pcall(love.graphics.newImage, "assets/sprites/winbatch.png")
     if ok17 then iconImages["winbatch"] = img17 end
+    local ok18, img18 = pcall(love.graphics.newImage, "assets/sprites/coding.png")
+    if ok18 then iconImages["coding"] = img18 end
 
     local ok8, snd8 = pcall(love.audio.newSource, "assets/sounds/songw95_1.wav", "stream")
     if ok8 then

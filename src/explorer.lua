@@ -79,7 +79,7 @@ function Explorer.new(x, y)
             name = "Code Editor",
             desc = "Acepta trabajos de programacion.\nEscribe codigo real para\nganar dinero. Mejora con\nupgrades de componentes.",
             price = 5000,
-            icon = "text",
+            icon = "coding",
             purchased = false,
             milestone = 250,
         },
