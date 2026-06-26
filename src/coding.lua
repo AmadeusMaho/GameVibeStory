@@ -309,7 +309,7 @@ local reviewCompanies = {
 
 function Coding.new(x, y)
     local self = setmetatable({}, Coding)
-    self.window = WindowManager.new("Code Editor", x or 200, y or 100, 560, 440)
+    self.window = WindowManager.new("Code Editor", x or 150, y or 80, 700, 520)
 
     self.trabajoRef = nil
     self.explorerRef = nil
@@ -510,8 +510,6 @@ function Coding:keypressed(key)
             self.appName = self.appName:sub(1, -2)
         elseif key == "return" or key == "escape" then
             self.inputActive = false
-        elseif #key == 1 and #self.appName < 30 then
-            self.appName = self.appName .. key
         end
         return
     end
@@ -646,6 +644,12 @@ function Coding:drawMenu(x, y, w, h)
 
     love.graphics.setColor(W95.text)
     love.graphics.print(self.appName, nameBoxX + 4, nameBoxY + 3)
+
+    if self.inputActive and math.floor(self.cursorBlink * 2) % 2 == 0 then
+        local textW = self.smallFont:getWidth(self.appName)
+        love.graphics.setColor(W95.text)
+        love.graphics.rectangle("fill", nameBoxX + 4 + textW, nameBoxY + 2, 2, nameBoxH - 4)
+    end
     table.insert(self.buttons, {x = nameBoxX, y = nameBoxY, w = nameBoxW, h = nameBoxH, action = "input_name"})
 
     love.graphics.setColor(W95.text)
@@ -654,7 +658,7 @@ function Coding:drawMenu(x, y, w, h)
     local gridX = x + 12
     local gridY = y + 124
     local cellW = (w - 30) / 2
-    local cellH = 42
+    local cellH = 50
 
     for i, appType in ipairs(appTypes) do
         local col = (i - 1) % 2
@@ -747,23 +751,24 @@ function Coding:drawCoding(x, y, w, h)
     love.graphics.setScissor(codeX + 1, codeY + 1, codeW - 2, codeH - 2)
 
     love.graphics.setFont(self.codeFont)
-    local lineH = 16
+    local lineH = 18
     local maxLines = math.floor((codeH - 4) / lineH)
 
     local currentLineY = (self.codeIndex - 1) * lineH
     local viewH = codeH - 4
-    if currentLineY > self.scrollY + viewH - lineH * 2 then
-        self.scrollY = currentLineY - viewH + lineH * 2
+    if currentLineY > self.scrollY + viewH - lineH * 3 then
+        self.scrollY = currentLineY - viewH + lineH * 3
     end
-    if currentLineY < self.scrollY then
-        self.scrollY = currentLineY
+    if currentLineY < self.scrollY + lineH then
+        self.scrollY = currentLineY - lineH
     end
+    if self.scrollY < 0 then self.scrollY = 0 end
 
     local startLine = math.max(1, math.floor(self.scrollY / lineH) + 1)
     local endLine = math.min(#self.currentCode, startLine + maxLines)
 
     for i = startLine, endLine do
-        local lineY = codeY + 2 + (i - startLine) * lineH - (self.scrollY % lineH)
+        local lineY = codeY + 2 + (i - startLine) * lineH
 
         love.graphics.setColor(monokai.lineNum)
         love.graphics.printf(i, codeX + 4, lineY, 30, "right")
