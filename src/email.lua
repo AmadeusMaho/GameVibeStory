@@ -44,7 +44,6 @@ local function generateProjectBody(baseBody, diff, reward)
 end
 
 local allEmails = {
-    {subject = "Disco duro IDE 1.2GB - $99", sender = "ofertas@compumail.com", type = "ad", body = "Disco duro IDE 1.2GB por solo $99!\nOferta por tiempo limitado.\nLlame al 555-0123."},
 }
 
 function Email.new(x, y)

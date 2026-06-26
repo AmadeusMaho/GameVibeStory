@@ -1980,18 +1980,10 @@ function love.mousepressed(x, y, button)
                 if popupConfirmStep == 1 then
                     popupConfirmStep = 2
                 else
-                    love.filesystem.write("save_slot_1.lua", "")
-                    love.filesystem.write("save_slot_2.lua", "")
-                    love.filesystem.write("save_slot_3.lua", "")
-                    popupActive = false
-                    gameState = "boot"
-                    bootLineIndex = 0
-                    bootCharIndex = 0
-                    bootDone = false
-                    bootTimerAccum = 0
-                    showAllLines = false
-                    showBottom = false
-                    if bootSound then bootSound:stop(); bootSound:play() end
+                    love.filesystem.remove("save_slot_1.lua")
+                    love.filesystem.remove("save_slot_2.lua")
+                    love.filesystem.remove("save_slot_3.lua")
+                    love.event.quit()
                 end
                 return
             end
