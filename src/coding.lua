@@ -324,7 +324,7 @@ function Coding.new(x, y)
     self.inputActive = false
 
     self.currentCode = {}
-    self.codeIndex = 0
+    self.codeIndex = 1
     self.charIndex = 0
     self.scrollY = 0
     self.targetScrollY = 0
@@ -442,7 +442,7 @@ function Coding:startCoding()
     local templates = {"python", "javascript", "c"}
     local lang = templates[math.random(#templates)]
     self.currentCode = codeTemplates[lang]
-    self.codeIndex = 0
+    self.codeIndex = 1
     self.charIndex = 0
     self.scrollY = 0
     self.targetScrollY = 0
