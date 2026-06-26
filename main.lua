@@ -89,6 +89,8 @@ local countdownValue = 3
 local countdownTimer = 0
 
 local startMenuOpen = false
+local saveMessage = ""
+local saveMessageTimer = 0
 local lastClickTime = 0
 local doubleClickTime = 0.4
 local taskbarApps = {}
@@ -668,6 +670,199 @@ function updateTaskbar()
     end
 end
 
+local function saveGame()
+    local saveData = {
+        version = 1,
+        gameState = "desktop",
+        
+        trabajo = {
+            money = trabajo.money,
+            totalEarned = trabajo.totalEarned,
+            tasksCompleted = trabajo.tasksCompleted,
+            completedProjects = trabajo.completedProjects,
+            winbatchActive = trabajo.winbatchActive,
+            level = trabajo.level,
+            unlockedDifficulties = trabajo.unlockedDifficulties,
+        },
+        
+        explorer = {
+            upgradeLevels = explorer.upgradeLevels,
+            appStore = {},
+            musicSongs = {},
+        },
+        
+        email = {
+            inbox = email.inbox,
+            emailIndex = email.emailIndex,
+            totalTasksDone = email.totalTasksDone,
+            malwareSent = email.malwareSent,
+            downloadIconActive = email.downloadIconActive,
+        },
+        
+        notepad = {
+            objectives = notepad.objectives,
+        },
+        
+        personal = {
+            employees = personal.employees,
+        },
+        
+        achievementsData = {
+            unlocked = achievements.unlocked or {},
+        },
+        
+        dynamicIcons = {},
+        pcStats = pcStats,
+    }
+    
+    for i, app in ipairs(explorer.appStore) do
+        table.insert(saveData.explorer.appStore, {
+            id = app.id,
+            purchased = app.purchased,
+        })
+    end
+    
+    for i, song in ipairs(explorer.musicSongs) do
+        table.insert(saveData.explorer.musicSongs, {
+            name = song.name,
+            purchased = song.purchased,
+        })
+    end
+    
+    for id, icon in pairs(dynamicIcons) do
+        saveData.dynamicIcons[id] = {active = icon.active}
+    end
+    
+    local success, err = love.filesystem.write("savegame.lua", serialize(saveData))
+    return success
+end
+
+local function serialize(o)
+    if type(o) == "number" then
+        return tostring(o)
+    elseif type(o) == "string" then
+        return string.format("%q", o)
+    elseif type(o) == "boolean" then
+        return tostring(o)
+    elseif type(o) == "table" then
+        local s = "{\n"
+        for k, v in pairs(o) do
+            if type(k) == "number" then
+                s = s .. "[" .. k .. "] = " .. serialize(v) .. ",\n"
+            else
+                s = s .. "[\"" .. k .. "\"] = " .. serialize(v) .. ",\n"
+            end
+        end
+        return s .. "}"
+    else
+        return "nil"
+    end
+end
+
+local function loadGame()
+    if not love.filesystem.getInfo("savegame.lua") then
+        return false
+    end
+    
+    local content, err = love.filesystem.read("savegame.lua")
+    if not content then return false end
+    
+    local chunk, err = load("return " .. content)
+    if not chunk then return false end
+    
+    local success, data = pcall(chunk)
+    if not success or not data then return false end
+    
+    if data.trabajo then
+        trabajo.money = data.trabajo.money or 0
+        trabajo.totalEarned = data.trabajo.totalEarned or 0
+        trabajo.tasksCompleted = data.trabajo.tasksCompleted or 0
+        trabajo.completedProjects = data.trabajo.completedProjects or 0
+        trabajo.winbatchActive = data.trabajo.winbatchActive or false
+        trabajo.level = data.trabajo.level or 1
+        if data.trabajo.unlockedDifficulties then
+            trabajo.unlockedDifficulties = data.trabajo.unlockedDifficulties
+        end
+    end
+    
+    if data.explorer then
+        if data.explorer.upgradeLevels then
+            for stat, level in pairs(data.explorer.upgradeLevels) do
+                explorer.upgradeLevels[stat] = level
+            end
+        end
+        if data.explorer.appStore then
+            for _, savedApp in ipairs(data.explorer.appStore) do
+                for _, app in ipairs(explorer.appStore) do
+                    if app.id == savedApp.id then
+                        app.purchased = savedApp.purchased
+                        if app.id == "winbatch" and savedApp.purchased then
+                            trabajo.winbatchActive = true
+                        end
+                    end
+                end
+            end
+        end
+        if data.explorer.musicSongs then
+            for _, savedSong in ipairs(data.explorer.musicSongs) do
+                for _, song in ipairs(explorer.musicSongs) do
+                    if song.name == savedSong.name then
+                        song.purchased = savedSong.purchased
+                    end
+                end
+            end
+        end
+    end
+    
+    if data.email then
+        email.inbox = data.email.inbox or {}
+        email.emailIndex = data.email.emailIndex or 1
+        email.totalTasksDone = data.email.totalTasksDone or 0
+        email.malwareSent = data.email.malwareSent or false
+        email.downloadIconActive = data.email.downloadIconActive or false
+    end
+    
+    if data.notepad and data.notepad.objectives then
+        for i, obj in ipairs(data.notepad.objectives) do
+            if notepad.objectives[i] then
+                notepad.objectives[i].done = obj.done
+            end
+        end
+    end
+    
+    if data.personal and data.personal.employees then
+        for id, emp in pairs(data.personal.employees) do
+            if personal.employees[id] then
+                personal.employees[id].count = emp.count or 0
+                personal.employees[id].cost = emp.cost or 0
+            end
+        end
+    end
+    
+    if data.dynamicIcons then
+        for id, iconData in pairs(data.dynamicIcons) do
+            if dynamicIcons[id] then
+                dynamicIcons[id].active = iconData.active
+            end
+        end
+        desktopIcons = getDesktopIcons()
+    end
+    
+    if data.pcStats then
+        for k, v in pairs(data.pcStats) do
+            pcStats[k] = v
+        end
+    end
+    
+    gameState = "desktop"
+    return true
+end
+
+local function showSaveMessage(msg)
+    saveMessage = msg
+    saveMessageTimer = 3.0
+end
+
 function love.load()
     love.graphics.setBackgroundColor(0, 0, 0)
     love.graphics.setDefaultFilter("nearest", "nearest")
@@ -1012,6 +1207,10 @@ function love.load()
 end
 
 function love.update(dt)
+    if saveMessageTimer > 0 then
+        saveMessageTimer = saveMessageTimer - dt
+    end
+    
     if gameState == "boot" or gameState == "bsod" or gameState == "malware_popup" then
         love.mouse.setVisible(false)
         CursorManager.show(false)
@@ -1385,10 +1584,10 @@ function drawDesktop()
 
         if startMenuOpen then
             local menuX = 2
-            local menuY = taskY - 240
+            local menuY = taskY - 290
             local menuW = 190
             local sidebarW = 30
-            local menuH = 240
+            local menuH = 290
 
             love.graphics.setColor(W95.bg)
             love.graphics.rectangle("fill", menuX, menuY, menuW, menuH)
@@ -1442,6 +1641,9 @@ function drawDesktop()
             end
             table.insert(menuItems, {label = "Papelera", action = "recyclebin", icon = "recyclebin"})
 
+            table.insert(menuItems, {label = "---", action = "none"})
+            table.insert(menuItems, {label = "Guardar partida", action = "save", icon = "save"})
+            table.insert(menuItems, {label = "Cargar partida", action = "load", icon = "load"})
             table.insert(menuItems, {label = "---", action = "none"})
             table.insert(menuItems, {label = "Shut Down...", action = "quit", icon = "power"})
 
@@ -1571,6 +1773,18 @@ function love.draw()
     if projectPopupActive then
         drawProjectPopup()
     end
+    if saveMessageTimer > 0 and saveMessage ~= "" then
+        local msgW = 300
+        local msgH = 60
+        local msgX = (love.graphics.getWidth() - msgW) / 2
+        local msgY = (love.graphics.getHeight() - msgH) / 2
+        love.graphics.setColor(0.75, 0.75, 0.75)
+        love.graphics.rectangle("fill", msgX, msgY, msgW, msgH)
+        love.graphics.setColor(0.5, 0.5, 0.5)
+        love.graphics.rectangle("line", msgX, msgY, msgW, msgH)
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.printf(saveMessage, msgX, msgY + 20, msgW, "center")
+    end
     CursorManager.draw()
     if installActive then
         drawInstallScreen()
@@ -1646,7 +1860,7 @@ function love.mousepressed(x, y, button)
 
         if startMenuOpen then
             local menuX = 2
-            local menuY = taskY - 240
+            local menuY = taskY - 290
             local menuW = 190
             local sidebarW = 30
             local contentX = menuX + sidebarW + 4
@@ -1674,6 +1888,9 @@ function love.mousepressed(x, y, button)
             end
             table.insert(menuItems, {label = "Papelera", action = "recyclebin"})
             table.insert(menuItems, {label = "---", action = "none"})
+            table.insert(menuItems, {label = "Guardar partida", action = "save"})
+            table.insert(menuItems, {label = "Cargar partida", action = "load"})
+            table.insert(menuItems, {label = "---", action = "none"})
             table.insert(menuItems, {label = "Shut Down...", action = "quit"})
 
             if x >= contentX and x <= menuX + menuW - 4 and y >= startY and y <= startY + #menuItems * itemH then
@@ -1682,6 +1899,20 @@ function love.mousepressed(x, y, button)
                 if item and item.action ~= "none" then
                     if item.action == "quit" then
                         love.event.quit()
+                    elseif item.action == "save" then
+                        local success = saveGame()
+                        if success then
+                            showSaveMessage("Partida guardada!")
+                        else
+                            showSaveMessage("Error al guardar")
+                        end
+                    elseif item.action == "load" then
+                        local success = loadGame()
+                        if success then
+                            showSaveMessage("Partida cargada!")
+                        else
+                            showSaveMessage("No hay partida guardada")
+                        end
                     else
                         toggleApp(item.action)
                     end
