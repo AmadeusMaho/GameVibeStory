@@ -954,144 +954,6 @@ local function saveGame(slot)
     return success
 end
 
-function loadGame(slot)
-    local data = getSaveSlotInfo(slot)
-    if not data then return false end
-    
-    if data.trabajo then
-        trabajo.money = data.trabajo.money or 0
-        trabajo.totalEarned = data.trabajo.totalEarned or 0
-        trabajo.tasksCompleted = data.trabajo.tasksCompleted or 0
-        trabajo.completedProjects = data.trabajo.completedProjects or 0
-        trabajo.winbatchActive = data.trabajo.winbatchActive or false
-        trabajo.level = data.trabajo.level or 1
-        if data.trabajo.unlockedDifficulties then
-            trabajo.unlockedDifficulties = data.trabajo.unlockedDifficulties
-        end
-    end
-    
-    if data.explorer then
-        if data.explorer.upgradeLevels then
-            for stat, level in pairs(data.explorer.upgradeLevels) do
-                explorer.upgradeLevels[stat] = level
-            end
-        end
-        if data.explorer.appStore then
-            for _, savedApp in ipairs(data.explorer.appStore) do
-                for _, app in ipairs(explorer.appStore) do
-                    if app.id == savedApp.id then
-                        app.purchased = savedApp.purchased
-                        if app.id == "winbatch" and savedApp.purchased then
-                            trabajo.winbatchActive = true
-                        end
-                    end
-                end
-            end
-        end
-        if data.explorer.musicSongs then
-            for _, savedSong in ipairs(data.explorer.musicSongs) do
-                for _, song in ipairs(explorer.musicSongs) do
-                    if song.name == savedSong.name then
-                        song.purchased = savedSong.purchased
-                    end
-                end
-            end
-        end
-        if data.explorer.refreshAttempts then
-            explorer.refreshAttempts = data.explorer.refreshAttempts
-        end
-        if data.explorer.refreshCooldown then
-            explorer.refreshCooldown = data.explorer.refreshCooldown
-        end
-    end
-    
-    if data.email then
-        email.inbox = data.email.inbox or {}
-        email.emailIndex = data.email.emailIndex or 1
-        email.totalTasksDone = data.email.totalTasksDone or 0
-        email.malwareSent = data.email.malwareSent or false
-        email.downloadIconActive = data.email.downloadIconActive or false
-    end
-    
-    if data.notepad and data.notepad.objectives then
-        for i, obj in ipairs(data.notepad.objectives) do
-            if notepad.objectives[i] then
-                notepad.objectives[i].done = obj.done
-            end
-        end
-    end
-    
-    if data.personal and data.personal.employees then
-        for id, emp in pairs(data.personal.employees) do
-            if personal.employees[id] then
-                personal.employees[id].count = emp.count or 0
-                personal.employees[id].cost = emp.cost or 0
-            end
-        end
-    end
-    
-    if data.dynamicIcons then
-        for id, iconData in pairs(data.dynamicIcons) do
-            if dynamicIcons[id] then
-                dynamicIcons[id].active = iconData.active
-            end
-        end
-        desktopIcons = getDesktopIcons()
-    end
-
-    if data.achievementsData and data.achievementsData.unlocked and achievements then
-        for id, unlocked in pairs(data.achievementsData.unlocked) do
-            if achievements.unlocked then
-                achievements.unlocked[id] = unlocked
-            end
-        end
-    end
-
-    if data.codingData and coding then
-        coding.codingLevel = data.codingData.codingLevel or 1
-        coding.codingXP = data.codingData.codingXP or 0
-        currentKeyboard = data.codingData.currentKeyboard or 1
-        if data.codingData.ownedKeyboards then
-            for _, idx in ipairs(data.codingData.ownedKeyboards) do
-                if keyboardSounds[idx] then
-                    keyboardSounds[idx].owned = true
-                end
-            end
-        end
-        if data.codingData.publishedApps then
-            for _, savedApp in ipairs(data.codingData.publishedApps) do
-                local appType = nil
-                if CodingClass and CodingClass.projectTypes then
-                    for _, pt in ipairs(CodingClass.projectTypes) do
-                    if pt.id == savedApp.typeId then
-                        appType = pt
-                        break
-                    end
-                end
-                if appType then
-                    table.insert(coding.publishedApps, {
-                        name = savedApp.name,
-                        type = appType,
-                        revenuePerMonth = savedApp.revenuePerMonth,
-                        monthsLeft = savedApp.monthsLeft,
-                        totalRevenue = savedApp.totalRevenue,
-                        selling = savedApp.selling,
-                        successScore = savedApp.successScore,
-                    })
-                end
-            end
-        end
-    end
-    
-    if data.pcStats then
-        for k, v in pairs(data.pcStats) do
-            pcStats[k] = v
-        end
-    end
-    
-    return true
-end
-
 local function showSaveMessage(msg)
     saveMessage = msg
     saveMessageTimer = 3.0
@@ -1512,6 +1374,145 @@ function love.load()
     
     if loaded > 0 then
         table.insert(keyboardSounds, pack)
+    end
+
+    function loadGame(slot)
+        local data = getSaveSlotInfo(slot)
+        if not data then return false end
+        
+        if data.trabajo then
+            trabajo.money = data.trabajo.money or 0
+            trabajo.totalEarned = data.trabajo.totalEarned or 0
+            trabajo.tasksCompleted = data.trabajo.tasksCompleted or 0
+            trabajo.completedProjects = data.trabajo.completedProjects or 0
+            trabajo.winbatchActive = data.trabajo.winbatchActive or false
+            trabajo.level = data.trabajo.level or 1
+            if data.trabajo.unlockedDifficulties then
+                trabajo.unlockedDifficulties = data.trabajo.unlockedDifficulties
+            end
+        end
+        
+        if data.explorer then
+            if data.explorer.upgradeLevels then
+                for stat, level in pairs(data.explorer.upgradeLevels) do
+                    explorer.upgradeLevels[stat] = level
+                end
+            end
+            if data.explorer.appStore then
+                for _, savedApp in ipairs(data.explorer.appStore) do
+                    for _, app in ipairs(explorer.appStore) do
+                        if app.id == savedApp.id then
+                            app.purchased = savedApp.purchased
+                            if app.id == "winbatch" and savedApp.purchased then
+                                trabajo.winbatchActive = true
+                            end
+                        end
+                    end
+                end
+            end
+            if data.explorer.musicSongs then
+                for _, savedSong in ipairs(data.explorer.musicSongs) do
+                    for _, song in ipairs(explorer.musicSongs) do
+                        if song.name == savedSong.name then
+                            song.purchased = savedSong.purchased
+                        end
+                    end
+                end
+            end
+            if data.explorer.refreshAttempts then
+                explorer.refreshAttempts = data.explorer.refreshAttempts
+            end
+            if data.explorer.refreshCooldown then
+                explorer.refreshCooldown = data.explorer.refreshCooldown
+            end
+        end
+        
+        if data.email then
+            email.inbox = data.email.inbox or {}
+            email.emailIndex = data.email.emailIndex or 1
+            email.totalTasksDone = data.email.totalTasksDone or 0
+            email.malwareSent = data.email.malwareSent or false
+            email.downloadIconActive = data.email.downloadIconActive or false
+        end
+        
+        if data.notepad and data.notepad.objectives then
+            for i, obj in ipairs(data.notepad.objectives) do
+                if notepad.objectives[i] then
+                    notepad.objectives[i].done = obj.done
+                end
+            end
+        end
+        
+        if data.personal and data.personal.employees then
+            for id, emp in pairs(data.personal.employees) do
+                if personal.employees[id] then
+                    personal.employees[id].count = emp.count or 0
+                    personal.employees[id].cost = emp.cost or 0
+                end
+            end
+        end
+        
+        if data.dynamicIcons then
+            for id, iconData in pairs(data.dynamicIcons) do
+                if dynamicIcons[id] then
+                    dynamicIcons[id].active = iconData.active
+                end
+            end
+            desktopIcons = getDesktopIcons()
+        end
+
+        if data.achievementsData and data.achievementsData.unlocked and achievements then
+            for id, unlocked in pairs(data.achievementsData.unlocked) do
+                if achievements.unlocked then
+                    achievements.unlocked[id] = unlocked
+                end
+            end
+        end
+
+        if data.codingData and coding then
+            coding.codingLevel = data.codingData.codingLevel or 1
+            coding.codingXP = data.codingData.codingXP or 0
+            currentKeyboard = data.codingData.currentKeyboard or 1
+            if data.codingData.ownedKeyboards then
+                for _, idx in ipairs(data.codingData.ownedKeyboards) do
+                    if keyboardSounds[idx] then
+                        keyboardSounds[idx].owned = true
+                    end
+                end
+            end
+            if data.codingData.publishedApps then
+                for _, savedApp in ipairs(data.codingData.publishedApps) do
+                    local appType = nil
+                    if CodingClass and CodingClass.projectTypes then
+                        for _, pt in ipairs(CodingClass.projectTypes) do
+                            if pt.id == savedApp.typeId then
+                                appType = pt
+                                break
+                            end
+                        end
+                    end
+                    if appType then
+                        table.insert(coding.publishedApps, {
+                            name = savedApp.name,
+                            type = appType,
+                            revenuePerMonth = savedApp.revenuePerMonth,
+                            monthsLeft = savedApp.monthsLeft,
+                            totalRevenue = savedApp.totalRevenue,
+                            selling = savedApp.selling,
+                            successScore = savedApp.successScore,
+                        })
+                    end
+                end
+            end
+        end
+        
+        if data.pcStats then
+            for k, v in pairs(data.pcStats) do
+                pcStats[k] = v
+            end
+        end
+        
+        return true
     end
 end
 
