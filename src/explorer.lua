@@ -75,13 +75,13 @@ function Explorer.new(x, y)
             milestone = nil,
         },
         {
-            id = "app2",
-            name = "Proximamente...",
-            desc = "Nueva app disponible pronto.",
-            price = 0,
-            icon = nil,
+            id = "coding",
+            name = "Code Editor",
+            desc = "Acepta trabajos de programacion.\nEscribe codigo real para\nganar dinero. Mejora con\nupgrades de componentes.",
+            price = 5000,
+            icon = "text",
             purchased = false,
-            milestone = "locked",
+            milestone = 250,
         },
         {
             id = "app3",
@@ -593,7 +593,13 @@ function Explorer:drawAppsPage(x, y, w, h)
         local cy = y + 52 + row * (cellH + padding) + scrollOffset
 
         if cy + cellH > y + 44 and cy < y + h then
-            local isLocked = app.milestone == "locked"
+            local isLocked = false
+            if app.milestone == "locked" then
+                isLocked = true
+            elseif type(app.milestone) == "number" then
+                local tasksDone = self.trabajoRef and self.trabajoRef.tasksCompleted or 0
+                isLocked = tasksDone < app.milestone
+            end
             local isSelected = self.selectedApp and self.selectedApp.id == app.id
             local hovered = self.lastMX >= cx and self.lastMX <= cx + cellW and self.lastMY >= cy and self.lastMY <= cy + cellH
 
@@ -620,7 +626,11 @@ function Explorer:drawAppsPage(x, y, w, h)
 
             if isLocked then
                 love.graphics.setColor(W95.textDim)
-                love.graphics.printf("Proximamente...", cx, cy + 64, cellW, "center")
+                if type(app.milestone) == "number" then
+                    love.graphics.printf(app.milestone .. " tareas", cx, cy + 64, cellW, "center")
+                else
+                    love.graphics.printf("Proximamente...", cx, cy + 64, cellW, "center")
+                end
                 table.insert(self.buttons, {x = cx, y = cy, w = cellW, h = cellH, action = "selectapp", index = i})
             elseif app.purchased then
                 love.graphics.setColor(W95.green)

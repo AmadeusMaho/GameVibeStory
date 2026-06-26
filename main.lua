@@ -8,6 +8,7 @@ local EmailClass = require("src.email")
 local RecycleBinClass = require("src.recyclebin")
 local PersonalClass = require("src.personal")
 local AchievementsClass = require("src.achievements")
+local CodingClass = require("src.coding")
 
 local gameState = "boot"
 local bsodTimer = 0
@@ -44,6 +45,7 @@ local email = nil
 local recyclebin = nil
 local personal = nil
 local achievements = nil
+local coding = nil
 
 local pcStats = {
     cpu = "Intel Pentium 75MHz",
@@ -123,6 +125,7 @@ addDynamicIcon("explorer", "Internet Explorer", "explorer", 40, 140, nil)
 addDynamicIcon("winamp", "Winamp", "winamp", 40, 240, nil)
 addDynamicIcon("notepad", "Objetivos", "text", 140, 140, nil)
 addDynamicIcon("personal", "Personal", "staff", 240, 240, nil)
+addDynamicIcon("coding", "Coding", "text", 340, 240, nil)
 addDynamicIcon("download", "WinOptimizer", "download", 340, 40, nil)
 
 local baseDesktopIcons = {
@@ -566,6 +569,12 @@ function openApp(appId)
         elseif not achievements.window.visible then
             achievements:toggleVisible()
         end
+    elseif appId == "coding" and coding then
+        if coding.window.visible and coding.window.minimized then
+            coding.window.minimized = false
+        elseif not coding.window.visible then
+            coding:toggleVisible()
+        end
     end
     updateTaskbar()
 end
@@ -589,11 +598,13 @@ function closeApp(appId)
         personal.window.visible = false
     elseif appId == "achievements" and achievements then
         achievements.window.visible = false
+    elseif appId == "coding" and coding then
+        coding.window.visible = false
     end
     updateTaskbar()
 end
 
-local windowOrder = {"winamp", "mypc", "explorer", "notepad", "trabajo", "particular", "email", "recyclebin", "personal", "achievements"}
+local windowOrder = {"winamp", "mypc", "explorer", "notepad", "trabajo", "particular", "email", "recyclebin", "personal", "achievements", "coding"}
 
 local function bringToFront(appId)
     for i, id in ipairs(windowOrder) do
@@ -642,7 +653,7 @@ function getNextCascadePosition(w, h)
 end
 
 function closeAllWindows()
-    local apps = {winamp, mypc, explorer, notepad, trabajo, email, recyclebin, personal, achievements}
+    local apps = {winamp, mypc, explorer, notepad, trabajo, email, recyclebin, personal, achievements, coding}
     for _, app in ipairs(apps) do
         if app then
             app.window.visible = false
@@ -767,6 +778,17 @@ function toggleApp(appId)
         else
             achievements.window.minimized = true
         end
+    elseif appId == "coding" and coding then
+        if not coding.window.visible then
+            coding.window.x, coding.window.y = getNextCascadePosition(coding.window.w, coding.window.h)
+            coding:toggleVisible()
+            bringToFront("coding")
+        elseif coding.window.minimized then
+            coding.window.minimized = false
+            bringToFront("coding")
+        else
+            coding.window.minimized = true
+        end
     end
     updateTaskbar()
 end
@@ -802,6 +824,9 @@ function updateTaskbar()
     end
     if achievements and achievements.window.visible then
         table.insert(taskbarApps, {id = "achievements", label = "Logros"})
+    end
+    if coding and coding.window.visible then
+        table.insert(taskbarApps, {id = "coding", label = "Coding"})
     end
 end
 
@@ -1202,6 +1227,9 @@ function love.load()
     explorer.onAppPurchased = function(appId)
         if appId == "winbatch" and trabajo then
             trabajo.winbatchActive = true
+        elseif appId == "coding" then
+            activateDynamicIcon("coding")
+            desktopIcons = getDesktopIcons()
         end
     end
 
@@ -1327,6 +1355,13 @@ function love.load()
     trabajo.achievementsRef = achievements
     personal.achievementsRef = achievements
     achievements.window.onClose = function()
+        updateTaskbar()
+    end
+
+    coding = CodingClass.new(180, 100)
+    coding.trabajoRef = trabajo
+    coding.explorerRef = explorer
+    coding.window.onClose = function()
         updateTaskbar()
     end
 
@@ -1505,6 +1540,7 @@ function love.update(dt)
         if recyclebin then recyclebin:update(dt) end
         if personal then personal:update(dt) end
         if achievements then achievements:update(dt) end
+        if coding then coding:update(dt) end
     end
 end
 
@@ -1898,7 +1934,7 @@ function love.draw()
         local appDrawMap = {
             winamp = winamp, mypc = mypc, explorer = explorer,
             notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
-            personal = personal, achievements = achievements,
+            personal = personal, achievements = achievements, coding = coding,
             particular = particularApp,
         }
         for _, id in ipairs(windowOrder) do
@@ -2217,7 +2253,7 @@ function love.mousereleased(x, y, button)
     local appMap = {
         winamp = winamp, mypc = mypc, explorer = explorer,
         notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
-        personal = personal, achievements = achievements,
+        personal = personal, achievements = achievements, coding = coding,
         particular = particularApp,
     }
     for _, id in ipairs(windowOrder) do
@@ -2230,7 +2266,7 @@ function love.mousemoved(x, y)
     local appMap = {
         winamp = winamp, mypc = mypc, explorer = explorer,
         notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
-        personal = personal, achievements = achievements,
+        personal = personal, achievements = achievements, coding = coding,
         particular = particularApp,
     }
     for _, id in ipairs(windowOrder) do
@@ -2243,6 +2279,9 @@ function love.keypressed(key)
     if key == "f1" and trabajo then
         trabajo.money = trabajo.money + 1000
         trabajo.totalEarned = trabajo.totalEarned + 1000
+    end
+    if coding and coding.window.visible and not coding.window.minimized then
+        coding:keypressed(key)
     end
 end
 
