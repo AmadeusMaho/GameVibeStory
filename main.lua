@@ -97,6 +97,7 @@ local popupType = nil
 local popupSelectedSlot = 1
 local popupConfirmStep = 0
 local lastClickTime = 0
+local doubleClickTime = 0.4
 local taskbarApps = {}
 local winampMusic2 = nil
 local firstBootDone = false
