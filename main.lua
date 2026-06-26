@@ -216,7 +216,7 @@ function triggerHardwareInstall()
 end
 
 function drawBSOD()
-    local w, h = 1920, 1080
+    local w, h = love.graphics.getDimensions()
     local margin = 80
 
     love.graphics.setColor(0, 0, 0.65)
@@ -243,7 +243,7 @@ function drawBSOD()
 end
 
 function drawMalwarePopup()
-    local w, h = 1920, 1080
+    local w, h = love.graphics.getDimensions()
     local popupW = 420
     local popupH = 180
     local popupX = (w - popupW) / 2
@@ -303,7 +303,7 @@ function triggerProjectPopup()
 end
 
 function drawProjectPopup()
-    local w, h = 1920, 1080
+    local w, h = love.graphics.getDimensions()
     local popupW = 420
     local popupH = 180
     local popupX = (w - popupW) / 2
@@ -371,7 +371,7 @@ local function getSaveSlotInfo(slot)
 end
 
 function drawSaveLoadPopup()
-    local w, h = 1920, 1080
+    local w, h = love.graphics.getDimensions()
     local popupW = 400
     local popupH = 300
     local popupX = (w - popupW) / 2
@@ -483,7 +483,7 @@ function drawSaveLoadPopup()
 end
 
 function drawInstallScreen()
-    local w, h = 1920, 1080
+    local w, h = love.graphics.getDimensions()
     local alpha = 1.0
     local fadeTime = 0.4
     if installTimer < fadeTime then
@@ -608,7 +608,7 @@ end
 
 function getNextCascadePosition(w, h)
     local cascadeOffset = 24
-    local screenW, screenH = 1920, 1080
+    local screenW, screenH = love.graphics.getDimensions()
     local taskbarH = 40
     local visibleWindows = {}
 
@@ -1121,7 +1121,10 @@ function love.load()
     local okShader, s = pcall(love.graphics.newShader, "assets/shaders/crt.glsl")
     if okShader then shader = s end
 
-    mainCanvas = love.graphics.newCanvas(1920, 1080)
+    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local pad = 0.15
+    mainCanvas = love.graphics.newCanvas(w * (1 + pad * 2), h * (1 + pad * 2))
+    mainCanvas:setWrap("repeat", "repeat")
 
     local font = love.graphics.newFont(16)
     love.graphics.setFont(font)
@@ -1574,24 +1577,11 @@ function drawDesktopIcon(icon, mx, my)
     end
 end
 
-local function getVirtualMouse()
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    local virtualW = 1920
-    local virtualH = 1080
-    local scaleX = screenW / virtualW
-    local scaleY = screenH / virtualH
-    local scale = math.min(scaleX, scaleY)
-    local offsetX = (screenW - virtualW * scale) / 2
-    local offsetY = (screenH - virtualH * scale) / 2
-    local mx, my = love.mouse.getPosition()
-    return (mx - offsetX) / scale, (my - offsetY) / scale
-end
-
 function drawDesktop()
-    local winW = 1920
-    local winH = 1080
+    local winW = love.graphics.getWidth()
+    local winH = love.graphics.getHeight()
     local taskH = 40
-    local mx, my = getVirtualMouse()
+    local mx, my = love.mouse.getPosition()
 
     love.graphics.setFont(defaultFont)
     CursorManager.set("normal")
@@ -1802,8 +1792,6 @@ function drawDesktop()
             table.insert(menuItems, {label = "Cargar partida", action = "load", icon = "load"})
             table.insert(menuItems, {label = "Nueva partida", action = "newgame", icon = "newgame"})
             table.insert(menuItems, {label = "---", action = "none"})
-            local isFullscreen = love.window.getFullscreen()
-            table.insert(menuItems, {label = isFullscreen and "Modo ventana" or "Pantalla completa", action = "togglefullscreen"})
             table.insert(menuItems, {label = "Shut Down...", action = "quit", icon = "power"})
 
             local contentX = menuX + sidebarW + 4
@@ -1847,10 +1835,13 @@ function drawDesktop()
 end
 
 function love.draw()
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local pad = mainCanvas:getWidth() * 0.065
 
     love.graphics.setCanvas(mainCanvas)
     love.graphics.clear(0, 0, 0)
+    love.graphics.push()
+    love.graphics.translate(pad, pad)
 
     if gameState == "boot" then
         drawAMIBIOSLogo(80, 10)
@@ -1892,26 +1883,18 @@ function love.draw()
 
     end
 
+    love.graphics.pop()
     love.graphics.setCanvas()
 
-    love.graphics.clear(0, 0, 0)
-
-    local scaleX = screenW / 1920
-    local scaleY = screenH / 1080
-    local scale = math.min(scaleX, scaleY)
-    local offsetX = (screenW - 1920 * scale) / 2
-    local offsetY = (screenH - 1080 * scale) / 2
-
     if shader then
-        shader:send("screen_size", {1920, 1080})
+        shader:send("screen_size", {w, h})
         shader:send("time", love.timer.getTime())
         shader:send("curvature", CURVATURE)
         love.graphics.setShader(shader)
     end
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(mainCanvas, offsetX, offsetY, 0, scale, scale)
+    love.graphics.draw(mainCanvas, -pad, -pad)
     love.graphics.setShader()
-
     if gameState == "desktop" then
         local appDrawMap = {
             winamp = winamp, mypc = mypc, explorer = explorer,
@@ -1922,7 +1905,7 @@ function love.draw()
         for _, id in ipairs(windowOrder) do
             local app = appDrawMap[id]
             if app then
-                local mx, my = getVirtualMouse()
+                local mx, my = love.mouse.getPosition()
                 app:draw(mx, my)
             end
         end
@@ -1943,8 +1926,8 @@ function love.draw()
     if saveMessageTimer > 0 and saveMessage ~= "" then
         local msgW = 300
         local msgH = 60
-        local msgX = (1920 - msgW) / 2
-        local msgY = (1080 - msgH) / 2
+        local msgX = (love.graphics.getWidth() - msgW) / 2
+        local msgY = (love.graphics.getHeight() - msgH) / 2
         love.graphics.setColor(0.75, 0.75, 0.75)
         love.graphics.rectangle("fill", msgX, msgY, msgW, msgH)
         love.graphics.setColor(0.5, 0.5, 0.5)
@@ -1958,14 +1941,13 @@ function love.draw()
     end
 end
 
-function love.mousepressed(screenX, screenY, button)
+function love.mousepressed(x, y, button)
     if button ~= 1 then return end
-    local x, y = getVirtualMouse()
 
     if gameState == "boot" then
         return
     elseif gameState == "malware_popup" then
-        local w, h = 1920, 1080
+        local w, h = love.graphics.getDimensions()
         local popupW = 420
         local popupH = 180
         local popupX = (w - popupW) / 2
@@ -1985,7 +1967,7 @@ function love.mousepressed(screenX, screenY, button)
     end
 
     if popupActive then
-        local w, h = 1920, 1080
+        local w, h = love.graphics.getDimensions()
         local popupW = 400
         local popupH = 300
         local popupX = (w - popupW) / 2
@@ -2076,7 +2058,7 @@ function love.mousepressed(screenX, screenY, button)
     end
 
     if projectPopupActive then
-        local w, h = 1920, 1080
+        local w, h = love.graphics.getDimensions()
         local popupW = 420
         local popupH = 180
         local popupX = (w - popupW) / 2
@@ -2151,8 +2133,6 @@ function love.mousepressed(screenX, screenY, button)
             table.insert(menuItems, {label = "Cargar partida", action = "load"})
             table.insert(menuItems, {label = "Nueva partida", action = "newgame"})
             table.insert(menuItems, {label = "---", action = "none"})
-            local isFullscreen = love.window.getFullscreen()
-            table.insert(menuItems, {label = isFullscreen and "Modo ventana" or "Pantalla completa", action = "togglefullscreen"})
             table.insert(menuItems, {label = "Shut Down...", action = "quit"})
 
             if x >= contentX and x <= menuX + menuW - 4 and y >= startY and y <= startY + #menuItems * itemH then
@@ -2175,8 +2155,6 @@ function love.mousepressed(screenX, screenY, button)
                         popupActive = true
                         popupType = "newgame"
                         popupConfirmStep = 1
-                    elseif item.action == "togglefullscreen" then
-                        love.window.setFullscreen(not love.window.getFullscreen())
                     else
                         toggleApp(item.action)
                     end
@@ -2236,8 +2214,7 @@ function love.mousepressed(screenX, screenY, button)
     end
 end
 
-function love.mousereleased(screenX, screenY, button)
-    local x, y = getVirtualMouse()
+function love.mousereleased(x, y, button)
     local appMap = {
         winamp = winamp, mypc = mypc, explorer = explorer,
         notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
@@ -2250,8 +2227,7 @@ function love.mousereleased(screenX, screenY, button)
     end
 end
 
-function love.mousemoved(screenX, screenY)
-    local x, y = getVirtualMouse()
+function love.mousemoved(x, y)
     local appMap = {
         winamp = winamp, mypc = mypc, explorer = explorer,
         notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
