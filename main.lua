@@ -670,6 +670,28 @@ function updateTaskbar()
     end
 end
 
+local function serialize(o)
+    if type(o) == "number" then
+        return tostring(o)
+    elseif type(o) == "string" then
+        return string.format("%q", o)
+    elseif type(o) == "boolean" then
+        return tostring(o)
+    elseif type(o) == "table" then
+        local s = "{\n"
+        for k, v in pairs(o) do
+            if type(k) == "number" then
+                s = s .. "[" .. k .. "] = " .. serialize(v) .. ",\n"
+            else
+                s = s .. "[\"" .. k .. "\"] = " .. serialize(v) .. ",\n"
+            end
+        end
+        return s .. "}"
+    else
+        return "nil"
+    end
+end
+
 local function saveGame()
     local saveData = {
         version = 1,
@@ -735,28 +757,6 @@ local function saveGame()
     
     local success, err = love.filesystem.write("savegame.lua", serialize(saveData))
     return success
-end
-
-local function serialize(o)
-    if type(o) == "number" then
-        return tostring(o)
-    elseif type(o) == "string" then
-        return string.format("%q", o)
-    elseif type(o) == "boolean" then
-        return tostring(o)
-    elseif type(o) == "table" then
-        local s = "{\n"
-        for k, v in pairs(o) do
-            if type(k) == "number" then
-                s = s .. "[" .. k .. "] = " .. serialize(v) .. ",\n"
-            else
-                s = s .. "[\"" .. k .. "\"] = " .. serialize(v) .. ",\n"
-            end
-        end
-        return s .. "}"
-    else
-        return "nil"
-    end
 end
 
 local function loadGame()
