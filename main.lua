@@ -352,6 +352,24 @@ function drawProjectPopup()
     love.graphics.rectangle("line", popupX + 1, popupY + 1, popupW - 2, popupH - 2)
 end
 
+local function getSaveSlotPath(slot)
+    return "save_slot_" .. slot .. ".lua"
+end
+
+local function getSaveSlotInfo(slot)
+    local path = getSaveSlotPath(slot)
+    if not love.filesystem.getInfo(path) then
+        return nil
+    end
+    local content = love.filesystem.read(path)
+    if not content then return nil end
+    local chunk = load("return " .. content)
+    if not chunk then return nil end
+    local ok, data = pcall(chunk)
+    if not ok then return nil end
+    return data
+end
+
 function drawSaveLoadPopup()
     local w, h = love.graphics.getDimensions()
     local popupW = 400
@@ -808,24 +826,6 @@ local function serialize(o)
     else
         return "nil"
     end
-end
-
-local function getSaveSlotPath(slot)
-    return "save_slot_" .. slot .. ".lua"
-end
-
-local function getSaveSlotInfo(slot)
-    local path = getSaveSlotPath(slot)
-    if not love.filesystem.getInfo(path) then
-        return nil
-    end
-    local content = love.filesystem.read(path)
-    if not content then return nil end
-    local chunk = load("return " .. content)
-    if not chunk then return nil end
-    local ok, data = pcall(chunk)
-    if not ok then return nil end
-    return data
 end
 
 local function saveGame(slot)
