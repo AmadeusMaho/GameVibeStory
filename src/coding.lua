@@ -78,7 +78,7 @@ function Coding.new(x, y)
     self.codeProgress = 0
     self.codeScrollY = 0
     self.codeTargetScrollY = 0
-    self.codeFont = love.graphics.newFont(11)
+    self.codeFont = love.graphics.newFont(12)
     self.codeComplete = false
     self.cursorBlink = 0
 
@@ -569,6 +569,15 @@ function Coding:drawCoding(x, y, w, h)
     love.graphics.rectangle("fill", barX + 2 + shakeOff, barY + 2, (barW - 4) * hpRatio, barH - 4)
     love.graphics.setColor(W95.white)
     love.graphics.printf(math.floor(self.projectProgress) .. "/" .. self.projectMaxProgress, barX + shakeOff, barY + 3, barW, "center")
+
+    for _, target in ipairs(self.milestoneTargets) do
+        local mx = barX + (barW - 4) * target
+        local passed = hpRatio >= target
+        love.graphics.setColor(passed and {0.5, 1, 0.5} or {1, 0.5, 0.5})
+        love.graphics.line(mx + shakeOff, barY - 3, mx + shakeOff, barY + barH + 3)
+        love.graphics.setColor(passed and W95.green or W95.yellow)
+        love.graphics.printf("V", mx + shakeOff - 12, barY - 14, 24, "center")
+    end
 
     local infoY = barY + barH + 4
     love.graphics.setColor(W95.text)

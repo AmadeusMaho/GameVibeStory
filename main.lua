@@ -1309,6 +1309,9 @@ function love.load()
         if trabajo and trabajo.activeProject then
             trabajo:recalcComponents()
         end
+        if coding and coding.state == "coding" then
+            coding:recalcComponents()
+        end
     end
     explorer.onAppPurchased = function(appId)
         if appId == "winbatch" and trabajo then
