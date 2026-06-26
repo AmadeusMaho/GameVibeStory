@@ -363,7 +363,12 @@ end
 
 function Coding:updateMinigame(dt)
     self.cursorBlink = self.cursorBlink + dt
-    self.codeScrollY = self.codeScrollY + (self.codeTargetScrollY - self.codeScrollY) * dt * 10
+    local lineH = 16
+    local currentLineY = (self.codeLineIndex - 1) * lineH
+    local maxVisibleY = self.codeScrollY + (self.codeH or 300) - lineH * 3
+    if currentLineY > maxVisibleY then
+        self.codeScrollY = currentLineY - (self.codeH or 300) + lineH * 3
+    end
 end
 
 function Coding:publishedAppsUpdate(dt)
@@ -648,6 +653,7 @@ function Coding:drawMinigame(x, y, w, h)
     local codeY = y + 24
     local codeW = w - 24
     local codeH = h - 50
+    self.codeH = codeH
 
     love.graphics.setColor({0.1, 0.1, 0.1})
     love.graphics.rectangle("fill", codeX, codeY, codeW, codeH)
@@ -938,7 +944,6 @@ function Coding:keypressed(key)
             else
                 self.codeLineIndex = self.codeLineIndex + 1
                 self.codeCharIndex = 0
-                self.codeTargetScrollY = self.codeTargetScrollY + 16
             end
         end
     end
