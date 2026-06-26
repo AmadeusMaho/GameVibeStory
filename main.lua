@@ -1487,21 +1487,23 @@ function love.update(dt)
         end
     end
 
-    if winamp then winamp:update(dt) end
-    if mypc then mypc:update(dt) end
-    if explorer then explorer:update(dt) end
-    if notepad then notepad:update(dt) end
-    if trabajo then trabajo:update(dt) end
-    if email then
-        email:update(dt)
-        if email.downloadIconActive and not dynamicIcons.download.active then
-            activateDynamicIcon("download")
-            desktopIcons = getDesktopIcons()
+    if gameState == "desktop" then
+        if winamp then winamp:update(dt) end
+        if mypc then mypc:update(dt) end
+        if explorer then explorer:update(dt) end
+        if notepad then notepad:update(dt) end
+        if trabajo then trabajo:update(dt) end
+        if email then
+            email:update(dt)
+            if email.downloadIconActive and not dynamicIcons.download.active then
+                activateDynamicIcon("download")
+                desktopIcons = getDesktopIcons()
+            end
         end
+        if recyclebin then recyclebin:update(dt) end
+        if personal then personal:update(dt) end
+        if achievements then achievements:update(dt) end
     end
-    if recyclebin then recyclebin:update(dt) end
-    if personal then personal:update(dt) end
-    if achievements then achievements:update(dt) end
 end
 
 function drawAMIBIOSLogo(x, y)
@@ -1800,6 +1802,8 @@ function drawDesktop()
             table.insert(menuItems, {label = "Cargar partida", action = "load", icon = "load"})
             table.insert(menuItems, {label = "Nueva partida", action = "newgame", icon = "newgame"})
             table.insert(menuItems, {label = "---", action = "none"})
+            local isFullscreen = love.window.getFullscreen()
+            table.insert(menuItems, {label = isFullscreen and "Modo ventana" or "Pantalla completa", action = "togglefullscreen"})
             table.insert(menuItems, {label = "Shut Down...", action = "quit", icon = "power"})
 
             local contentX = menuX + sidebarW + 4
@@ -2147,6 +2151,8 @@ function love.mousepressed(screenX, screenY, button)
             table.insert(menuItems, {label = "Cargar partida", action = "load"})
             table.insert(menuItems, {label = "Nueva partida", action = "newgame"})
             table.insert(menuItems, {label = "---", action = "none"})
+            local isFullscreen = love.window.getFullscreen()
+            table.insert(menuItems, {label = isFullscreen and "Modo ventana" or "Pantalla completa", action = "togglefullscreen"})
             table.insert(menuItems, {label = "Shut Down...", action = "quit"})
 
             if x >= contentX and x <= menuX + menuW - 4 and y >= startY and y <= startY + #menuItems * itemH then
@@ -2169,6 +2175,8 @@ function love.mousepressed(screenX, screenY, button)
                         popupActive = true
                         popupType = "newgame"
                         popupConfirmStep = 1
+                    elseif item.action == "togglefullscreen" then
+                        love.window.setFullscreen(not love.window.getFullscreen())
                     else
                         toggleApp(item.action)
                     end
