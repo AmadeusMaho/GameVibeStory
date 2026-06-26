@@ -1476,32 +1476,41 @@ function love.load()
 
     local kbdPath = "assets/sounds/keyboard/"
     for i = 1, 6 do
-        local pack = {sources = {}, currentIndex = 1, name = keyboardNames[i] or "Teclado " .. i, owned = (i == 1)}
-        local srcPath = nil
-        local ok, src = pcall(love.audio.newSource, kbdPath .. i .. "/pbt.ogg", "static")
-        if ok then
-            srcPath = kbdPath .. i .. "/pbt.ogg"
+        local pack = {sources = {}, currentIndex = 1, name = keyboardNames[i] or "Teclado " .. i, owned = (i == 1), keyMap = {}}
+        local dirPath = kbdPath .. i
+        local files = love.filesystem.getDirectoryItems(dirPath)
+        
+        local wavFiles = {}
+        for _, f in ipairs(files) do
+            if f:match("%.wav$") then
+                table.insert(wavFiles, f)
+            end
+        end
+        
+        if #wavFiles > 0 then
+            for _, f in ipairs(wavFiles) do
+                local keyName = f:gsub("%.wav$", "")
+                local ok, src = pcall(love.audio.newSource, dirPath .. "/" .. f, "static")
+                if ok then
+                    src:setVolume(0.3)
+                    pack.keyMap[keyName] = src
+                end
+            end
+            if next(pack.keyMap) then
+                table.insert(keyboardSounds, pack)
+            end
         else
-            local files = love.filesystem.getDirectoryItems(kbdPath .. i)
             for _, f in ipairs(files) do
                 if f:match("%.ogg$") then
-                    local ok2, src2 = pcall(love.audio.newSource, kbdPath .. i .. "/" .. f, "static")
-                    if ok2 then
-                        srcPath = kbdPath .. i .. "/" .. f
+                    local ok, src = pcall(love.audio.newSource, dirPath .. "/" .. f, "static")
+                    if ok then
+                        src:setVolume(0.3)
+                        pack.keyMap["default"] = src
                         break
                     end
                 end
             end
-        end
-        if srcPath then
-            for j = 1, 5 do
-                local ok3, src3 = pcall(love.audio.newSource, srcPath, "static")
-                if ok3 then
-                    src3:setVolume(0.3)
-                    table.insert(pack.sources, src3)
-                end
-            end
-            if #pack.sources > 0 then
+            if pack.keyMap["default"] then
                 table.insert(keyboardSounds, pack)
             end
         end
@@ -2411,11 +2420,12 @@ function love.keypressed(key)
         local skipKeys = {lshift=true, rshift=true, lctrl=true, rctrl=true, lalt=true, ralt=true, escape=true, tab=true, capslock=true}
         if not skipKeys[key] then
             local pack = keyboardSounds[currentKeyboard]
-            if pack and pack.sources and #pack.sources > 0 and pack.owned then
-                local src = pack.sources[pack.currentIndex]
-                src:stop()
-                src:play()
-                pack.currentIndex = pack.currentIndex % #pack.sources + 1
+            if pack and pack.owned then
+                local src = pack.keyMap[key] or pack.keyMap["default"]
+                if src then
+                    src:stop()
+                    src:play()
+                end
             end
         end
     end
