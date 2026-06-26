@@ -981,7 +981,6 @@ local function loadGame(slot)
         end
     end
     
-    gameState = "desktop"
     return true
 end
 
