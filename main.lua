@@ -896,6 +896,12 @@ local function saveGame(slot)
             unlocked = achievements.unlocked or {},
         },
         
+        codingData = {
+            codingLevel = coding.codingLevel,
+            codingXP = coding.codingXP,
+            publishedApps = {},
+        },
+        
         dynamicIcons = {},
         pcStats = pcStats,
     }
@@ -911,6 +917,18 @@ local function saveGame(slot)
         table.insert(saveData.explorer.musicSongs, {
             name = song.name,
             purchased = song.purchased,
+        })
+    end
+    
+    for i, app in ipairs(coding.publishedApps) do
+        table.insert(saveData.codingData.publishedApps, {
+            name = app.name,
+            typeId = app.type.id,
+            revenuePerMonth = app.revenuePerMonth,
+            monthsLeft = app.monthsLeft,
+            totalRevenue = app.totalRevenue,
+            selling = app.selling,
+            successScore = app.successScore,
         })
     end
     
@@ -1011,6 +1029,33 @@ local function loadGame(slot)
         for id, unlocked in pairs(data.achievementsData.unlocked) do
             if achievements.unlocked then
                 achievements.unlocked[id] = unlocked
+            end
+        end
+    end
+    
+    if data.codingData and coding then
+        coding.codingLevel = data.codingData.codingLevel or 1
+        coding.codingXP = data.codingData.codingXP or 0
+        if data.codingData.publishedApps then
+            for _, savedApp in ipairs(data.codingData.publishedApps) do
+                local appType = nil
+                for _, pt in ipairs(projectTypes) do
+                    if pt.id == savedApp.typeId then
+                        appType = pt
+                        break
+                    end
+                end
+                if appType then
+                    table.insert(coding.publishedApps, {
+                        name = savedApp.name,
+                        type = appType,
+                        revenuePerMonth = savedApp.revenuePerMonth,
+                        monthsLeft = savedApp.monthsLeft,
+                        totalRevenue = savedApp.totalRevenue,
+                        selling = savedApp.selling,
+                        successScore = savedApp.successScore,
+                    })
+                end
             end
         end
     end
