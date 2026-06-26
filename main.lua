@@ -47,8 +47,8 @@ personal = nil
 achievements = nil
 coding = nil
 
-local keyboardSounds = {}
-local currentKeyboard = 1
+keyboardSounds = {}
+currentKeyboard = 1
 local keyboardNames = {
     "NK Cream (original by Ryan)",
 }
@@ -64,7 +64,7 @@ pcStats = {
     os = "Microsoft Windows 95  4.00.950",
 }
 
-bootLines = {
+local bootLines = {
     {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
     {text = "             AMIBIOS (C)1994 American Megatrends Inc..", x = 80, y = 40, color = {0.8, 0.8, 0.8}},
     {text = "", x = 80, y = 60, color = {0.8, 0.8, 0.8}},
@@ -78,40 +78,40 @@ bootLines = {
     {text = "", x = 80, y = 220, color = {0.8, 0.8, 0.8}},
     {text = "WAIT...", x = 80, y = 240, color = {0.8, 0.8, 0.8}},
 }
-bottomLines = {
+local bottomLines = {
     "Press DEL to enter SETUP , ESC to skip memory test",
     "08/06/2011-Soon-in-Tokyo-Rehab-Studio"
 }
 
-bootLineIndex = 0
-bootCharIndex = 0
-bootDone = false
-bootLineDelay = 0.15
-bootCharDelay = 0.02
-bootTimerAccum = 0
-showAllLines = false
-showBottom = false
+local bootLineIndex = 0
+local bootCharIndex = 0
+local bootDone = false
+local bootLineDelay = 0.15
+local bootCharDelay = 0.02
+local bootTimerAccum = 0
+local showAllLines = false
+local showBottom = false
 
-countdownActive = false
-countdownValue = 3
-countdownTimer = 0
+local countdownActive = false
+local countdownValue = 3
+local countdownTimer = 0
 
-startMenuOpen = false
-saveMessage = ""
-saveMessageTimer = 0
+local startMenuOpen = false
+local saveMessage = ""
+local saveMessageTimer = 0
 
-popupActive = false
-popupType = nil
-popupSelectedSlot = 1
-popupConfirmStep = 0
-lastClickTime = 0
-doubleClickTime = 0.4
-taskbarApps = {}
-winampMusic2 = nil
-firstBootDone = false
+local popupActive = false
+local popupType = nil
+local popupSelectedSlot = 1
+local popupConfirmStep = 0
+local lastClickTime = 0
+local doubleClickTime = 0.4
+local taskbarApps = {}
+local winampMusic2 = nil
+local firstBootDone = false
 
-iconImages = {}
-winampMusic = nil
+local iconImages = {}
+local winampMusic = nil
 
 dynamicIcons = {}
 local dynamicIconOrder = {}
@@ -134,14 +134,14 @@ addDynamicIcon("personal", "Personal", "staff", 240, 240, nil)
 addDynamicIcon("coding", "Coding", "coding", 340, 240, nil)
 addDynamicIcon("download", "WinOptimizer", "download", 340, 40, nil)
 
-baseDesktopIcons = {
+local baseDesktopIcons = {
     {label = "Mi PC", icon = "mypc"},
     {label = "Trabajo", icon = "trabajo", iconScale = 1.4},
     {label = "Correo", icon = "email", iconScale = 1.4},
     {label = "Papelera", icon = "recyclebin"},
 }
 
-local function getDesktopIcons()
+function getDesktopIcons()
     local all = {}
     for _, icon in ipairs(baseDesktopIcons) do
         table.insert(all, icon)
@@ -360,11 +360,11 @@ function drawProjectPopup()
     love.graphics.rectangle("line", popupX + 1, popupY + 1, popupW - 2, popupH - 2)
 end
 
-local function getSaveSlotPath(slot)
+function getSaveSlotPath(slot)
     return "save_slot_" .. slot .. ".lua"
 end
 
-local function getSaveSlotInfo(slot)
+function getSaveSlotInfo(slot)
     local path = getSaveSlotPath(slot)
     if not love.filesystem.getInfo(path) then
         return nil
@@ -954,7 +954,7 @@ local function saveGame(slot)
     return success
 end
 
-function loadGame(slot)
+local function loadGame(slot)
     local data = getSaveSlotInfo(slot)
     if not data then return false end
     
