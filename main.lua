@@ -91,6 +91,12 @@ local countdownTimer = 0
 local startMenuOpen = false
 local saveMessage = ""
 local saveMessageTimer = 0
+
+local popupActive = false
+local popupType = nil
+local popupSelectedSlot = 1
+local popupConfirmStep = 0
+local popupAction = nil
 local lastClickTime = 0
 local doubleClickTime = 0.4
 local taskbarApps = {}
@@ -344,6 +350,118 @@ function drawProjectPopup()
     love.graphics.rectangle("line", popupX, popupY, popupW, popupH)
     love.graphics.setColor(1, 1, 1)
     love.graphics.rectangle("line", popupX + 1, popupY + 1, popupW - 2, popupH - 2)
+end
+
+function drawSaveLoadPopup()
+    local w, h = love.graphics.getDimensions()
+    local popupW = 400
+    local popupH = 300
+    local popupX = (w - popupW) / 2
+    local popupY = (h - popupH) / 2
+
+    love.graphics.setColor(0.75, 0.75, 0.75)
+    love.graphics.rectangle("fill", popupX, popupY, popupW, popupH)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("fill", popupX + 2, popupY + 2, popupW - 4, popupH - 4)
+
+    love.graphics.setColor(0, 0, 0.5)
+    love.graphics.rectangle("fill", popupX + 2, popupY + 2, popupW - 4, 20)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.setFont(love.graphics.newFont(12))
+
+    local title = "Guardar partida"
+    if popupType == "load" then title = "Cargar partida"
+    elseif popupType == "newgame" then title = "Nueva partida" end
+    love.graphics.print(title, popupX + 8, popupY + 5)
+
+    if popupType == "newgame" then
+        love.graphics.setColor(0, 0, 0)
+        if popupConfirmStep == 1 then
+            love.graphics.printf("¿Estas seguro de que quieres\nempezar una nueva partida?", popupX + 20, popupY + 50, popupW - 40, "center")
+            love.graphics.printf("Se perderan todos los datos\nguardados.", popupX + 20, popupY + 90, popupW - 40, "center")
+        else
+            love.graphics.printf("¿REALMENTE quieres empezar\nde nuevo?", popupX + 20, popupY + 50, popupW - 40, "center")
+            love.graphics.printf("Esta accion no se puede deshacer.", popupX + 20, popupY + 90, popupW - 40, "center")
+        end
+
+        local btnW = 80
+        local btnH = 24
+        local btnY = popupY + popupH - 45
+
+        love.graphics.setColor(0.75, 0.75, 0.75)
+        love.graphics.rectangle("fill", popupX + 40, btnY, btnW, btnH)
+        love.graphics.setColor(0, 0.5, 0)
+        love.graphics.printf("Si", popupX + 40, btnY + 5, btnW, "center")
+
+        love.graphics.setColor(0.75, 0.75, 0.75)
+        love.graphics.rectangle("fill", popupX + popupW - 120, btnY, btnW, btnH)
+        love.graphics.setColor(0.5, 0, 0)
+        love.graphics.printf("No", popupX + popupW - 120, btnY + 5, btnW, "center")
+    else
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.print("Selecciona un slot:", popupX + 20, popupY + 30)
+
+        for i = 1, 3 do
+            local slotY = popupY + 55 + (i - 1) * 55
+            local slotW = popupW - 40
+            local slotH = 45
+
+            if i == popupSelectedSlot then
+                love.graphics.setColor(0.8, 0.85, 1.0)
+            else
+                love.graphics.setColor(0.9, 0.9, 0.9)
+            end
+            love.graphics.rectangle("fill", popupX + 20, slotY, slotW, slotH)
+            love.graphics.setColor(0.5, 0.5, 0.5)
+            love.graphics.rectangle("line", popupX + 20, slotY, slotW, slotH)
+
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.print("Slot " .. i, popupX + 30, slotY + 5)
+
+            local info = getSaveSlotInfo(i)
+            if info then
+                local money = info.trabajo and info.trabajo.money or 0
+                local tasks = info.trabajo and info.trabajo.tasksCompleted or 0
+                love.graphics.setColor(0.3, 0.3, 0.3)
+                love.graphics.print("$" .. money .. " | " .. tasks .. " tareas", popupX + 30, slotY + 22)
+            else
+                love.graphics.setColor(0.5, 0.5, 0.5)
+                love.graphics.print("[Vacio]", popupX + 30, slotY + 22)
+            end
+        end
+
+        local btnW = 100
+        local btnH = 24
+        local btnY = popupY + popupH - 40
+
+        if popupConfirmStep == 0 then
+            love.graphics.setColor(0.75, 0.75, 0.75)
+            love.graphics.rectangle("fill", popupX + 20, btnY, btnW, btnH)
+            love.graphics.setColor(0, 0.5, 0)
+            love.graphics.printf(popupType == "save" and "Guardar" or "Cargar", popupX + 20, btnY + 5, btnW, "center")
+
+            love.graphics.setColor(0.75, 0.75, 0.75)
+            love.graphics.rectangle("fill", popupX + popupW - 120, btnY, btnW, btnH)
+            love.graphics.setColor(0.5, 0, 0)
+            love.graphics.printf("Cancelar", popupX + popupW - 120, btnY + 5, btnW, "center")
+        else
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.printf("¿Confirmar?", popupX + 20, btnY - 25, popupW - 40, "center")
+
+            love.graphics.setColor(0.75, 0.75, 0.75)
+            love.graphics.rectangle("fill", popupX + 20, btnY, btnW, btnH)
+            love.graphics.setColor(0, 0.5, 0)
+            love.graphics.printf("Si", popupX + 20, btnY + 5, btnW, "center")
+
+            love.graphics.setColor(0.75, 0.75, 0.75)
+            love.graphics.rectangle("fill", popupX + popupW - 120, btnY, btnW, btnH)
+            love.graphics.setColor(0.5, 0, 0)
+            love.graphics.printf("No", popupX + popupW - 120, btnY + 5, btnW, "center")
+        end
+    end
+
+    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.rectangle("line", popupX, popupY, popupW, popupH)
 end
 
 function drawInstallScreen()
@@ -692,9 +810,28 @@ local function serialize(o)
     end
 end
 
-local function saveGame()
+local function getSaveSlotPath(slot)
+    return "save_slot_" .. slot .. ".lua"
+end
+
+local function getSaveSlotInfo(slot)
+    local path = getSaveSlotPath(slot)
+    if not love.filesystem.getInfo(path) then
+        return nil
+    end
+    local content = love.filesystem.read(path)
+    if not content then return nil end
+    local chunk = load("return " .. content)
+    if not chunk then return nil end
+    local ok, data = pcall(chunk)
+    if not ok then return nil end
+    return data
+end
+
+local function saveGame(slot)
     local saveData = {
         version = 1,
+        timestamp = os.time(),
         gameState = "desktop",
         
         trabajo = {
@@ -755,23 +892,13 @@ local function saveGame()
         saveData.dynamicIcons[id] = {active = icon.active}
     end
     
-    local success, err = love.filesystem.write("savegame.lua", serialize(saveData))
+    local success, err = love.filesystem.write(getSaveSlotPath(slot), serialize(saveData))
     return success
 end
 
-local function loadGame()
-    if not love.filesystem.getInfo("savegame.lua") then
-        return false
-    end
-    
-    local content, err = love.filesystem.read("savegame.lua")
-    if not content then return false end
-    
-    local chunk, err = load("return " .. content)
-    if not chunk then return false end
-    
-    local success, data = pcall(chunk)
-    if not success or not data then return false end
+local function loadGame(slot)
+    local data = getSaveSlotInfo(slot)
+    if not data then return false end
     
     if data.trabajo then
         trabajo.money = data.trabajo.money or 0
@@ -1644,6 +1771,7 @@ function drawDesktop()
             table.insert(menuItems, {label = "---", action = "none"})
             table.insert(menuItems, {label = "Guardar partida", action = "save", icon = "save"})
             table.insert(menuItems, {label = "Cargar partida", action = "load", icon = "load"})
+            table.insert(menuItems, {label = "Nueva partida", action = "newgame", icon = "newgame"})
             table.insert(menuItems, {label = "---", action = "none"})
             table.insert(menuItems, {label = "Shut Down...", action = "quit", icon = "power"})
 
@@ -1773,6 +1901,9 @@ function love.draw()
     if projectPopupActive then
         drawProjectPopup()
     end
+    if popupActive then
+        drawSaveLoadPopup()
+    end
     if saveMessageTimer > 0 and saveMessage ~= "" then
         local msgW = 300
         local msgH = 60
@@ -1811,6 +1942,105 @@ function love.mousepressed(x, y, button)
             if bsodSound then
                 bsodSound:stop()
                 bsodSound:play()
+            end
+        end
+        return
+    end
+
+    if popupActive then
+        local w, h = love.graphics.getDimensions()
+        local popupW = 400
+        local popupH = 300
+        local popupX = (w - popupW) / 2
+        local popupY = (h - popupH) / 2
+
+        if popupType == "newgame" then
+            local btnW = 80
+            local btnH = 24
+            local btnY = popupY + popupH - 45
+
+            if x >= popupX + 40 and x <= popupX + 40 + btnW and y >= btnY and y <= btnY + btnH then
+                if popupConfirmStep == 1 then
+                    popupConfirmStep = 2
+                else
+                    love.filesystem.write("save_slot_1.lua", "")
+                    love.filesystem.write("save_slot_2.lua", "")
+                    love.filesystem.write("save_slot_3.lua", "")
+                    popupActive = false
+                    gameState = "boot"
+                    bootLineIndex = 0
+                    bootCharIndex = 0
+                    bootDone = false
+                    bootTimerAccum = 0
+                    showAllLines = false
+                    showBottom = false
+                    if bootSound then bootSound:stop(); bootSound:play() end
+                end
+                return
+            end
+
+            if x >= popupX + popupW - 120 and x <= popupX + popupW - 40 and y >= btnY and y <= btnY + btnH then
+                popupActive = false
+                return
+            end
+        else
+            for i = 1, 3 do
+                local slotY = popupY + 55 + (i - 1) * 55
+                local slotW = popupW - 40
+                local slotH = 45
+                if x >= popupX + 20 and x <= popupX + 20 + slotW and y >= slotY and y <= slotY + slotH then
+                    popupSelectedSlot = i
+                    return
+                end
+            end
+
+            local btnW = 100
+            local btnH = 24
+            local btnY = popupY + popupH - 40
+
+            if popupConfirmStep == 0 then
+                if x >= popupX + 20 and x <= popupX + 20 + btnW and y >= btnY and y <= btnY + btnH then
+                    if popupType == "save" then
+                        popupConfirmStep = 1
+                    else
+                        local info = getSaveSlotInfo(popupSelectedSlot)
+                        if info then
+                            popupConfirmStep = 1
+                        end
+                    end
+                    return
+                end
+
+                if x >= popupX + popupW - 120 and x <= popupX + popupW - 20 and y >= btnY and y <= btnY + btnH then
+                    popupActive = false
+                    return
+                end
+            else
+                if x >= popupX + 20 and x <= popupX + 20 + btnW and y >= btnY and y <= btnY + btnH then
+                    if popupType == "save" then
+                        local success = saveGame(popupSelectedSlot)
+                        popupActive = false
+                        if success then
+                            showSaveMessage("Partida guardada en Slot " .. popupSelectedSlot)
+                        else
+                            showSaveMessage("Error al guardar")
+                        end
+                    elseif popupType == "load" then
+                        local success = loadGame(popupSelectedSlot)
+                        popupActive = false
+                        if success then
+                            showSaveMessage("Partida cargada!")
+                        else
+                            showSaveMessage("Error al cargar")
+                        end
+                    end
+                    return
+                end
+
+                if x >= popupX + popupW - 120 and x <= popupX + popupW - 20 and y >= btnY and y <= btnY + btnH then
+                    popupConfirmStep = 0
+                    return
+                end
             end
         end
         return
@@ -1890,6 +2120,7 @@ function love.mousepressed(x, y, button)
             table.insert(menuItems, {label = "---", action = "none"})
             table.insert(menuItems, {label = "Guardar partida", action = "save"})
             table.insert(menuItems, {label = "Cargar partida", action = "load"})
+            table.insert(menuItems, {label = "Nueva partida", action = "newgame"})
             table.insert(menuItems, {label = "---", action = "none"})
             table.insert(menuItems, {label = "Shut Down...", action = "quit"})
 
@@ -1900,19 +2131,19 @@ function love.mousepressed(x, y, button)
                     if item.action == "quit" then
                         love.event.quit()
                     elseif item.action == "save" then
-                        local success = saveGame()
-                        if success then
-                            showSaveMessage("Partida guardada!")
-                        else
-                            showSaveMessage("Error al guardar")
-                        end
+                        popupActive = true
+                        popupType = "save"
+                        popupSelectedSlot = 1
+                        popupConfirmStep = 0
                     elseif item.action == "load" then
-                        local success = loadGame()
-                        if success then
-                            showSaveMessage("Partida cargada!")
-                        else
-                            showSaveMessage("No hay partida guardada")
-                        end
+                        popupActive = true
+                        popupType = "load"
+                        popupSelectedSlot = 1
+                        popupConfirmStep = 0
+                    elseif item.action == "newgame" then
+                        popupActive = true
+                        popupType = "newgame"
+                        popupConfirmStep = 1
                     else
                         toggleApp(item.action)
                     end
