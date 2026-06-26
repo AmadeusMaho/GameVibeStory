@@ -31,7 +31,7 @@ function Notepad.new(x, y)
 
     self.objectives = {
         {id = "work5", text = "Trabaja 5 veces", done = false, shown = true},
-        {id = "money150", text = "Gana $150 en total", done = false, shown = false},
+        {id = "money50", text = "Gana $50 en total", done = false, shown = false},
         {id = "work15", text = "Trabaja 15 veces", done = false, shown = false},
         {id = "firstProject", text = "Termina un proyecto exitosamente", done = false, shown = false},
         {id = "money300", text = "Gana $300 en total", done = false, shown = false},
@@ -70,7 +70,7 @@ function Notepad:update(dt)
                 self:unlockNext(i)
                 self:addNotification("Objetivo Completado!", obj.text)
                 if self.onGoalComplete then self.onGoalComplete(obj.id, i) end
-            elseif obj.id == "money150" and money >= 150 then
+            elseif obj.id == "money50" and money >= 50 then
                 obj.done = true
                 self:unlockNext(i)
                 self:addNotification("Objetivo Completado!", obj.text)
