@@ -65,7 +65,6 @@ function Explorer.new(x, y)
     self.jobBoardRefreshTimer = 0
     self.jobBoardRefreshTime = 30
     self.selectedJob = nil
-    self:refreshJobBoard()
 
     self.appStore = {
         {
@@ -131,6 +130,7 @@ function Explorer.new(x, y)
         {name = "Sistema de facturacion", desc = "Generador de facturas\ncon base de datos.", baseHp = 150, days = 14, reward = 450, difficulty = "pesadilla"},
         {name = "Conversor de formatos", desc = "Herramienta para convertir\narchivos entre formatos.", baseHp = 150, days = 14, reward = 210, difficulty = "pesadilla"},
     }
+    self:refreshJobBoard()
 
     self.upgradeTiers = {
         cpu = {
