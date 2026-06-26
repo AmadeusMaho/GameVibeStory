@@ -1018,7 +1018,6 @@ function love.load()
     countdownValue = 3
     countdownTimer = 0
 
-    local autoLoaded = false
     local latestSlot = nil
     local latestTimestamp = 0
     for i = 1, 3 do
@@ -1029,15 +1028,12 @@ function love.load()
         end
     end
     if latestSlot then
-        local ok = loadGame(latestSlot)
-        if ok then
-            autoLoaded = true
-            gameState = "desktop"
-            firstBootDone = true
-            if email then
-                email.window.visible = false
-            end
-        end
+        loadGame(latestSlot)
+        bootLines[6] = {text = "CPU: " .. pcStats.cpu, x = 80, y = 325, color = {0.8, 0.8, 0.8}}
+        bootLines[7] = {text = "RAM: Checking " .. pcStats.ram .. " ... OK", x = 80, y = 350, color = {0.8, 0.8, 0.8}}
+        bootLines[8] = {text = "HDD: " .. pcStats.disk, x = 80, y = 375, color = {0.8, 0.8, 0.8}}
+        bootLines[9] = {text = "Video: " .. pcStats.display, x = 80, y = 400, color = {0.8, 0.8, 0.8}}
+        bootLines[10] = {text = "Cooling: " .. pcStats.cooling, x = 80, y = 425, color = {0.8, 0.8, 0.8}}
     end
 
     local ok, snd = pcall(love.audio.newSource, "assets/sounds/start.wav", "static")
