@@ -875,6 +875,23 @@ function Explorer:drawShopGrid(x, y, w, h)
     love.graphics.setColor(W95.text)
     love.graphics.printf("Consumo: " .. totalWatts .. "W / " .. psuCap .. "W", x, y - 16, w, "center")
 
+    local kbdItems = {
+        {index = 2, name = "NK Cream", price = 200},
+        {index = 3, name = "EG Oreo", price = 250},
+        {index = 4, name = "Crystal Purple", price = 300},
+        {index = 5, name = "CherryMX Black", price = 350},
+        {index = 6, name = "CherryMX Blue", price = 400},
+    }
+
+    local componentRows = math.ceil(#componentOrder / cols)
+    local kbdHeaderY = y + 8 + componentRows * (cellH + padding) + 24
+    local kbdStartY = kbdHeaderY + 24
+    local kbdRows = math.ceil(#kbdItems / cols)
+    local totalContentH = kbdStartY + kbdRows * (cellH + padding) - y
+
+    self.maxShopScroll = math.max(0, totalContentH - h + 20)
+    if self.shopScrollY > self.maxShopScroll then self.shopScrollY = self.maxShopScroll end
+
     love.graphics.setScissor(x, y, w, h)
 
     local scrollOffset = -self.shopScrollY
@@ -936,22 +953,19 @@ function Explorer:drawShopGrid(x, y, w, h)
                 love.graphics.setColor(W95.textDim)
                 love.graphics.printf("-> " .. nextCap .. "W", cx, cy + 70, cellW, "center")
             else
-            love.graphics.setColor(W95.textDim)
-            love.graphics.printf(currentWatts .. "W", cx, cy + 70, cellW, "center")
+                love.graphics.setColor(W95.textDim)
+                love.graphics.printf(currentWatts .. "W", cx, cy + 70, cellW, "center")
             end
 
             local bonusText = ""
             if stat == "cpu" then
-                local bonus = level * 20
-                bonusText = "Tiempo: -" .. bonus .. "%"
+                bonusText = "Tiempo: -" .. (level * 20) .. "%"
             elseif stat == "display" then
-                local bonus = level * 40
-                bonusText = "Dinero: +" .. bonus .. "%"
+                bonusText = "Dinero: +" .. (level * 40) .. "%"
             elseif stat == "ram" then
                 bonusText = "Trabajos: " .. (1 + level)
             elseif stat == "cooling" then
-                local bonus = 10 + (level - 1) * 20
-                if level == 0 then bonus = 0 end
+                local bonus = level > 0 and (10 + (level - 1) * 20) or 0
                 bonusText = "Boost: +" .. bonus .. "%"
             elseif stat == "disk" then
                 bonusText = "Apps: " .. (1 + level)
@@ -966,23 +980,13 @@ function Explorer:drawShopGrid(x, y, w, h)
         end
     end
 
-    local kbdHeaderY = y + 8 + math.ceil(#componentOrder / cols) * (cellH + padding) + scrollOffset
-    if kbdHeaderY > y - 20 and kbdHeaderY < y + h then
+    local kbHeaderScreenY = kbdHeaderY + scrollOffset
+    if kbHeaderScreenY > y - 20 and kbHeaderScreenY < y + h then
         love.graphics.setColor(W95.text)
-        love.graphics.printf("Teclados Mecanicos", x, kbdHeaderY, w, "center")
+        love.graphics.printf("Teclados Mecanicos", x, kbHeaderScreenY, w, "center")
         love.graphics.setColor(W95.borderDark)
-        love.graphics.line(x + 10, kbdHeaderY + 18, x + w - 10, kbdHeaderY + 18)
+        love.graphics.line(x + 10, kbHeaderScreenY + 18, x + w - 10, kbHeaderScreenY + 18)
     end
-
-    local kbdItems = {
-        {index = 2, name = "NK Cream", price = 200},
-        {index = 3, name = "EG Oreo", price = 250},
-        {index = 4, name = "Crystal Purple", price = 300},
-        {index = 5, name = "CherryMX Black", price = 350},
-        {index = 6, name = "CherryMX Blue", price = 400},
-    }
-
-    local kbdStartY = kbdHeaderY + 24
 
     for i, kbd in ipairs(kbdItems) do
         local col = (i - 1) % cols
