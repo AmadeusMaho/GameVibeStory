@@ -1061,7 +1061,8 @@ local function loadGame(slot)
         if data.codingData.publishedApps then
             for _, savedApp in ipairs(data.codingData.publishedApps) do
                 local appType = nil
-                for _, pt in ipairs(projectTypes) do
+                if CodingClass and CodingClass.projectTypes then
+                    for _, pt in ipairs(CodingClass.projectTypes) do
                     if pt.id == savedApp.typeId then
                         appType = pt
                         break

@@ -44,6 +44,7 @@ local projectTypes = {
     {id = "office_suite", name = "Suite de Oficina", difficulty = "pesadilla", baseCost = 8000, baseHp = 5000, reward = 18000, monthly = 800},
     {id = "game_engine", name = "Motor de Juegos", difficulty = "pesadilla", baseCost = 12000, baseHp = 6000, reward = 25000, monthly = 1200},
 }
+Coding.projectTypes = projectTypes
 
 function Coding.new(x, y)
     local self = setmetatable({}, Coding)
