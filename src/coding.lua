@@ -525,16 +525,14 @@ function Coding:keypressed(key)
 
     local charsToAdd = self:getCharsPerKey()
     for i = 1, charsToAdd do
-        if self.codeIndex < #self.currentCode then
+        if self.codeIndex <= #self.currentCode then
             local currentLine = self.currentCode[self.codeIndex]
             if self.charIndex < #currentLine then
                 self.charIndex = self.charIndex + 1
             else
                 self.codeIndex = self.codeIndex + 1
                 self.charIndex = 0
-                if self.codeIndex <= #self.currentCode then
-                    self.targetScrollY = self.targetScrollY + 16
-                end
+                self.targetScrollY = self.targetScrollY + 16
             end
         end
     end
@@ -544,14 +542,14 @@ function Coding:keypressed(key)
         totalChars = totalChars + #line + 1
     end
     local typedChars = 0
-    for i = 1, self.codeIndex do
+    for i = 1, self.codeIndex - 1 do
         typedChars = typedChars + #self.currentCode[i] + 1
     end
     typedChars = typedChars + self.charIndex
     self.progress = math.min(1, typedChars / totalChars)
     self.quality = self.progress * self:getQualityMultiplier()
 
-    if self.codeIndex >= #self.currentCode and self.charIndex >= #self.currentCode[#self.currentCode] then
+    if self.codeIndex > #self.currentCode then
         self.state = "reviews"
         self.reviews = self:calculateReviewScores()
         self.reviewIndex = 0
@@ -751,8 +749,18 @@ function Coding:drawCoding(x, y, w, h)
     love.graphics.setFont(self.codeFont)
     local lineH = 16
     local maxLines = math.floor((codeH - 4) / lineH)
+
+    local currentLineY = (self.codeIndex - 1) * lineH
+    local viewH = codeH - 4
+    if currentLineY > self.scrollY + viewH - lineH * 2 then
+        self.scrollY = currentLineY - viewH + lineH * 2
+    end
+    if currentLineY < self.scrollY then
+        self.scrollY = currentLineY
+    end
+
     local startLine = math.max(1, math.floor(self.scrollY / lineH) + 1)
-    local endLine = math.min(#self.currentCode, startLine + maxLines - 1)
+    local endLine = math.min(#self.currentCode, startLine + maxLines)
 
     for i = startLine, endLine do
         local lineY = codeY + 2 + (i - startLine) * lineH - (self.scrollY % lineH)
