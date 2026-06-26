@@ -216,7 +216,7 @@ function triggerHardwareInstall()
 end
 
 function drawBSOD()
-    local w, h = love.graphics.getDimensions()
+    local w, h = 1920, 1080
     local margin = 80
 
     love.graphics.setColor(0, 0, 0.65)
@@ -243,7 +243,7 @@ function drawBSOD()
 end
 
 function drawMalwarePopup()
-    local w, h = love.graphics.getDimensions()
+    local w, h = 1920, 1080
     local popupW = 420
     local popupH = 180
     local popupX = (w - popupW) / 2
@@ -303,7 +303,7 @@ function triggerProjectPopup()
 end
 
 function drawProjectPopup()
-    local w, h = love.graphics.getDimensions()
+    local w, h = 1920, 1080
     local popupW = 420
     local popupH = 180
     local popupX = (w - popupW) / 2
@@ -371,7 +371,7 @@ local function getSaveSlotInfo(slot)
 end
 
 function drawSaveLoadPopup()
-    local w, h = love.graphics.getDimensions()
+    local w, h = 1920, 1080
     local popupW = 400
     local popupH = 300
     local popupX = (w - popupW) / 2
@@ -483,7 +483,7 @@ function drawSaveLoadPopup()
 end
 
 function drawInstallScreen()
-    local w, h = love.graphics.getDimensions()
+    local w, h = 1920, 1080
     local alpha = 1.0
     local fadeTime = 0.4
     if installTimer < fadeTime then
@@ -608,7 +608,7 @@ end
 
 function getNextCascadePosition(w, h)
     local cascadeOffset = 24
-    local screenW, screenH = love.graphics.getDimensions()
+    local screenW, screenH = 1920, 1080
     local taskbarH = 40
     local visibleWindows = {}
 
@@ -1121,9 +1121,10 @@ function love.load()
     local okShader, s = pcall(love.graphics.newShader, "assets/shaders/crt.glsl")
     if okShader then shader = s end
 
-    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local virtualW = 1920
+    local virtualH = 1080
     local pad = 0.15
-    mainCanvas = love.graphics.newCanvas(w * (1 + pad * 2), h * (1 + pad * 2))
+    mainCanvas = love.graphics.newCanvas(virtualW * (1 + pad * 2), virtualH * (1 + pad * 2))
     mainCanvas:setWrap("repeat", "repeat")
 
     local font = love.graphics.newFont(16)
@@ -1575,11 +1576,29 @@ function drawDesktopIcon(icon, mx, my)
     end
 end
 
-function drawDesktop()
-    local winW = love.graphics.getWidth()
-    local winH = love.graphics.getHeight()
-    local taskH = 40
+local function getVirtualMouse()
+    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local virtualW = 1920
+    local virtualH = 1080
+    local canvasW = mainCanvas:getWidth()
+    local canvasH = mainCanvas:getHeight()
+    local scaleX = screenW / canvasW
+    local scaleY = screenH / canvasH
+    local scale = math.min(scaleX, scaleY)
+    local offsetX = (screenW - canvasW * scale) / 2
+    local offsetY = (screenH - canvasH * scale) / 2
     local mx, my = love.mouse.getPosition()
+    local vx = (mx - offsetX) / scale
+    local vy = (my - offsetY) / scale
+    local pad = canvasW * 0.065
+    return vx - pad, vy - pad
+end
+
+function drawDesktop()
+    local winW = 1920
+    local winH = 1080
+    local taskH = 40
+    local mx, my = getVirtualMouse()
 
     love.graphics.setFont(defaultFont)
     CursorManager.set("normal")
@@ -1833,8 +1852,12 @@ function drawDesktop()
 end
 
 function love.draw()
-    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-    local pad = mainCanvas:getWidth() * 0.065
+    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local virtualW = 1920
+    local virtualH = 1080
+    local canvasW = mainCanvas:getWidth()
+    local canvasH = mainCanvas:getHeight()
+    local pad = canvasW * 0.065
 
     love.graphics.setCanvas(mainCanvas)
     love.graphics.clear(0, 0, 0)
@@ -1884,14 +1907,20 @@ function love.draw()
     love.graphics.pop()
     love.graphics.setCanvas()
 
+    local scaleX = screenW / canvasW
+    local scaleY = screenH / canvasH
+    local scale = math.min(scaleX, scaleY)
+    local offsetX = (screenW - canvasW * scale) / 2
+    local offsetY = (screenH - canvasH * scale) / 2
+
     if shader then
-        shader:send("screen_size", {w, h})
+        shader:send("screen_size", {screenW, screenH})
         shader:send("time", love.timer.getTime())
         shader:send("curvature", CURVATURE)
         love.graphics.setShader(shader)
     end
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(mainCanvas, -pad, -pad)
+    love.graphics.draw(mainCanvas, offsetX, offsetY, 0, scale, scale)
     love.graphics.setShader()
     if gameState == "desktop" then
         local appDrawMap = {
@@ -1903,7 +1932,7 @@ function love.draw()
         for _, id in ipairs(windowOrder) do
             local app = appDrawMap[id]
             if app then
-                local mx, my = love.mouse.getPosition()
+                local mx, my = getVirtualMouse()
                 app:draw(mx, my)
             end
         end
@@ -1924,8 +1953,8 @@ function love.draw()
     if saveMessageTimer > 0 and saveMessage ~= "" then
         local msgW = 300
         local msgH = 60
-        local msgX = (love.graphics.getWidth() - msgW) / 2
-        local msgY = (love.graphics.getHeight() - msgH) / 2
+        local msgX = (1920 - msgW) / 2
+        local msgY = (1080 - msgH) / 2
         love.graphics.setColor(0.75, 0.75, 0.75)
         love.graphics.rectangle("fill", msgX, msgY, msgW, msgH)
         love.graphics.setColor(0.5, 0.5, 0.5)
@@ -1939,13 +1968,14 @@ function love.draw()
     end
 end
 
-function love.mousepressed(x, y, button)
+function love.mousepressed(screenX, screenY, button)
     if button ~= 1 then return end
+    local x, y = getVirtualMouse()
 
     if gameState == "boot" then
         return
     elseif gameState == "malware_popup" then
-        local w, h = love.graphics.getDimensions()
+        local w, h = 1920, 1080
         local popupW = 420
         local popupH = 180
         local popupX = (w - popupW) / 2
@@ -1965,7 +1995,7 @@ function love.mousepressed(x, y, button)
     end
 
     if popupActive then
-        local w, h = love.graphics.getDimensions()
+        local w, h = 1920, 1080
         local popupW = 400
         local popupH = 300
         local popupX = (w - popupW) / 2
@@ -2056,7 +2086,7 @@ function love.mousepressed(x, y, button)
     end
 
     if projectPopupActive then
-        local w, h = love.graphics.getDimensions()
+        local w, h = 1920, 1080
         local popupW = 420
         local popupH = 180
         local popupX = (w - popupW) / 2
@@ -2212,7 +2242,8 @@ function love.mousepressed(x, y, button)
     end
 end
 
-function love.mousereleased(x, y, button)
+function love.mousereleased(screenX, screenY, button)
+    local x, y = getVirtualMouse()
     local appMap = {
         winamp = winamp, mypc = mypc, explorer = explorer,
         notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
@@ -2225,7 +2256,8 @@ function love.mousereleased(x, y, button)
     end
 end
 
-function love.mousemoved(x, y)
+function love.mousemoved(screenX, screenY)
+    local x, y = getVirtualMouse()
     local appMap = {
         winamp = winamp, mypc = mypc, explorer = explorer,
         notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
