@@ -91,12 +91,12 @@ local componentDefs = {
         label = "RAM",
         color = {0.9, 0.5, 0.1},
         baseInterval = 4.0,
-        basePower = 1,
+        basePower = 0,
         tiers = {
-            {interval = 4.0, power = 1},
+            {interval = 4.0, power = 0},
             {interval = 3.2, power = 2},
-            {interval = 2.4, power = 3},
-            {interval = 1.6, power = 5},
+            {interval = 2.4, power = 4},
+            {interval = 1.6, power = 7},
         },
         passive = "Multiplicador de puntos al llegar",
     },
@@ -104,12 +104,12 @@ local componentDefs = {
         label = "Refrigeracion",
         color = {0.2, 0.8, 0.8},
         baseInterval = 5.0,
-        basePower = 1,
+        basePower = 0,
         tiers = {
-            {interval = 5.0, power = 1},
+            {interval = 5.0, power = 0},
             {interval = 4.0, power = 2},
-            {interval = 3.0, power = 3},
-            {interval = 2.0, power = 4},
+            {interval = 3.0, power = 4},
+            {interval = 2.0, power = 6},
         },
         passive = "Reduce fallos (bugs) en circulos",
     },
@@ -466,10 +466,9 @@ function Trabajo:update(dt)
                         isBug = true,
                     })
                 else
-                    local finalPower = math.floor(circ.power * self:getRamMultiplier())
-                    self.projectProgress = self.projectProgress + finalPower
+                    self.projectProgress = self.projectProgress + circ.power
                     table.insert(self.floatingNumbers, {
-                        text = "+" .. finalPower,
+                        text = "+" .. circ.power,
                         x = circ.targetX,
                         y = circ.targetY,
                         timer = 1.0,
@@ -512,7 +511,7 @@ function Trabajo:generateCircle(comp)
     local isBug = math.random() < bugChance
     local circColor = isBug and {0.9, 0.15, 0.15} or comp.color
     local basePower = isBug and math.floor(comp.power * 0.6) or comp.power
-    local circPower = math.floor(basePower * self:getCirclePowerMultiplier())
+    local circPower = math.floor(basePower * self:getCirclePowerMultiplier() * self:getRamMultiplier())
 
     table.insert(self.circles, {
         x = startX,
@@ -924,15 +923,14 @@ function Trabajo:drawParticularTab(x, y, w, h)
     local gapY = 6
 
     local tierColors = {
-        {0.5, 0.5, 0.5},
-        {0.5, 0.5, 0.5},
-        {0.2, 0.7, 0.2},
+        {1.0, 1.0, 1.0},
+        {0.2, 0.8, 0.2},
         {0.2, 0.4, 0.9},
         {0.6, 0.2, 0.9},
         {0.9, 0.6, 0.1},
     }
 
-    local tierNames = {"Basico", "Basico", "Avanzado", "Elite", "Legendario"}
+    local tierNames = {"Basico", "Avanzado", "Elite", "Legendario", "Maximo"}
 
     local componentNames = {
         gpu = "S3 Trio64",
@@ -979,7 +977,7 @@ function Trabajo:drawParticularTab(x, y, w, h)
         love.graphics.printf(componentNames[comp.id] or comp.label, bx + vibOff, by + 29, boxW, "center")
 
         love.graphics.setColor(comp.color)
-        love.graphics.printf(comp.power .. "/circulo", bx + vibOff, by + 41, boxW, "center")
+        love.graphics.printf("Potencia: " .. comp.power, bx + vibOff, by + 41, boxW, "center")
 
         comp.screenX = bx + boxW / 2 + vibOff
         comp.screenY = by + boxH / 2
