@@ -1482,7 +1482,7 @@ function love.load()
         ["-"]="-", ["="]="=", ["["]="[", ["]"]="]", ["\\"]="\\",
         [";"]=";", ["'"]="'", [","]=",", ["."]=".", ["/"]="/",
         ["`"]="`",
-        space="space", backspace="backspace", return="enter",
+        space="space", backspace="backspace", ["return"]="enter",
         tab="tab", capslock="caps lock", lshift="shift", rshift="shift",
     }
     
