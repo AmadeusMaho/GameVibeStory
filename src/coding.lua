@@ -370,4 +370,22 @@ function Coding:drawContent(cx, cy, cw, ch)
     love.graphics.setFont(prevFont)
 end
 
+function Coding:mousemoved(x, y)
+end
+
+function Coding:mousereleased(x, y, button)
+end
+
+function Coding:draw(mx, my)
+    self.window:drawFrame()
+end
+
+function Coding:hitTest(mx, my)
+    return self.window:hitTest(mx, my)
+end
+
+function Coding:mousepressed(x, y, button)
+    return self.window:mousepressed(x, y, button)
+end
+
 return Coding
