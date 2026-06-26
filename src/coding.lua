@@ -98,6 +98,12 @@ function Coding.new(x, y)
     self.publishedApps = {}
     self.selectedApp = nil
 
+    self.circleSounds = {}
+    local okCs, sndCs = pcall(love.audio.newSource, "assets/sounds/circlesound.wav", "static")
+    if okCs then sndCs:setVolume(0.5); table.insert(self.circleSounds, sndCs) end
+    local okCs2, sndCs2 = pcall(love.audio.newSource, "assets/sounds/circlesound2.wav", "static")
+    if okCs2 then sndCs2:setVolume(0.5); table.insert(self.circleSounds, sndCs2) end
+
     self.refreshAttempts = 3
     self.maxRefreshAttempts = 3
     self.refreshCooldown = 0
@@ -288,8 +294,8 @@ function Coding:activeProjectUpdate(dt)
     if not self.activeProject then return end
     if self.milestoneActive then return end
 
-    local costPerFrame = self.costPerSecond * dt
-    if self.trabajoRef.money >= costPerFrame then
+    local costPerFrame = math.floor(self.costPerSecond * dt)
+    if costPerFrame > 0 and self.trabajoRef.money >= costPerFrame then
         self.trabajoRef.money = self.trabajoRef.money - costPerFrame
         self.moneySpent = self.moneySpent + costPerFrame
     end
@@ -383,22 +389,34 @@ function Coding:publishedAppsUpdate(dt)
 end
 
 function Coding:generateCircle(comp)
-    local compBox = comp
+    local targetX = comp.barX or 0
+    local targetY = comp.barY or 0
 
     local bugChance = 0.03
     local isBug = math.random() < bugChance
-    local power = isBug and 0 or comp.power
     local circColor = isBug and {0.9, 0.15, 0.15} or comp.color
+    local basePower = isBug and math.floor(comp.power * 0.6) or comp.power
+    local circPower = math.floor(basePower)
+
+    local dx = targetX - comp.screenX
+    local dy = targetY - comp.screenY
+    local dist = math.max(1, math.sqrt(dx * dx + dy * dy))
+    local speed = 200
 
     table.insert(self.circles, {
-        x = compBox.screenX, y = compBox.screenY,
-        vx = (compBox.barX - compBox.screenX) * 0.5,
-        vy = (compBox.barY - compBox.screenY) * 0.5,
-        targetX = compBox.barX, targetY = compBox.barY,
-        color = circColor, power = power,
-        life = 1.5, radius = 10, isBug = isBug,
+        x = comp.screenX, y = comp.screenY,
+        vx = (dx / dist) * speed, vy = (dy / dist) * speed,
+        targetX = targetX, targetY = targetY,
+        color = circColor, power = circPower,
+        life = dist / speed + 0.1, radius = 12,
+        isBug = isBug,
     })
-    compBox.vibration = 0.2
+    comp.vibration = 0.2
+
+    if #self.circleSounds > 0 then
+        local snd = self.circleSounds[math.random(#self.circleSounds)]
+        snd:stop(); snd:play()
+    end
 end
 
 function Coding:drawContent(cx, cy, cw, ch)
@@ -581,10 +599,17 @@ function Coding:drawCoding(x, y, w, h)
     end
 
     for _, circ in ipairs(self.circles) do
+        love.graphics.setColor(0, 0, 0, 0.3)
+        love.graphics.circle("fill", circ.x + 2, circ.y + 2, circ.radius)
         love.graphics.setColor(circ.color)
         love.graphics.circle("fill", circ.x, circ.y, circ.radius)
         love.graphics.setColor(0, 0, 0)
         love.graphics.circle("line", circ.x, circ.y, circ.radius)
+        local prevFont = love.graphics.getFont()
+        love.graphics.setFont(love.graphics.newFont(13))
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf(circ.power, circ.x - 16, circ.y - 8, 32, "center")
+        love.graphics.setFont(prevFont)
     end
 
     for _, num in ipairs(self.floatingNumbers) do
