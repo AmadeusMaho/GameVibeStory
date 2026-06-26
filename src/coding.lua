@@ -113,7 +113,6 @@ local codeSnippets = {
 function Coding.new(x, y)
     local self = setmetatable({}, Coding)
     self.window = WindowManager.new("Code Editor", x or 200, y or 100, 500, 400)
-    self.window.minimizeOnly = true
 
     self.trabajoRef = nil
     self.explorerRef = nil
