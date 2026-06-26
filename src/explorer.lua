@@ -106,59 +106,13 @@ function Explorer.new(x, y)
             milestone = "locked",
         },
         {
-            id = "kbd_2",
-            name = "NK Cream",
-            desc = "Teclado mecanico con switches NK Cream.\nSonido unico y satisfactorio.\n\nReproduce sonido al escribir.",
-            price = 200,
-            icon = "winamp",
+            id = "app4",
+            name = "Proximamente...",
+            desc = "Nueva app disponible pronto.",
+            price = 0,
+            icon = nil,
             purchased = false,
-            milestone = nil,
-            isKeyboard = true,
-            keyboardIndex = 2,
-        },
-        {
-            id = "kbd_3",
-            name = "EG Oreo",
-            desc = "Teclado mecanico con switches EG Oreo.\nSonido suave y consistente.\n\nReproduce sonido al escribir.",
-            price = 250,
-            icon = "winamp",
-            purchased = false,
-            milestone = nil,
-            isKeyboard = true,
-            keyboardIndex = 3,
-        },
-        {
-            id = "kbd_4",
-            name = "EG Crystal Purple",
-            desc = "Teclado mecanico con switches Crystal Purple.\nSonido profundo y resonante.\n\nReproduce sonido al escribir.",
-            price = 300,
-            icon = "winamp",
-            purchased = false,
-            milestone = nil,
-            isKeyboard = true,
-            keyboardIndex = 4,
-        },
-        {
-            id = "kbd_5",
-            name = "CherryMX Black",
-            desc = "Teclado con switches CherryMX Black.\nSonido suave y lineal.\n\nReproduce sonido al escribir.",
-            price = 350,
-            icon = "winamp",
-            purchased = false,
-            milestone = nil,
-            isKeyboard = true,
-            keyboardIndex = 5,
-        },
-        {
-            id = "kbd_6",
-            name = "CherryMX Blue",
-            desc = "Teclado con switches CherryMX Blue.\nSonido clicky y tactil.\n\nReproduce sonido al escribir.",
-            price = 400,
-            icon = "winamp",
-            purchased = false,
-            milestone = nil,
-            isKeyboard = true,
-            keyboardIndex = 6,
+            milestone = "locked",
         },
     }
     self.appStoreScrollY = 0
@@ -1012,6 +966,65 @@ function Explorer:drawShopGrid(x, y, w, h)
         end
     end
 
+    local kbdHeaderY = y + 8 + math.ceil(#componentOrder / cols) * (cellH + padding) + scrollOffset
+    if kbdHeaderY > y - 20 and kbdHeaderY < y + h then
+        love.graphics.setColor(W95.text)
+        love.graphics.printf("Teclados Mecanicos", x, kbdHeaderY, w, "center")
+        love.graphics.setColor(W95.borderDark)
+        love.graphics.line(x + 10, kbdHeaderY + 18, x + w - 10, kbdHeaderY + 18)
+    end
+
+    local kbdItems = {
+        {index = 2, name = "NK Cream", price = 200},
+        {index = 3, name = "EG Oreo", price = 250},
+        {index = 4, name = "Crystal Purple", price = 300},
+        {index = 5, name = "CherryMX Black", price = 350},
+        {index = 6, name = "CherryMX Blue", price = 400},
+    }
+
+    local kbdStartY = kbdHeaderY + 24
+
+    for i, kbd in ipairs(kbdItems) do
+        local col = (i - 1) % cols
+        local row = math.floor((i - 1) / cols)
+        local cx = startX + col * (cellW + padding)
+        local cy = kbdStartY + row * (cellH + padding) + scrollOffset
+
+        if cy + cellH > y and cy < y + h then
+            local owned = self.keyboardSoundsRef and self.keyboardSoundsRef[kbd.index] and self.keyboardSoundsRef[kbd.index].owned
+            local hovered = self.lastMX >= cx and self.lastMX <= cx + cellW and self.lastMY >= cy and self.lastMY <= cy + cellH
+
+            love.graphics.setColor(hovered and {0.85, 0.85, 0.85} or W95.bg)
+            love.graphics.rectangle("fill", cx, cy, cellW, cellH)
+            self:drawBevel(cx, cy, cellW, cellH)
+
+            love.graphics.setColor(W95.highlight)
+            love.graphics.rectangle("fill", cx + 4, cy + 4, cellW - 8, 28)
+            love.graphics.setColor(W95.highlightText)
+            love.graphics.printf("KBD", cx + 4, cy + 10, cellW - 8, "center")
+
+            love.graphics.setColor(W95.text)
+            love.graphics.printf(kbd.name, cx, cy + 36, cellW, "center")
+
+            if owned then
+                love.graphics.setColor(W95.green)
+                love.graphics.printf("Comprado", cx, cy + 54, cellW, "center")
+            else
+                local canBuy = self.trabajoRef and self.trabajoRef.money >= kbd.price
+                love.graphics.setColor(canBuy and W95.green or {0.8, 0, 0})
+                love.graphics.printf("$" .. kbd.price, cx, cy + 54, cellW, "center")
+            end
+
+            love.graphics.setColor(W95.textDim)
+            love.graphics.printf("Sonido al escribir", cx, cy + 70, cellW, "center")
+
+            love.graphics.setColor(W95.yellow)
+            love.graphics.printf(owned and "Activo" or "Accesorio", cx, cy + 86, cellW, "center")
+
+            table.insert(self.buttons, {x = cx, y = cy, w = cellW, h = cellH, action = "buy_keyboard", kbdIndex = kbd.index, kbdPrice = kbd.price})
+        end
+    end
+
     love.graphics.setScissor()
 end
 
@@ -1258,6 +1271,22 @@ function Explorer:handleClick(x, y, button)
                         end
                         if self.onAppPurchased then self.onAppPurchased(app.id) end
                     else
+                        self.purchaseMessage = "Dinero insuficiente."
+                        self.purchaseMsgTimer = 2.0
+                    end
+                end
+            elseif btn.action == "buy_keyboard" then
+                if btn.kbdIndex and self.trabajoRef then
+                    local kbd = self.keyboardSoundsRef and self.keyboardSoundsRef[btn.kbdIndex]
+                    if kbd and not kbd.owned and self.trabajoRef.money >= (btn.kbdPrice or 0) then
+                        self.trabajoRef.money = self.trabajoRef.money - btn.kbdPrice
+                        kbd.owned = true
+                        self.purchaseMessage = kbd.name .. " instalado!"
+                        self.purchaseMsgTimer = 2.0
+                    elseif kbd and kbd.owned then
+                        self.purchaseMessage = "Ya tienes este teclado."
+                        self.purchaseMsgTimer = 2.0
+                    elseif self.trabajoRef.money < (btn.kbdPrice or 0) then
                         self.purchaseMessage = "Dinero insuficiente."
                         self.purchaseMsgTimer = 2.0
                     end

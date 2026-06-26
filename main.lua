@@ -1476,29 +1476,34 @@ function love.load()
 
     local kbdPath = "assets/sounds/keyboard/"
     for i = 1, 6 do
-        local pack = {}
+        local pack = {sources = {}, currentIndex = 1, name = keyboardNames[i] or "Teclado " .. i, owned = (i == 1)}
+        local srcPath = nil
         local ok, src = pcall(love.audio.newSource, kbdPath .. i .. "/pbt.ogg", "static")
         if ok then
-            pack.source = src
-            pack.name = keyboardNames[i] or "Teclado " .. i
-            pack.owned = (i == 1)
+            srcPath = kbdPath .. i .. "/pbt.ogg"
         else
             local files = love.filesystem.getDirectoryItems(kbdPath .. i)
             for _, f in ipairs(files) do
                 if f:match("%.ogg$") then
                     local ok2, src2 = pcall(love.audio.newSource, kbdPath .. i .. "/" .. f, "static")
                     if ok2 then
-                        pack.source = src2
-                        pack.name = keyboardNames[i] or "Teclado " .. i
-                        pack.owned = (i == 1)
+                        srcPath = kbdPath .. i .. "/" .. f
                         break
                     end
                 end
             end
         end
-        if pack.source then
-            pack.source:setVolume(0.3)
-            table.insert(keyboardSounds, pack)
+        if srcPath then
+            for j = 1, 5 do
+                local ok3, src3 = pcall(love.audio.newSource, srcPath, "static")
+                if ok3 then
+                    src3:setVolume(0.3)
+                    table.insert(pack.sources, src3)
+                end
+            end
+            if #pack.sources > 0 then
+                table.insert(keyboardSounds, pack)
+            end
         end
     end
 end
@@ -2406,9 +2411,11 @@ function love.keypressed(key)
         local skipKeys = {lshift=true, rshift=true, lctrl=true, rctrl=true, lalt=true, ralt=true, escape=true, tab=true, capslock=true}
         if not skipKeys[key] then
             local pack = keyboardSounds[currentKeyboard]
-            if pack and pack.source and pack.owned then
-                pack.source:stop()
-                pack.source:play()
+            if pack and pack.sources and #pack.sources > 0 and pack.owned then
+                local src = pack.sources[pack.currentIndex]
+                src:stop()
+                src:play()
+                pack.currentIndex = pack.currentIndex % #pack.sources + 1
             end
         end
     end
