@@ -954,7 +954,7 @@ local function saveGame(slot)
     return success
 end
 
-local function loadGame(slot)
+function loadGame(slot)
     local data = getSaveSlotInfo(slot)
     if not data then return false end
     
