@@ -4,7 +4,7 @@
     "default": true,
     "key_define_type": "single",
     "includes_numpad": false,
-    "sound": "sound.ogg",
+    "sound": "pbt.ogg",
     "defines": {
         "1": [
             1813,

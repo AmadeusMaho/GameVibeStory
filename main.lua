@@ -900,6 +900,8 @@ local function saveGame(slot)
             codingLevel = coding.codingLevel,
             codingXP = coding.codingXP,
             publishedApps = {},
+            currentKeyboard = coding.currentKeyboard,
+            ownedKeyboards = {},
         },
         
         dynamicIcons = {},
@@ -930,6 +932,12 @@ local function saveGame(slot)
             selling = app.selling,
             successScore = app.successScore,
         })
+    end
+
+    for i, kbd in ipairs(coding.keyboardSounds) do
+        if kbd.owned then
+            table.insert(saveData.codingData.ownedKeyboards, i)
+        end
     end
     
     for id, icon in pairs(dynamicIcons) do
@@ -1032,10 +1040,18 @@ local function loadGame(slot)
             end
         end
     end
-    
+
     if data.codingData and coding then
         coding.codingLevel = data.codingData.codingLevel or 1
         coding.codingXP = data.codingData.codingXP or 0
+        coding.currentKeyboard = data.codingData.currentKeyboard or 1
+        if data.codingData.ownedKeyboards then
+            for _, idx in ipairs(data.codingData.ownedKeyboards) do
+                if coding.keyboardSounds[idx] then
+                    coding.keyboardSounds[idx].owned = true
+                end
+            end
+        end
         if data.codingData.publishedApps then
             for _, savedApp in ipairs(data.codingData.publishedApps) do
                 local appType = nil

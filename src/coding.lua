@@ -66,7 +66,7 @@ function Coding.new(x, y)
     self.codeProgress = 0
     self.codeScrollY = 0
     self.codeTargetScrollY = 0
-    self.codeFont = love.graphics.newFont(12)
+    self.codeFont = love.graphics.newFont(11)
     self.codeComplete = false
     self.cursorBlink = 0
 
@@ -99,6 +99,40 @@ function Coding.new(x, y)
         return self:handleClick(x, y, button)
     end
 
+    self.keyboardSounds = {}
+    self.currentKeyboard = 1
+    local kbdPath = "assets/sounds/keyboard/"
+    for i = 1, 6 do
+        local pack = {}
+        local ok, src = pcall(love.audio.newSource, kbdPath .. i .. "/soundKeyboard" .. i .. ".ogg", "static")
+        if ok then
+            pack.source = src
+            pack.name = "Teclado " .. i
+            pack.owned = (i == 1)
+        else
+            local ok2, src2 = pcall(love.audio.newSource, kbdPath .. i .. "/pbt.ogg", "static")
+            if ok2 then
+                pack.source = src2
+                pack.name = "Teclado " .. i
+                pack.owned = (i == 1)
+            else
+                local files = love.filesystem.getDirectoryItems(kbdPath .. i)
+                for _, f in ipairs(files) do
+                    if f:match("%.ogg$") then
+                        local ok3, src3 = pcall(love.audio.newSource, kbdPath .. i .. "/" .. f, "static")
+                        if ok3 then
+                            pack.source = src3
+                            pack.name = "Teclado " .. i
+                            pack.owned = (i == 1)
+                            break
+                        end
+                    end
+                end
+            end
+        end
+        table.insert(self.keyboardSounds, pack)
+    end
+
     return self
 end
 
@@ -109,6 +143,14 @@ end
 
 function Coding:getCodingLevel()
     return self.codingLevel
+end
+
+function Coding:playKeySound()
+    local pack = self.keyboardSounds[self.currentKeyboard]
+    if pack and pack.source then
+        pack.source:stop()
+        pack.source:play()
+    end
 end
 
 function Coding:getNextXP()
@@ -508,6 +550,56 @@ function Coding:drawBrowse(x, y, w, h)
         love.graphics.setColor(W95.red)
         love.graphics.printf(math.ceil(self.refreshCooldown) .. "s", refreshBtnX, refreshBtnY + 3, refreshBtnW, "center")
     end
+
+    local kbdX = x + 12
+    local kbdY = y + h - 60
+    local kbdW = 100
+    local kbdH = 20
+
+    love.graphics.setColor(W95.text)
+    love.graphics.print("Teclado:", kbdX, kbdY - 14)
+
+    local prevBtnX = kbdX
+    local prevHov = self.lastMX >= prevBtnX and self.lastMX <= prevBtnX + kbdH and self.lastMY >= kbdY and self.lastMY <= kbdY + kbdH
+    love.graphics.setColor(prevHov and {0.85, 0.85, 0.85} or W95.bg)
+    love.graphics.rectangle("fill", prevBtnX, kbdY, kbdH, kbdH)
+    self:drawBevel(prevBtnX, kbdY, kbdH, kbdH)
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("<", prevBtnX, kbdY + 3, kbdH, "center")
+    table.insert(self.buttons, {x = prevBtnX, y = kbdY, w = kbdH, h = kbdH, action = "prev_keyboard"})
+
+    love.graphics.setColor(W95.highlight)
+    love.graphics.rectangle("fill", prevBtnX + kbdH + 2, kbdY, kbdW, kbdH)
+    local kbd = self.keyboardSounds[self.currentKeyboard]
+    local kbdName = kbd and kbd.name or "?"
+    if kbd and not kbd.owned then
+        love.graphics.setColor(W95.yellow)
+        love.graphics.printf(kbdName .. " ($200)", prevBtnX + kbdH + 2, kbdY + 3, kbdW, "center")
+        table.insert(self.buttons, {x = prevBtnX + kbdH + 2, y = kbdY, w = kbdW, h = kbdH, action = "buy_keyboard"})
+    else
+        love.graphics.setColor(W95.white)
+        love.graphics.printf(kbdName, prevBtnX + kbdH + 2, kbdY + 3, kbdW, "center")
+    end
+
+    local nextBtnX = prevBtnX + kbdH + kbdW + 4
+    local nextHov = self.lastMX >= nextBtnX and self.lastMX <= nextBtnX + kbdH and self.lastMY >= kbdY and self.lastMY <= kbdY + kbdH
+    love.graphics.setColor(nextHov and {0.85, 0.85, 0.85} or W95.bg)
+    love.graphics.rectangle("fill", nextBtnX, kbdY, kbdH, kbdH)
+    self:drawBevel(nextBtnX, kbdY, kbdH, kbdH)
+    love.graphics.setColor(W95.text)
+    love.graphics.printf(">", nextBtnX, kbdY + 3, kbdH, "center")
+    table.insert(self.buttons, {x = nextBtnX, y = kbdY, w = kbdH, h = kbdH, action = "next_keyboard"})
+
+    if kbd and kbd.owned then
+        local testBtnX = nextBtnX + kbdH + 4
+        local testHov = self.lastMX >= testBtnX and self.lastMX <= testBtnX + 40 and self.lastMY >= kbdY and self.lastMY <= kbdY + kbdH
+        love.graphics.setColor(testHov and {0.85, 0.85, 0.85} or W95.bg)
+        love.graphics.rectangle("fill", testBtnX, kbdY, 40, kbdH)
+        self:drawBevel(testBtnX, kbdY, 40, kbdH)
+        love.graphics.setColor(W95.green)
+        love.graphics.printf("Probar", testBtnX, kbdY + 3, 40, "center")
+        table.insert(self.buttons, {x = testBtnX, y = kbdY, w = 40, h = kbdH, action = "test_keyboard"})
+    end
 end
 
 function Coding:drawCoding(x, y, w, h)
@@ -837,6 +929,20 @@ function Coding:handleClick(x, y, button)
                 end
             elseif btn.action == "cancel_sale" and btn.index then
                 table.remove(self.publishedApps, btn.index)
+            elseif btn.action == "prev_keyboard" then
+                self.currentKeyboard = self.currentKeyboard - 1
+                if self.currentKeyboard < 1 then self.currentKeyboard = #self.keyboardSounds end
+            elseif btn.action == "next_keyboard" then
+                self.currentKeyboard = self.currentKeyboard + 1
+                if self.currentKeyboard > #self.keyboardSounds then self.currentKeyboard = 1 end
+            elseif btn.action == "buy_keyboard" then
+                local kbd = self.keyboardSounds[self.currentKeyboard]
+                if kbd and not kbd.owned and self.trabajoRef and self.trabajoRef.money >= 200 then
+                    self.trabajoRef.money = self.trabajoRef.money - 200
+                    kbd.owned = true
+                end
+            elseif btn.action == "test_keyboard" then
+                self:playKeySound()
             end
             return true
         end
@@ -892,6 +998,8 @@ function Coding:keypressed(key)
        key == "left" or key == "right" or key == "home" or key == "end" then
         return
     end
+
+    self:playKeySound()
 
     local charsPerKey = 1 + self.codingLevel
     for i = 1, charsPerKey do
