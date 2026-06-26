@@ -2297,4 +2297,7 @@ function love.wheelmoved(x, y)
 end
 
 function love.textinput(text)
+    if coding and coding.window.visible and not coding.window.minimized then
+        coding:textinput(text)
+    end
 end
