@@ -36,16 +36,16 @@ local desktopBg = nil
 local shader = nil
 local CURVATURE = 0.02
 local mainCanvas = nil
-local winamp = nil
-local mypc = nil
-local explorer = nil
-local notepad = nil
-local trabajo = nil
-local email = nil
-local recyclebin = nil
-local personal = nil
-local achievements = nil
-local coding = nil
+winamp = nil
+mypc = nil
+explorer = nil
+notepad = nil
+trabajo = nil
+email = nil
+recyclebin = nil
+personal = nil
+achievements = nil
+coding = nil
 
 local keyboardSounds = {}
 local currentKeyboard = 1
@@ -53,7 +53,7 @@ local keyboardNames = {
     "NK Cream (original by Ryan)",
 }
 
-local pcStats = {
+pcStats = {
     cpu = "Intel Pentium 75MHz",
     ram = "16 MB",
     ramNum = 16,
@@ -64,7 +64,7 @@ local pcStats = {
     os = "Microsoft Windows 95  4.00.950",
 }
 
-local bootLines = {
+bootLines = {
     {text = "American  Megatrends  Released: 12/01/94", x = 80, y = 20, color = {0.8, 0.8, 0.8}},
     {text = "             AMIBIOS (C)1994 American Megatrends Inc..", x = 80, y = 40, color = {0.8, 0.8, 0.8}},
     {text = "", x = 80, y = 60, color = {0.8, 0.8, 0.8}},
@@ -78,7 +78,7 @@ local bootLines = {
     {text = "", x = 80, y = 220, color = {0.8, 0.8, 0.8}},
     {text = "WAIT...", x = 80, y = 240, color = {0.8, 0.8, 0.8}},
 }
-local bottomLines = {
+bottomLines = {
     "Press DEL to enter SETUP , ESC to skip memory test",
     "08/06/2011-Soon-in-Tokyo-Rehab-Studio"
 }
@@ -113,7 +113,7 @@ local firstBootDone = false
 local iconImages = {}
 local winampMusic = nil
 
-local dynamicIcons = {}
+dynamicIcons = {}
 local dynamicIconOrder = {}
 
 local function addDynamicIcon(id, label, icon, x, y, iconScale)
