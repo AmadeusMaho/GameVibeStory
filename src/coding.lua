@@ -463,32 +463,37 @@ function Coding:drawBrowse(x, y, w, h)
         self:refreshProjects()
     end
 
-    local itemH = 65
+    local itemH = 72
     local startY = y + 44
     for i, project in ipairs(self.availableProjects) do
-        local iy = startY + (i - 1) * (itemH + 6)
+        local iy = startY + (i - 1) * (itemH + 8)
         if iy + itemH < y + h then
             local canAfford = self.trabajoRef and self.trabajoRef.money >= project.baseCost
             love.graphics.setColor(canAfford and W95.bg or {0.9, 0.9, 0.9})
             love.graphics.rectangle("fill", x + 12, iy, w - 24, itemH)
             self:drawBevel(x + 12, iy, w - 24, itemH)
 
+            love.graphics.setColor(W95.highlight)
+            love.graphics.rectangle("fill", x + 14, iy + 2, 24, 24)
             love.graphics.setColor(W95.text)
-            love.graphics.printf(project.name, x + 20, iy + 4, w - 40, "center")
+            love.graphics.printf(project.difficulty:sub(1, 1):upper(), x + 14, iy + 6, 24, "center")
+
+            love.graphics.setColor(W95.text)
+            love.graphics.printf(project.name, x + 44, iy + 6, w - 60, "left")
 
             local diffColor = W95.green
             if project.difficulty == "dificil" then diffColor = W95.yellow end
             if project.difficulty == "pesadilla" then diffColor = W95.red end
             love.graphics.setColor(diffColor)
-            love.graphics.printf("[" .. project.difficulty:upper() .. "]", x + 20, iy + 20, w - 40, "center")
+            love.graphics.printf(project.difficulty:upper(), x + 44, iy + 22, 80, "left")
 
             love.graphics.setColor(W95.textDim)
-            love.graphics.printf("Inversion: $" .. project.baseCost .. "  |  Ingreso: $" .. project.monthly .. "/mes", x + 20, iy + 36, w - 40, "center")
+            love.graphics.printf("$" .. project.baseCost .. "  |  $" .. project.monthly .. "/mes", x + 44, iy + 36, w - 60, "left")
 
-            local btnW = 90
-            local btnH = 18
-            local btnX = x + (w - btnW) / 2
-            local btnY = iy + itemH - 22
+            local btnW = 80
+            local btnH = 20
+            local btnX = x + w - btnW - 20
+            local btnY = iy + itemH - 28
             local btnHov = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
 
             if canAfford then
@@ -496,14 +501,14 @@ function Coding:drawBrowse(x, y, w, h)
                 love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
                 self:drawBevel(btnX, btnY, btnW, btnH)
                 love.graphics.setColor(W95.green)
-                love.graphics.printf("Iniciar", btnX, btnY + 2, btnW, "center")
+                love.graphics.printf("Iniciar", btnX, btnY + 4, btnW, "center")
                 table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "start_project", index = i})
             else
                 love.graphics.setColor(W95.textDim)
                 love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
                 self:drawBevel(btnX, btnY, btnW, btnH)
                 love.graphics.setColor(W95.red)
-                love.graphics.printf("Sin fondos", btnX, btnY + 2, btnW, "center")
+                love.graphics.printf("Sin fondos", btnX, btnY + 4, btnW, "center")
             end
         end
     end
@@ -817,7 +822,7 @@ function Coding:drawManage(x, y, w, h)
                 local updateBtnY = iy + 4
                 local uHov = self.lastMX >= updateBtnX and self.lastMX <= updateBtnX + updateBtnW and self.lastMY >= updateBtnY and self.lastMY <= updateBtnY + updateBtnH
 
-                if app.updateCooldown >= 4 then
+                if (app.updateCooldown or 0) >= 4 then
                     love.graphics.setColor(uHov and {0.85, 0.85, 0.85} or W95.bg)
                     love.graphics.rectangle("fill", updateBtnX, updateBtnY, updateBtnW, updateBtnH)
                     self:drawBevel(updateBtnX, updateBtnY, updateBtnW, updateBtnH)
@@ -826,7 +831,7 @@ function Coding:drawManage(x, y, w, h)
                     table.insert(self.buttons, {x = updateBtnX, y = updateBtnY, w = updateBtnW, h = updateBtnH, action = "do_update", index = i})
                 else
                     love.graphics.setColor(W95.textDim)
-                    love.graphics.print("Update: " .. (4 - app.updateCooldown) .. " meses", x + w - 110, iy + 18)
+                    love.graphics.print("Update: " .. (4 - (app.updateCooldown or 0)) .. " meses", x + w - 110, iy + 18)
                 end
 
                 local cancelAppW = 60

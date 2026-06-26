@@ -1862,7 +1862,7 @@ function drawDesktop()
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(winW - 135, taskY + 4, winW - 135, taskY + taskH - 5)
 
-    local time = "10/24/95  " .. os.date("%I:%M %p")
+    local time = os.date("%H:%M")
     local moneyStr = "$0"
     if trabajo then
         moneyStr = "$" .. trabajo.money
@@ -1894,7 +1894,7 @@ function drawDesktop()
     love.graphics.line(timeX + timeW - 1, taskY + 5, timeX + timeW - 1, taskY + taskH - 5)
     love.graphics.line(timeX + 3, taskY + taskH - 5, timeX + timeW - 1, taskY + taskH - 5)
     love.graphics.setColor(W95.fieldText)
-    love.graphics.printf(time, timeX + 6, taskY + 12, timeW - 10, "right")
+    love.graphics.printf(time, timeX + 4, taskY + 12, timeW - 4, "right")
 
         if startMenuOpen then
             local menuX = 2
