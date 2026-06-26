@@ -21,16 +21,28 @@ local W95 = {
     yellow = {0.8, 0.6, 0},
 }
 
+local componentDefs = {
+    gpu = {label = "GPU", color = {0.2, 0.8, 0.3}, baseInterval = 2.0, basePower = 3,
+        tiers = {{interval = 2.0, power = 3}, {interval = 1.6, power = 5}, {interval = 1.2, power = 8}, {interval = 0.8, power = 12}}},
+    cpu = {label = "CPU", color = {0.6, 0.2, 0.9}, baseInterval = 3.0, basePower = 2,
+        tiers = {{interval = 3.0, power = 2}, {interval = 2.4, power = 3}, {interval = 1.8, power = 5}, {interval = 1.2, power = 7}}},
+    ram = {label = "RAM", color = {0.9, 0.5, 0.1}, baseInterval = 4.0, basePower = 0,
+        tiers = {{interval = 4.0, power = 0}, {interval = 3.2, power = 2}, {interval = 2.4, power = 4}, {interval = 1.6, power = 7}}},
+    cooling = {label = "Refrig", color = {0.2, 0.8, 0.8}, baseInterval = 5.0, basePower = 0,
+        tiers = {{interval = 5.0, power = 0}, {interval = 4.0, power = 2}, {interval = 3.0, power = 4}, {interval = 2.0, power = 6}}},
+}
+local componentOrder = {"gpu", "cpu", "ram", "cooling"}
+
 local projectTypes = {
-    {id = "calculator", name = "Calculadora", difficulty = "normal", baseCost = 800, baseHp = 300, reward = 2000, monthly = 80},
-    {id = "notepad_pro", name = "Notepad Pro", difficulty = "normal", baseCost = 600, baseHp = 250, reward = 1500, monthly = 60},
-    {id = "file_manager", name = "File Manager", difficulty = "normal", baseCost = 900, baseHp = 350, reward = 2200, monthly = 90},
-    {id = "browser", name = "Web Browser", difficulty = "dificil", baseCost = 2000, baseHp = 500, reward = 5000, monthly = 200},
-    {id = "email_client", name = "Cliente de Email", difficulty = "dificil", baseCost = 1500, baseHp = 400, reward = 4000, monthly = 150},
-    {id = "media_player", name = "Reproductor", difficulty = "dificil", baseCost = 2500, baseHp = 600, reward = 6000, monthly = 250},
-    {id = "database", name = "Base de Datos", difficulty = "pesadilla", baseCost = 5000, baseHp = 900, reward = 12000, monthly = 500},
-    {id = "office_suite", name = "Suite de Oficina", difficulty = "pesadilla", baseCost = 8000, baseHp = 1200, reward = 18000, monthly = 800},
-    {id = "game_engine", name = "Motor de Juegos", difficulty = "pesadilla", baseCost = 12000, baseHp = 1500, reward = 25000, monthly = 1200},
+    {id = "calculator", name = "Calculadora", difficulty = "normal", baseCost = 800, baseHp = 1000, reward = 2000, monthly = 80},
+    {id = "notepad_pro", name = "Notepad Pro", difficulty = "normal", baseCost = 600, baseHp = 800, reward = 1500, monthly = 60},
+    {id = "file_manager", name = "File Manager", difficulty = "normal", baseCost = 900, baseHp = 1200, reward = 2200, monthly = 90},
+    {id = "browser", name = "Web Browser", difficulty = "dificil", baseCost = 2000, baseHp = 2000, reward = 5000, monthly = 200},
+    {id = "email_client", name = "Cliente de Email", difficulty = "dificil", baseCost = 1500, baseHp = 1600, reward = 4000, monthly = 150},
+    {id = "media_player", name = "Reproductor", difficulty = "dificil", baseCost = 2500, baseHp = 2400, reward = 6000, monthly = 250},
+    {id = "database", name = "Base de Datos", difficulty = "pesadilla", baseCost = 5000, baseHp = 4000, reward = 12000, monthly = 500},
+    {id = "office_suite", name = "Suite de Oficina", difficulty = "pesadilla", baseCost = 8000, baseHp = 5000, reward = 18000, monthly = 800},
+    {id = "game_engine", name = "Motor de Juegos", difficulty = "pesadilla", baseCost = 12000, baseHp = 6000, reward = 25000, monthly = 1200},
 }
 
 function Coding.new(x, y)
@@ -138,10 +150,22 @@ function Coding:refreshProjects()
     end
 end
 
+function Coding:getMaxAppsForSale()
+    if self.codingLevel >= 5 then return 3 end
+    if self.codingLevel >= 3 then return 2 end
+    return 1
+end
+
 function Coding:startProject(index)
     local projectType = self.availableProjects[index]
     if not projectType then return end
     if self.trabajoRef.money < projectType.baseCost then return end
+
+    local sellingCount = 0
+    for _, app in ipairs(self.publishedApps) do
+        if app.selling then sellingCount = sellingCount + 1 end
+    end
+    if sellingCount >= self:getMaxAppsForSale() then return end
 
     self.trabajoRef.money = self.trabajoRef.money - projectType.baseCost
     self.activeProject = projectType
@@ -169,41 +193,28 @@ function Coding:recalcComponents()
     self.components = {}
     if not self.explorerRef then return end
 
-    local gpuLevel = self.explorerRef.upgradeLevels.display or 0
-    local cpuLevel = self.explorerRef.upgradeLevels.cpu or 0
-    local ramLevel = self.explorerRef.upgradeLevels.ram or 0
-    local coolLevel = self.explorerRef.upgradeLevels.cooling or 0
+    local statMap = {gpu = "display", cpu = "cpu", ram = "ram", cooling = "cooling"}
 
-    local gpuPower = 3 + gpuLevel * 3
-    local gpuInterval = math.max(0.8, 2.0 - gpuLevel * 0.3)
+    for _, id in ipairs(componentOrder) do
+        local def = componentDefs[id]
+        local stat = statMap[id]
+        local level = self.explorerRef.upgradeLevels[stat] or 0
+        local power = level > 0 and def.tiers[level].power or def.basePower
+        local interval = level > 0 and def.tiers[level].interval or def.baseInterval
 
-    local cpuPower = 2 + cpuLevel * 2
-    local cpuInterval = math.max(1.0, 3.0 - cpuLevel * 0.5)
+        if power > 0 then
+            local coreMult = 1.0
+            if stat == "display" then coreMult = 1.0 end
+            if stat == "cpu" then coreMult = 1.0 end
+            if stat == "ram" then coreMult = 0.5 end
+            if stat == "cooling" then coreMult = 0.5 end
 
-    table.insert(self.components, {
-        id = "gpu", label = "GPU", color = {0.2, 0.8, 0.3},
-        power = gpuPower, interval = gpuInterval, timer = 0, screenX = 0, screenY = 0, barX = 0, barY = 0, vibration = 0,
-    })
-    table.insert(self.components, {
-        id = "cpu", label = "CPU", color = {0.6, 0.2, 0.9},
-        power = cpuPower, interval = cpuInterval, timer = 0, screenX = 0, screenY = 0, barX = 0, barY = 0, vibration = 0,
-    })
-
-    if ramLevel > 0 then
-        local ramPower = 1 + ramLevel
-        local ramInterval = math.max(1.5, 4.0 - ramLevel * 0.6)
-        table.insert(self.components, {
-            id = "ram", label = "RAM", color = {0.9, 0.5, 0.1},
-            power = ramPower, interval = ramInterval, timer = 0, screenX = 0, screenY = 0, barX = 0, barY = 0, vibration = 0,
-        })
-    end
-    if coolLevel > 0 then
-        local coolPower = 1 + coolLevel
-        local coolInterval = math.max(2.0, 5.0 - coolLevel * 0.7)
-        table.insert(self.components, {
-            id = "cooling", label = "Cool", color = {0.2, 0.8, 0.8},
-            power = coolPower, interval = coolInterval, timer = 0, screenX = 0, screenY = 0, barX = 0, barY = 0, vibration = 0,
-        })
+            table.insert(self.components, {
+                id = id, label = def.label, color = def.color,
+                power = math.floor(power * coreMult), interval = interval,
+                timer = 0, screenX = 0, screenY = 0, barX = 0, barY = 0, vibration = 0,
+            })
+        end
     end
 end
 
