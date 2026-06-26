@@ -128,12 +128,9 @@ function Trabajo.new(x, y)
     self.taskProgress = 0
     self.cooldown = 0
     self.cooldownMax = 0.3
-    self.level = 1
-    self.baseReward = 1
     self.onWorkDone = nil
     self.onOpenParticular = nil
     self.emailRef = nil
-    self.pcStatsRef = nil
     self.explorerRef = nil
     self.achievementsRef = nil
     self.completedProjects = 0
@@ -657,16 +654,6 @@ function Trabajo:getJobCapacity()
     local upgMap = self:getUpgrades()
     if upgMap.ram then capacity = capacity + upgMap.ram end
     return capacity
-end
-
-function Trabajo:getCooldownMultiplier()
-    local mult = 1.0
-    return mult
-end
-
-function Trabajo:getCircleSpeedMultiplier()
-    local mult = 1.0
-    return mult
 end
 
 function Trabajo:getCirclePowerMultiplier()

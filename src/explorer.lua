@@ -62,8 +62,6 @@ function Explorer.new(x, y)
     self.unlockedPages = {upgrades = true, update = true, apps = true, jobs = true}
 
     self.jobBoard = {}
-    self.jobBoardRefreshTimer = 0
-    self.jobBoardRefreshTime = 30
     self.selectedJob = nil
 
     self.appStore = {
