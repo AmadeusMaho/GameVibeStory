@@ -2235,6 +2235,8 @@ function love.mousepressed(x, y, button)
                     toggleApp("achievements")
                 elseif icon.icon == "staff" then
                     toggleApp("personal")
+                elseif icon.icon == "coding" then
+                    toggleApp("coding")
                 elseif icon.icon == "download" then
                     triggerMalware()
                     if dynamicIcons.download then dynamicIcons.download.active = false end
