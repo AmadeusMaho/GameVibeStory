@@ -1580,8 +1580,9 @@ local function getVirtualMouse()
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
     local virtualW = 1920
     local virtualH = 1080
-    local canvasW = mainCanvas:getWidth()
-    local canvasH = mainCanvas:getHeight()
+    local pad = 0.15
+    local canvasW = virtualW * (1 + pad * 2)
+    local canvasH = virtualH * (1 + pad * 2)
     local scaleX = screenW / canvasW
     local scaleY = screenH / canvasH
     local scale = math.min(scaleX, scaleY)
@@ -1590,8 +1591,8 @@ local function getVirtualMouse()
     local mx, my = love.mouse.getPosition()
     local vx = (mx - offsetX) / scale
     local vy = (my - offsetY) / scale
-    local pad = canvasW * 0.065
-    return vx - pad, vy - pad
+    local padPixels = virtualW * pad
+    return vx - padPixels, vy - padPixels
 end
 
 function drawDesktop()
@@ -1914,13 +1915,14 @@ function love.draw()
     local offsetY = (screenH - canvasH * scale) / 2
 
     if shader then
-        shader:send("screen_size", {screenW, screenH})
+        shader:send("screen_size", {canvasW, canvasH})
         shader:send("time", love.timer.getTime())
         shader:send("curvature", CURVATURE)
         love.graphics.setShader(shader)
     end
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(mainCanvas, offsetX, offsetY, 0, scale, scale)
+    love.graphics.setShader()
     love.graphics.setShader()
     if gameState == "desktop" then
         local appDrawMap = {
