@@ -1121,10 +1121,7 @@ function love.load()
     local okShader, s = pcall(love.graphics.newShader, "assets/shaders/crt.glsl")
     if okShader then shader = s end
 
-    local virtualW = 1920
-    local virtualH = 1080
-    local crtPad = 100
-    mainCanvas = love.graphics.newCanvas(virtualW + crtPad * 2, virtualH + crtPad * 2)
+    mainCanvas = love.graphics.newCanvas(1920, 1080)
 
     local font = love.graphics.newFont(16)
     love.graphics.setFont(font)
@@ -1847,22 +1844,9 @@ end
 
 function love.draw()
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    local virtualW = 1920
-    local virtualH = 1080
-    local crtPad = 100
-    local canvasW = virtualW + crtPad * 2
-    local canvasH = virtualH + crtPad * 2
-
-    local scaleX = screenW / canvasW
-    local scaleY = screenH / canvasH
-    local scale = math.min(scaleX, scaleY)
-    local offsetX = (screenW - canvasW * scale) / 2
-    local offsetY = (screenH - canvasH * scale) / 2
 
     love.graphics.setCanvas(mainCanvas)
     love.graphics.clear(0, 0, 0)
-    love.graphics.push()
-    love.graphics.translate(crtPad, crtPad)
 
     if gameState == "boot" then
         drawAMIBIOSLogo(80, 10)
@@ -1904,13 +1888,18 @@ function love.draw()
 
     end
 
-    love.graphics.pop()
     love.graphics.setCanvas()
 
     love.graphics.clear(0, 0, 0)
 
+    local scaleX = screenW / 1920
+    local scaleY = screenH / 1080
+    local scale = math.min(scaleX, scaleY)
+    local offsetX = (screenW - 1920 * scale) / 2
+    local offsetY = (screenH - 1080 * scale) / 2
+
     if shader then
-        shader:send("screen_size", {canvasW, canvasH})
+        shader:send("screen_size", {1920, 1080})
         shader:send("time", love.timer.getTime())
         shader:send("curvature", CURVATURE)
         love.graphics.setShader(shader)
