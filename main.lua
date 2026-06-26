@@ -2408,6 +2408,16 @@ function love.keypressed(key)
     if key == "f1" and trabajo then
         trabajo.money = trabajo.money + 1000
         trabajo.totalEarned = trabajo.totalEarned + 1000
+    elseif key == "f2" and explorer then
+        for _, app in ipairs(explorer.appStore) do
+            app.purchased = true
+            if app.id == "winbatch" and trabajo then
+                trabajo.winbatchActive = true
+            elseif app.id == "coding" then
+                activateDynamicIcon("coding")
+            end
+        end
+        desktopIcons = getDesktopIcons()
     end
 
     if gameState == "desktop" then
