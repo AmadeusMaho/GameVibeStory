@@ -110,7 +110,7 @@ function Coding.new(x, y)
     self.refreshCooldown = 0
     self.refreshCooldownMax = 30
 
-    self.buttons = {}
+    self.contentButtons = {}
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
     end
@@ -426,7 +426,7 @@ function Coding:generateCircle(comp)
 end
 
 function Coding:drawContent(cx, cy, cw, ch)
-    self.buttons = {}
+    self.contentButtons = {}
     local prevFont = love.graphics.getFont()
 
     if self.state == "browse" then
@@ -502,7 +502,7 @@ function Coding:drawBrowse(x, y, w, h)
                 self:drawBevel(btnX, btnY, btnW, btnH)
                 love.graphics.setColor(W95.green)
                 love.graphics.printf("Iniciar", btnX, btnY + 4, btnW, "center")
-                table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "start_project", index = i})
+                table.insert(self.contentButtons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "start_project", index = i})
             else
                 love.graphics.setColor(W95.textDim)
                 love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
@@ -525,7 +525,7 @@ function Coding:drawBrowse(x, y, w, h)
         self:drawBevel(manageBtnX, manageBtnY, manageBtnW, manageBtnH)
         love.graphics.setColor(W95.yellow)
         love.graphics.printf("Mis Apps (" .. #self.publishedApps .. ")", manageBtnX, manageBtnY + 3, manageBtnW, "center")
-        table.insert(self.buttons, {x = manageBtnX, y = manageBtnY, w = manageBtnW, h = manageBtnH, action = "open_manage"})
+        table.insert(self.contentButtons, {x = manageBtnX, y = manageBtnY, w = manageBtnW, h = manageBtnH, action = "open_manage"})
     end
 
     local refreshBtnX = x + w - 110 - 12
@@ -540,7 +540,7 @@ function Coding:drawBrowse(x, y, w, h)
         self:drawBevel(refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
         love.graphics.setColor(W95.text)
         love.graphics.printf("Refresh (" .. self.refreshAttempts .. ")", refreshBtnX, refreshBtnY + 3, refreshBtnW, "center")
-        table.insert(self.buttons, {x = refreshBtnX, y = refreshBtnY, w = refreshBtnW, h = refreshBtnH, action = "refresh"})
+        table.insert(self.contentButtons, {x = refreshBtnX, y = refreshBtnY, w = refreshBtnW, h = refreshBtnH, action = "refresh"})
     else
         love.graphics.setColor(W95.textDim)
         love.graphics.rectangle("fill", refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
@@ -649,7 +649,7 @@ function Coding:drawCoding(x, y, w, h)
     self:drawBevel(cancelBtnX, cancelBtnY, cancelBtnW, cancelBtnH)
     love.graphics.setColor(W95.red)
     love.graphics.printf("Cancelar", cancelBtnX, cancelBtnY + 5, cancelBtnW, "center")
-    table.insert(self.buttons, {x = cancelBtnX, y = cancelBtnY, w = cancelBtnW, h = cancelBtnH, action = "cancel_project"})
+    table.insert(self.contentButtons, {x = cancelBtnX, y = cancelBtnY, w = cancelBtnW, h = cancelBtnH, action = "cancel_project"})
 
     love.graphics.setColor(W95.textDim)
     love.graphics.printf("Cancelas y recuperas 30%", x + 16, y + h - 28, w / 2 - 20, "left")
@@ -766,7 +766,7 @@ function Coding:drawSell(x, y, w, h)
     self:drawBevel(btnX, btnY, btnW, btnH)
     love.graphics.setColor(W95.green)
     love.graphics.printf("Vender App", btnX, btnY + 8, btnW, "center")
-    table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "sell_app"})
+    table.insert(self.contentButtons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "sell_app"})
 end
 
 function Coding:drawManage(x, y, w, h)
@@ -792,14 +792,14 @@ function Coding:drawManage(x, y, w, h)
         self:drawBevel(backBtnX, backBtnY, backBtnW, backBtnH)
         love.graphics.setColor(W95.text)
         love.graphics.printf("Volver", backBtnX, backBtnY + 3, backBtnW, "center")
-        table.insert(self.buttons, {x = backBtnX, y = backBtnY, w = backBtnW, h = backBtnH, action = "back_browse"})
+        table.insert(self.contentButtons, {x = backBtnX, y = backBtnY, w = backBtnW, h = backBtnH, action = "back_browse"})
         return
     end
 
-    local itemH = 50
+    local itemH = 60
     local startY = y + 28
     for i, app in ipairs(self.publishedApps) do
-        local iy = startY + (i - 1) * (itemH + 4)
+        local iy = startY + (i - 1) * (itemH + 8)
         if iy + itemH < y + h - 40 then
             love.graphics.setColor(W95.bg)
             love.graphics.rectangle("fill", x + 12, iy, w - 24, itemH)
@@ -828,7 +828,7 @@ function Coding:drawManage(x, y, w, h)
                     self:drawBevel(updateBtnX, updateBtnY, updateBtnW, updateBtnH)
                     love.graphics.setColor(W95.green)
                     love.graphics.printf("Update", updateBtnX, updateBtnY + 1, updateBtnW, "center")
-                    table.insert(self.buttons, {x = updateBtnX, y = updateBtnY, w = updateBtnW, h = updateBtnH, action = "do_update", index = i})
+                    table.insert(self.contentButtons, {x = updateBtnX, y = updateBtnY, w = updateBtnW, h = updateBtnH, action = "do_update", index = i})
                 else
                     love.graphics.setColor(W95.textDim)
                     love.graphics.print("Update: " .. (4 - (app.updateCooldown or 0)) .. " meses", x + w - 110, iy + 18)
@@ -845,7 +845,7 @@ function Coding:drawManage(x, y, w, h)
                 self:drawBevel(cancelAppX, cancelAppY, cancelAppW, cancelAppH)
                 love.graphics.setColor(W95.red)
                 love.graphics.printf("Quitar", cancelAppX, cancelAppY + 1, cancelAppW, "center")
-                table.insert(self.buttons, {x = cancelAppX, y = cancelAppY, w = cancelAppW, h = cancelAppH, action = "cancel_sale", index = i})
+                table.insert(self.contentButtons, {x = cancelAppX, y = cancelAppY, w = cancelAppW, h = cancelAppH, action = "cancel_sale", index = i})
             end
         end
     end
@@ -861,13 +861,13 @@ function Coding:drawManage(x, y, w, h)
     self:drawBevel(backBtnX, backBtnY, backBtnW, backBtnH)
     love.graphics.setColor(W95.text)
     love.graphics.printf("Volver", backBtnX, backBtnY + 3, backBtnW, "center")
-    table.insert(self.buttons, {x = backBtnX, y = backBtnY, w = backBtnW, h = backBtnH, action = "back_browse"})
+    table.insert(self.contentButtons, {x = backBtnX, y = backBtnY, w = backBtnW, h = backBtnH, action = "back_browse"})
 end
 
 function Coding:handleClick(x, y, button)
     if button ~= 1 then return false end
 
-    for _, btn in ipairs(self.buttons) do
+    for _, btn in ipairs(self.contentButtons) do
         if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
             if btn.action == "start_project" then
                 self:startProject(btn.index)
