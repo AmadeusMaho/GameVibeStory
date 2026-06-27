@@ -463,10 +463,10 @@ function Coding:drawBrowse(x, y, w, h)
         self:refreshProjects()
     end
 
-    local itemH = 72
+    local itemH = 80
     local startY = y + 44
     for i, project in ipairs(self.availableProjects) do
-        local iy = startY + (i - 1) * (itemH + 8)
+        local iy = startY + (i - 1) * (itemH + 10)
         if iy + itemH < y + h then
             local canAfford = self.trabajoRef and self.trabajoRef.money >= project.baseCost
             love.graphics.setColor(canAfford and W95.bg or {0.9, 0.9, 0.9})

@@ -1867,7 +1867,7 @@ function drawDesktop()
     if trabajo then
         moneyStr = "$" .. trabajo.money
     end
-    local moneyW = 70
+    local moneyW = 60
     love.graphics.setColor(W95.borderLight)
     love.graphics.line(winW - 132, taskY + 4, winW - 132, taskY + taskH - 5)
     love.graphics.setColor(W95.bg)
