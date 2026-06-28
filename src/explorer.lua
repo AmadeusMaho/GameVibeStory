@@ -1108,7 +1108,7 @@ function Explorer:drawShopDetail(x, y, w, h)
     local isPsu = stat == "psu"
     local isMb = stat == "motherboard"
     local headers = isPsu and {"Upgrade", "Capacidad", "Precio", "Estado"} or (isMb and {"Upgrade", "Reduccion", "Bonus", "Precio"} or {"Upgrade", "Watts", "Precio", "Estado"})
-    local colW2 = {(w - 120) / 2, 50, 70, 80}
+    local colW2 = {math.floor((w - 220) / 2), 60, 70, 90}
 
     local tableContentH = #tiers * rowH
     local tableVisibleH = h - 140
@@ -1157,7 +1157,8 @@ function Explorer:drawShopDetail(x, y, w, h)
             else
                 love.graphics.print((tier.watts or 0) .. "W", rx, ry + 8)
             end
-            if not isMb then rx = rx + colW2[2] end
+
+            rx = rx + colW2[2]
 
             local price = self:getUpgradePrice(stat, i - 1)
             local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= price
@@ -1272,7 +1273,7 @@ function Explorer:handleClick(x, y, button)
                         if canBuyMoney and canBuyWatts then
                             self.trabajoRef.money = self.trabajoRef.money - price
                             self.upgradeLevels[stat] = level + 1
-                            local names = {cpu = "Procesador", ram = "Memoria RAM", disk = "Disco Duro", display = "Placa de Video", cooling = "Refrigeracion", psu = "Fuente de Poder"}
+                            local names = {cpu = "Procesador", ram = "Memoria RAM", disk = "Disco Duro", display = "Placa de Video", cooling = "Refrigeracion", psu = "Fuente de Poder", motherboard = "Placa Madre"}
                             self.purchaseMessage = names[stat] .. " mejorado a " .. tier.to .. "!"
                             self.purchaseMsgTimer = 2.0
                             if self.onHardwarePurchase then self.onHardwarePurchase() end
