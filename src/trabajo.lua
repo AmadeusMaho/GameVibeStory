@@ -26,7 +26,6 @@ local W95 = {
 }
 
 local projectDifficulties = {
-    {id = "infantil", label = "Infantil", color = {0.6, 0.9, 0.6}, hpMult = 0.5, rewardMult = 0.5},
     {id = "facil", label = "Facil", color = {0.2, 0.8, 0.2}, hpMult = 1.0, rewardMult = 1.0},
     {id = "normal", label = "Normal", color = {0.9, 0.9, 0.2}, hpMult = 1.0, rewardMult = 1.0},
     {id = "dificil", label = "Dificil", color = {0.9, 0.6, 0.2}, hpMult = 1.0, rewardMult = 1.0},
@@ -143,7 +142,9 @@ function Trabajo.new(x, y)
 
     self.activeJobs = {}
     self.maxJobs = 1
-    self.unlockedDifficulties = {muy_facil = true, facil = true}
+    self.unlockedDifficulties = {facil = true, normal = true}
+    self.difficultyProgression = {"facil", "normal", "dificil", "muy_dificil", "extremo", "pesadilla", "inframundo", "infierno"}
+    self.newDifficultyUnlocked = nil
 
     self.particularWindow = WindowManager.new("Trabajo Particular", (x or 250) + 50, (y or 120) + 50, 460, 400)
     self.particularWindow.minimizeOnly = true
@@ -190,6 +191,7 @@ function Trabajo.new(x, y)
                 if btn.action == "dismiss_success" then
                     self.successMessage = ""
                     self.successTimer = 0
+                    self.newDifficultyUnlocked = nil
                     self.particularWindow.visible = false
                 end
                 return true
@@ -548,6 +550,21 @@ function Trabajo:winProject()
     self.money = self.money + reward
     self.totalEarned = self.totalEarned + reward
     self.completedProjects = (self.completedProjects or 0) + 1
+
+    local completedDiff = self.projectDifficulty and self.projectDifficulty.id
+    if completedDiff then
+        for i, diffId in ipairs(self.difficultyProgression) do
+            if diffId == completedDiff and i < #self.difficultyProgression then
+                local nextDiff = self.difficultyProgression[i + 1]
+                if not self.unlockedDifficulties[nextDiff] then
+                    self.unlockedDifficulties[nextDiff] = true
+                    self.newDifficultyUnlocked = nextDiff
+                end
+                break
+            end
+        end
+    end
+
     self.successMessage = "Proyecto exitoso! +$" .. reward
     self.successTimer = 5.0
 
@@ -853,6 +870,19 @@ function Trabajo:drawParticularTab(x, y, w, h)
         love.graphics.printf(self.successMessage, x + 8, y + h / 2 - 30, w - 16, "center")
         love.graphics.setColor(W95.text)
         love.graphics.printf("Felicidades por completar el proyecto!", x + 8, y + h / 2 - 10, w - 16, "center")
+
+        if self.newDifficultyUnlocked then
+            local diffInfo = nil
+            for _, d in ipairs(projectDifficulties) do
+                if d.id == self.newDifficultyUnlocked then diffInfo = d break end
+            end
+            if diffInfo then
+                love.graphics.setColor(diffInfo.color)
+                love.graphics.printf("Nueva dificultad desbloqueada:", x + 8, y + h / 2 + 40, w - 16, "center")
+                love.graphics.setColor(W95.highlight)
+                love.graphics.printf("[" .. diffInfo.label .. "]", x + 8, y + h / 2 + 55, w - 16, "center")
+            end
+        end
 
         local btnW = 80
         local btnH = 24

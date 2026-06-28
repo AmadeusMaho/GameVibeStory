@@ -122,9 +122,6 @@ function Explorer.new(x, y)
     self.selectedApp = nil
 
     self.allProjects = {
-        {name = "Ordenar papeleria", desc = "Ordenar 50 hojas\nen carpetas.", baseHp = 75, days = 14, reward = 80, difficulty = "infantil"},
-        {name = "Copiar disquetes", desc = "Copiar 20 disquetes\ncon archivos.", baseHp = 75, days = 14, reward = 90, difficulty = "infantil"},
-        {name = "Etiquetar cajas", desc = "Poner etiquetas\nen 30 cajas.", baseHp = 75, days = 14, reward = 70, difficulty = "infantil"},
         {name = "Digitacion de formularios", desc = "Digitar 200 formularios\nde seguros.", baseHp = 150, days = 14, reward = 150, difficulty = "facil"},
         {name = "Clasificacion de archivos", desc = "Clasificar 500 archivos\npor categoria y fecha.", baseHp = 150, days = 14, reward = 180, difficulty = "facil"},
         {name = "Traduccion de documentos", desc = "Traducir 10 documentos\nlegales al espanol.", baseHp = 150, days = 14, reward = 200, difficulty = "facil"},
@@ -272,8 +269,11 @@ end
 function Explorer:refreshJobBoard()
     self.jobBoard = {}
     local available = {}
+    local unlocked = self.trabajoRef and self.trabajoRef.unlockedDifficulties or {facil = true, normal = true}
     for _, project in ipairs(self.allProjects) do
-        table.insert(available, project)
+        if unlocked[project.difficulty] then
+            table.insert(available, project)
+        end
     end
     for i = 1, math.min(5, #available) do
         local idx = math.random(#available)
@@ -766,15 +766,14 @@ function Explorer:drawJobsPage(x, y, w, h)
                 infierno = {1.0, 0.0, 0.3},
             }
             local diffLabels = {
-                infantil = "Infantil",
                 facil = "Facil",
                 normal = "Normal",
                 dificil = "Dificil",
                 muy_dificil = "Muy Dificil",
                 extremo = "Extremo",
                 pesadilla = "Pesadilla",
-                pesadilla_estelar = "Inframundo",
-                demoniaco = "Infierno",
+                inframundo = "Inframundo",
+                infierno = "Infierno",
             }
             love.graphics.setColor(diffColors[job.difficulty] or W95.text)
             love.graphics.printf(diffLabels[job.difficulty] or job.difficulty, cx + 8, cy + 28, cellW - 16, "center")

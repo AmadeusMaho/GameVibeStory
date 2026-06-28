@@ -1512,6 +1512,7 @@ function love.load()
 
     if latestSlot then
         loadGame(latestSlot)
+        explorer:refreshJobBoard()
         bootLines[6] = {text = "CPU: " .. pcStats.cpu, x = 80, y = 325, color = {0.8, 0.8, 0.8}}
         bootLines[7] = {text = "RAM: Checking " .. pcStats.ram .. " ... OK", x = 80, y = 350, color = {0.8, 0.8, 0.8}}
         bootLines[8] = {text = "HDD: " .. pcStats.disk, x = 80, y = 375, color = {0.8, 0.8, 0.8}}
