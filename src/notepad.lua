@@ -23,6 +23,9 @@ function Notepad.new(x, y)
     local self = setmetatable({}, Notepad)
     self.window = WindowManager.new("Objetivos", x or 150, y or 100, 420, 320)
 
+    self.smallFont = love.graphics.newFont(11)
+    self.notifFont = love.graphics.newFont(12)
+
     self.trabajoRef = nil
     self.explorerRef = nil
     self.emailRef = nil
@@ -131,8 +134,7 @@ function Notepad:drawContent(cx, cy, cw, ch)
     self.buttons = {}
 
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(11)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     love.graphics.setColor(W95.fieldBg)
     love.graphics.rectangle("fill", cx, cy, cw, ch)
@@ -192,8 +194,7 @@ end
 
 function Notepad:drawNotifications()
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(12)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.notifFont)
 
     local screenW, screenH = love.graphics.getDimensions()
 

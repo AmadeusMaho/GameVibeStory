@@ -32,6 +32,8 @@ function Explorer.new(x, y)
     local self = setmetatable({}, Explorer)
     self.window = WindowManager.new("Microsoft Internet Explorer", x or 80, y or 60, 640, 460)
 
+    self.smallFont = love.graphics.newFont(11)
+
     self.currentPage = "home"
     self.loading = false
     self.loadTimer = 0
@@ -400,8 +402,7 @@ function Explorer:drawContent(cx, cy, cw, ch)
     self.buttons = {}
 
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(11)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     local menuH = 18
     local toolbarH = 28
@@ -414,7 +415,7 @@ function Explorer:drawContent(cx, cy, cw, ch)
     local menuItems = {"Archivo", "Editar", "Ver", "Favoritos", "Ayuda"}
     local mx_off = cx + 4
     for _, item in ipairs(menuItems) do
-        local iw = smallFont:getWidth(item) + 12
+        local iw = self.smallFont:getWidth(item) + 12
         love.graphics.setColor(W95.text)
         love.graphics.print(item, mx_off, cy + 3)
         mx_off = mx_off + iw

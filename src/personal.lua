@@ -74,6 +74,8 @@ function Personal.new(x, y)
     local self = setmetatable({}, Personal)
     self.window = WindowManager.new("Personal - Empleados", x or 200, y or 100, 440, 380)
 
+    self.smallFont = love.graphics.newFont(11)
+
     self.trabajoRef = nil
     self.employees = {}
     self.totalIncome = 0
@@ -179,8 +181,7 @@ end
 function Personal:drawContent(cx, cy, cw, ch)
     self.buttons = {}
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(11)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     love.graphics.setColor(W95.text)
     love.graphics.printf("Departamento de Personal", cx + 8, cy + 6, cw - 16, "center")

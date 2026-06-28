@@ -67,6 +67,9 @@ function Achievements.new(x, y)
     local self = setmetatable({}, Achievements)
     self.window = WindowManager.new("Logros y Estadisticas", x or 160, y or 80, 460, 400)
 
+    self.smallFont = love.graphics.newFont(11)
+    self.notifFont = love.graphics.newFont(12)
+
     self.trabajoRef = nil
     self.explorerRef = nil
     self.personalRef = nil
@@ -267,8 +270,7 @@ end
 function Achievements:drawContent(cx, cy, cw, ch)
     self.buttons = {}
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(11)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     local tabY = cy + 4
     local tabH = 20
@@ -455,8 +457,7 @@ end
 
 function Achievements:drawNotifications()
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(12)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.notifFont)
 
     local screenW, screenH = love.graphics.getDimensions()
 

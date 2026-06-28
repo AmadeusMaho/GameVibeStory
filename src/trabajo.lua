@@ -122,6 +122,8 @@ function Trabajo.new(x, y)
     self.window = WindowManager.new("Trabajo Freelance", x or 250, y or 120, 460, 320)
 
     self.money = 0
+    self.smallFont = love.graphics.newFont(11)
+    self.circleFont = love.graphics.newFont(13)
     self.totalEarned = 0
     self.tasksCompleted = 0
     self.currentTask = nil
@@ -704,8 +706,7 @@ end
 function Trabajo:drawContent(cx, cy, cw, ch)
     self.buttons = {}
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(11)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     love.graphics.setColor(W95.bg)
     love.graphics.rectangle("fill", cx + 6, cy + 4, cw - 12, ch - 8)
@@ -830,8 +831,7 @@ end
 
 function Trabajo:drawParticularContent(cx, cy, cw, ch)
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(11)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     love.graphics.setColor(W95.bg)
     love.graphics.rectangle("fill", cx + 6, cy + 4, cw - 12, ch - 8)
@@ -1019,8 +1019,7 @@ function Trabajo:drawParticularTab(x, y, w, h)
         love.graphics.circle("line", cx, cy, r)
 
         local prevFont = love.graphics.getFont()
-        local bigFont = love.graphics.newFont(13)
-        love.graphics.setFont(bigFont)
+        love.graphics.setFont(self.circleFont)
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf(circ.power, cx - 16, cy - 8, 32, "center")
         love.graphics.setFont(prevFont)

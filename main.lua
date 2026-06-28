@@ -231,10 +231,10 @@ function drawBSOD()
     love.graphics.rectangle("fill", 0, 0, w, h)
 
     love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(love.graphics.newFont(24))
+    love.graphics.setFont(bsodBigFont)
     love.graphics.print("Windows", margin, h * 0.12)
 
-    love.graphics.setFont(love.graphics.newFont(18))
+    love.graphics.setFont(bsodMedFont)
     love.graphics.print("Un error irrecoverable ha occurrido.", margin, h * 0.22)
     love.graphics.print("Se ha producido un error y Windows", margin, h * 0.27)
     love.graphics.print("ha de cerrarse para evitar daño al equipo.", margin, h * 0.32)
@@ -244,7 +244,7 @@ function drawBSOD()
     love.graphics.print(" ", margin, h * 0.52)
     love.graphics.print("* Presione cualquier tecla para terminar", margin, h * 0.58)
     love.graphics.print("  la sesion actual.", margin, h * 0.63)
-    love.graphics.setFont(love.graphics.newFont(14))
+    love.graphics.setFont(sidebarFont)
     love.graphics.print("Informacion de depuracion:", margin, h * 0.75)
     love.graphics.print("  Filtros=00000001 Dispositivo=00000000", margin, h * 0.79)
     love.graphics.print("  Carga de la direccion de comandos no disponible", margin, h * 0.83)
@@ -267,7 +267,7 @@ function drawMalwarePopup()
     love.graphics.rectangle("fill", popupX + 2, popupY + 2, popupW - 4, 20)
 
     love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(love.graphics.newFont(12))
+    love.graphics.setFont(popupTitleFont)
     love.graphics.print("Error", popupX + 8, popupY + 5)
 
     local iconX = popupX + 25
@@ -327,7 +327,7 @@ function drawProjectPopup()
     love.graphics.rectangle("fill", popupX + 2, popupY + 2, popupW - 4, 20)
 
     love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(love.graphics.newFont(12))
+    love.graphics.setFont(popupTitleFont)
     love.graphics.print("Aviso", popupX + 8, popupY + 5)
 
     local iconX = popupX + 25
@@ -393,7 +393,7 @@ function drawSaveLoadPopup()
     love.graphics.setColor(0, 0, 0.5)
     love.graphics.rectangle("fill", popupX + 2, popupY + 2, popupW - 4, 20)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(love.graphics.newFont(12))
+    love.graphics.setFont(popupTitleFont)
 
     local title = "Guardar partida"
     if popupType == "load" then title = "Cargar partida"
@@ -512,8 +512,7 @@ function drawInstallScreen()
     love.graphics.rectangle("fill", 0, 0, w, h)
     love.graphics.setColor(1, 1, 1, alpha)
     local prevFont = love.graphics.getFont()
-    local bigFont = love.graphics.newFont(24)
-    love.graphics.setFont(bigFont)
+    love.graphics.setFont(installFont)
     love.graphics.printf("Instalando hardware...", 0, h / 2 - 30, w, "center")
     love.graphics.setFont(prevFont)
 
@@ -1103,6 +1102,10 @@ function love.load()
     defaultFont = font
     bootFont = love.graphics.newFont(22)
     sidebarFont = love.graphics.newFont(16)
+    bsodBigFont = love.graphics.newFont(24)
+    bsodMedFont = love.graphics.newFont(18)
+    popupTitleFont = love.graphics.newFont(12)
+    installFont = love.graphics.newFont(24)
     love.graphics.setFont(font)
 
     CursorManager.init()

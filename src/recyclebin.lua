@@ -19,6 +19,8 @@ function RecycleBin.new(x, y)
     local self = setmetatable({}, RecycleBin)
     self.window = WindowManager.new("Papelera de reciclaje", x or 300, y or 150, 380, 280)
 
+    self.smallFont = love.graphics.newFont(11)
+
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
     end
@@ -59,8 +61,7 @@ function RecycleBin:drawContent(cx, cy, cw, ch)
     self.buttons = {}
 
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(11)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     local menuH = 18
     love.graphics.setColor(W95.bg)
@@ -68,7 +69,7 @@ function RecycleBin:drawContent(cx, cy, cw, ch)
     local menuItems = {"Archivo", "Editar", "Ver", "Ayuda"}
     local mx_off = cx + 4
     for _, item in ipairs(menuItems) do
-        local iw = smallFont:getWidth(item) + 12
+        local iw = self.smallFont:getWidth(item) + 12
         love.graphics.setColor(W95.text)
         love.graphics.print(item, mx_off, cy + 3)
         mx_off = mx_off + iw

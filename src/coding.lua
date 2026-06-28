@@ -81,6 +81,7 @@ function Coding.new(x, y)
     self.cursorBlink = 0
     self.codeFont = love.graphics.newFont(12)
     self.smallFont = love.graphics.newFont(11)
+    self.circleFont = love.graphics.newFont(13)
     self.circleSounds = {}
     local okCs, sndCs = pcall(love.audio.newSource, "assets/sounds/circlesound.wav", "static")
     if okCs then sndCs:setVolume(0.5); table.insert(self.circleSounds, sndCs) end
@@ -548,7 +549,7 @@ function Coding:drawCoding(x, y, w, h)
         love.graphics.circle("fill", c.x, c.y, c.radius)
         love.graphics.setColor(0,0,0)
         love.graphics.circle("line", c.x, c.y, c.radius)
-        love.graphics.setFont(love.graphics.newFont(13))
+        love.graphics.setFont(self.circleFont)
         love.graphics.setColor(1,1,1)
         love.graphics.printf(c.power, c.x-16, c.y-8, 32, "center")
         love.graphics.setFont(self.smallFont)
@@ -558,7 +559,7 @@ function Coding:drawCoding(x, y, w, h)
         love.graphics.setColor(n.isBug and {1,0.2,0.2,alpha} or {0.2,1,0.2,alpha})
         love.graphics.printf(n.text, n.x-30, n.y, 60, "center")
     end
-    local cx BtnW, btnH = 100, 24
+    local btnW, btnH = 100, 24
     local cxBtnX, cxBtnY = x+w-btnW-16, y+h-36
     local cxHov = self.lastMX >= cxBtnX and self.lastMX <= cxBtnX+btnW and self.lastMY >= cxBtnY and self.lastMY <= cxBtnY+btnH
     love.graphics.setColor(cxHov and {0.85,0.85,0.85} or W95.bg)

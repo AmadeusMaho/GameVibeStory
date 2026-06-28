@@ -33,6 +33,8 @@ function MyPC.new(x, y)
         {label = "Perf. del sistema", id = "performance"},
     }
 
+    self.smallFont = love.graphics.newFont(11)
+
     self.pcStats = nil
     self.upgradesRef = nil
     self.explorerRef = nil
@@ -77,9 +79,8 @@ function MyPC:drawContent(cx, cy, cw, ch)
     self.buttons = {}
 
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(11)
 
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     local tabY = cy + 8
     local tabH = 22
@@ -146,8 +147,7 @@ end
 
 function MyPC:drawGeneralTab(x, y, w, h)
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(11)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     local iconSize = 48
     love.graphics.setColor(1, 1, 1)
@@ -197,8 +197,7 @@ end
 
 function MyPC:drawDevicesTab(x, y, w, h)
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(11)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     love.graphics.setColor(W95.fieldBg)
     love.graphics.rectangle("fill", x, y, w, h - 8)
@@ -237,8 +236,7 @@ end
 
 function MyPC:drawPerformanceTab(x, y, w, h)
     local prevFont = love.graphics.getFont()
-    local smallFont = love.graphics.newFont(11)
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(self.smallFont)
 
     local totalMB = 16
     if self.pcStats and self.pcStats.ramNum then
