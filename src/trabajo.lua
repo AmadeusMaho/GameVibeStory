@@ -830,6 +830,7 @@ function Trabajo:drawFreelanceTab(x, y, w, h)
 end
 
 function Trabajo:drawParticularContent(cx, cy, cw, ch)
+    self.buttons = {}
     local prevFont = love.graphics.getFont()
     love.graphics.setFont(self.smallFont)
 
