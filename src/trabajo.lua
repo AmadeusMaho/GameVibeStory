@@ -278,24 +278,22 @@ function Trabajo:recalcComponents()
         local def = componentDefs[id]
         local tier = self:getComponentTier(id)
         local power = self:getComponentPower(id)
-        if power > 0 then
-            local actualName = def.label
-            if self.explorerRef and self.explorerRef.getComponentName then
-                local statMap = {gpu = "display", cpu = "cpu", ram = "ram", cooling = "cooling"}
-                actualName = self.explorerRef:getComponentName(statMap[id] or id)
-            end
-            table.insert(self.components, {
-                id = id,
-                label = def.label,
-                actualName = actualName,
-                color = def.color,
-                tier = tier,
-                timer = 0,
-                interval = self:getComponentInterval(id),
-                power = power,
-                vibration = 0,
-            })
+        local actualName = def.label
+        if self.explorerRef and self.explorerRef.getComponentName then
+            local statMap = {gpu = "display", cpu = "cpu", ram = "ram", cooling = "cooling"}
+            actualName = self.explorerRef:getComponentName(statMap[id] or id)
         end
+        table.insert(self.components, {
+            id = id,
+            label = def.label,
+            actualName = actualName,
+            color = def.color,
+            tier = tier,
+            timer = 0,
+            interval = self:getComponentInterval(id),
+            power = power,
+            vibration = 0,
+        })
     end
 end
 
@@ -455,10 +453,12 @@ function Trabajo:update(dt)
 
     if self.activeProject then
         for _, comp in ipairs(self.components) do
-            comp.timer = comp.timer + dt * self:getCircleGenMultiplier()
-            if comp.timer >= comp.interval then
-                comp.timer = comp.timer - comp.interval
-                self:generateCircle(comp)
+            if comp.power > 0 then
+                comp.timer = comp.timer + dt * self:getCircleGenMultiplier()
+                if comp.timer >= comp.interval then
+                    comp.timer = comp.timer - comp.interval
+                    self:generateCircle(comp)
+                end
             end
             if comp.vibration > 0 then
                 comp.vibration = comp.vibration - dt
@@ -1034,7 +1034,12 @@ function Trabajo:drawParticularTab(x, y, w, h)
         love.graphics.printf(comp.actualName, bx + vibOff, by + 29, boxW, "center")
 
         love.graphics.setColor(comp.color)
-        love.graphics.printf("Potencia: " .. comp.power, bx + vibOff, by + 41, boxW, "center")
+        if comp.power > 0 then
+            love.graphics.printf("Potencia: " .. comp.power, bx + vibOff, by + 41, boxW, "center")
+        else
+            love.graphics.setColor(W95.textDim)
+            love.graphics.printf("Sin circulos", bx + vibOff, by + 41, boxW, "center")
+        end
 
         love.graphics.setColor(W95.textDim)
         love.graphics.printf(string.format("%.1fs", comp.interval), bx + vibOff, by + 52, boxW, "center")
