@@ -5,15 +5,11 @@ local WindowManager = require("src.window")
 
 local W95 = {
     bg = {0.75, 0.75, 0.75},
-    titleActive = {0.0, 0.0, 0.5},
-    titleText = {1, 1, 1},
     borderLight = {1, 1, 1},
     borderDark = {0.5, 0.5, 0.5},
-    borderUltra = {0.25, 0.25, 0.25},
     text = {0, 0, 0},
     textDim = {0.4, 0.4, 0.4},
     white = {1, 1, 1},
-    fieldBg = {1, 1, 1},
     highlight = {0, 0, 0.5},
     highlightText = {1, 1, 1},
     green = {0, 0.5, 0},
@@ -21,47 +17,43 @@ local W95 = {
     yellow = {0.8, 0.6, 0},
 }
 
-local componentDefs = {
-    gpu = {label = "GPU", color = {0.2, 0.8, 0.3}, baseInterval = 2.0, basePower = 3,
-        tiers = {{interval = 2.0, power = 3}, {interval = 1.6, power = 5}, {interval = 1.2, power = 8}, {interval = 0.8, power = 12}}},
-    cpu = {label = "CPU", color = {0.6, 0.2, 0.9}, baseInterval = 3.0, basePower = 2,
-        tiers = {{interval = 3.0, power = 2}, {interval = 2.4, power = 3}, {interval = 1.8, power = 5}, {interval = 1.2, power = 7}}},
-    ram = {label = "RAM", color = {0.9, 0.5, 0.1}, baseInterval = 4.0, basePower = 0,
-        tiers = {{interval = 4.0, power = 0}, {interval = 3.2, power = 2}, {interval = 2.4, power = 4}, {interval = 1.6, power = 7}}},
-    cooling = {label = "Refrig", color = {0.2, 0.8, 0.8}, baseInterval = 5.0, basePower = 0,
-        tiers = {{interval = 5.0, power = 0}, {interval = 4.0, power = 2}, {interval = 3.0, power = 4}, {interval = 2.0, power = 6}}},
+Coding.projectTypes = {
+    {id="calculator",name="Calculadora",difficulty="normal",baseCost=800,baseHp=1000,reward=2000,monthly=80},
+    {id="notepad_pro",name="Notepad Pro",difficulty="normal",baseCost=600,baseHp=800,reward=1500,monthly=60},
+    {id="file_manager",name="File Manager",difficulty="normal",baseCost=900,baseHp=1200,reward=2200,monthly=90},
+    {id="browser",name="Web Browser",difficulty="dificil",baseCost=2000,baseHp=2000,reward=5000,monthly=200},
+    {id="email_client",name="Cliente de Email",difficulty="dificil",baseCost=1500,baseHp=1600,reward=4000,monthly=150},
+    {id="media_player",name="Reproductor",difficulty="dificil",baseCost=2500,baseHp=2400,reward=6000,monthly=250},
+    {id="database",name="Base de Datos",difficulty="pesadilla",baseCost=5000,baseHp=4000,reward=12000,monthly=500},
+    {id="office_suite",name="Suite de Oficina",difficulty="pesadilla",baseCost=8000,baseHp=5000,reward=18000,monthly=800},
+    {id="game_engine",name="Motor de Juegos",difficulty="pesadilla",baseCost=12000,baseHp=6000,reward=25000,monthly=1200},
 }
-local componentOrder = {"gpu", "cpu", "ram", "cooling"}
 
-local projectTypes = {
-    {id = "calculator", name = "Calculadora", difficulty = "normal", baseCost = 800, baseHp = 1000, reward = 2000, monthly = 80},
-    {id = "notepad_pro", name = "Notepad Pro", difficulty = "normal", baseCost = 600, baseHp = 800, reward = 1500, monthly = 60},
-    {id = "file_manager", name = "File Manager", difficulty = "normal", baseCost = 900, baseHp = 1200, reward = 2200, monthly = 90},
-    {id = "browser", name = "Web Browser", difficulty = "dificil", baseCost = 2000, baseHp = 2000, reward = 5000, monthly = 200},
-    {id = "email_client", name = "Cliente de Email", difficulty = "dificil", baseCost = 1500, baseHp = 1600, reward = 4000, monthly = 150},
-    {id = "media_player", name = "Reproductor", difficulty = "dificil", baseCost = 2500, baseHp = 2400, reward = 6000, monthly = 250},
-    {id = "database", name = "Base de Datos", difficulty = "pesadilla", baseCost = 5000, baseHp = 4000, reward = 12000, monthly = 500},
-    {id = "office_suite", name = "Suite de Oficina", difficulty = "pesadilla", baseCost = 8000, baseHp = 5000, reward = 18000, monthly = 800},
-    {id = "game_engine", name = "Motor de Juegos", difficulty = "pesadilla", baseCost = 12000, baseHp = 6000, reward = 25000, monthly = 1200},
+local componentDefs = {
+    gpu = {label="GPU",color={0.2,0.8,0.3},baseInterval=2.0,basePower=3,tiers={{interval=2.0,power=3},{interval=1.6,power=5},{interval=1.2,power=8},{interval=0.8,power=12}}},
+    cpu = {label="CPU",color={0.6,0.2,0.9},baseInterval=3.0,basePower=2,tiers={{interval=3.0,power=2},{interval=2.4,power=3},{interval=1.8,power=5},{interval=1.2,power=7}}},
+    ram = {label="RAM",color={0.9,0.5,0.1},baseInterval=4.0,basePower=0,tiers={{interval=4.0,power=0},{interval=3.2,power=2},{interval=2.4,power=4},{interval=1.6,power=7}}},
+    cooling = {label="Refrig",color={0.2,0.8,0.8},baseInterval=5.0,basePower=0,tiers={{interval=5.0,power=0},{interval=4.0,power=2},{interval=3.0,power=4},{interval=2.0,power=6}}},
 }
-Coding.projectTypes = projectTypes
+local componentOrder = {"gpu","cpu","ram","cooling"}
+
+local codeSnippets = {
+    {'def calculate_total(items):','    total = 0','    for item in items:','        total += item.price','    return total','','def save_report(data):','    with open("report.txt", "w") as f:','        f.write(str(data))'},
+    {'class Database:','    def __init__(self, name):','        self.name = name','        self.tables = {}','','    def create_table(self, name, cols):','        table = {"name": name, "columns": cols}','        self.tables[name] = table'},
+    {'function processData(input) {','    const result = [];','    for (let i = 0; i < input.length; i++) {','        if (input[i].valid) {','            result.push(transform(input[i]));','        }','    }','    return result;','}'},
+    {'#include <stdlib.h>','#include <string.h>','','typedef struct {','    char *name;','    int id;','    float value;','} Record;','','Record* create_record(const char *n) {','    Record *r = malloc(sizeof(Record));','    r->name = strdup(n);','    return r;','}'},
+}
 
 function Coding.new(x, y)
     local self = setmetatable({}, Coding)
     self.window = WindowManager.new("Code Editor", x or 200, y or 100, 600, 450)
-
     self.trabajoRef = nil
     self.explorerRef = nil
-
     self.codingLevel = 1
     self.codingXP = 0
     self.xpPerLevel = {100, 250, 500, 1000, 2000}
-
     self.state = "browse"
     self.availableProjects = {}
-    self.selectedProject = nil
-    self.projectName = ""
-
     self.activeProject = nil
     self.projectProgress = 0
     self.projectMaxProgress = 100
@@ -69,65 +61,53 @@ function Coding.new(x, y)
     self.costPerSecond = 0
     self.projectDaysLeft = 0
     self.projectMaxDays = 0
-
-    self.milestoneTargets = {0.25, 0.50, 0.75}
-    self.nextMilestone = 1
-    self.milestoneActive = false
-    self.codeLines = {}
-    self.codeLineIndex = 1
-    self.codeCharIndex = 0
-    self.codeProgress = 0
-    self.codeScrollY = 0
-    self.codeTargetScrollY = 0
-    self.codeFont = love.graphics.newFont(12)
-    self.codeComplete = false
-    self.cursorBlink = 0
-
-    local codeSnippets = {
-        {'def calculate_total(items):', '    total = 0', '    for item in items:', '        total += item.price', '    return total', '', 'def save_report(data):', '    with open("report.txt", "w") as f:', '        f.write(str(data))'},
-        {'class Database:', '    def __init__(self, name):', '        self.name = name', '        self.tables = {}', '', '    def create_table(self, name, cols):', '        table = {"name": name, "columns": cols}', '        self.tables[name] = table'},
-        {'function processData(input) {', '    const result = [];', '    for (let i = 0; i < input.length; i++) {', '        if (input[i].valid) {', '            result.push(transform(input[i]));', '        }', '    }', '    return result;', '}'},
-        {'#include <stdlib.h>', '#include <string.h>', '', 'typedef struct {', '    char *name;', '    int id;', '    float value;', '} Record;', '', 'Record* create_record(const char *n) {', '    Record *r = malloc(sizeof(Record));', '    r->name = strdup(n);', '    return r;', '}'},
-    }
-    self.codeSnippets = codeSnippets
-
     self.circles = {}
     self.floatingNumbers = {}
     self.barShake = 0
     self.components = {}
-
     self.publishedApps = {}
-    self.selectedApp = nil
-
+    self.refreshAttempts = 3
+    self.maxRefreshAttempts = 3
+    self.refreshCooldown = 0
+    self.refreshCooldownMax = 30
+    self.milestoneActive = false
+    self.milestoneTargets = {0.25, 0.50, 0.75}
+    self.nextMilestone = 1
+    self.codeLines = {}
+    self.codeLineIndex = 1
+    self.codeCharIndex = 0
+    self.codeScrollY = 0
+    self.codeH = 300
+    self.cursorBlink = 0
+    self.codeFont = love.graphics.newFont(12)
+    self.smallFont = love.graphics.newFont(11)
     self.circleSounds = {}
     local okCs, sndCs = pcall(love.audio.newSource, "assets/sounds/circlesound.wav", "static")
     if okCs then sndCs:setVolume(0.5); table.insert(self.circleSounds, sndCs) end
     local okCs2, sndCs2 = pcall(love.audio.newSource, "assets/sounds/circlesound2.wav", "static")
     if okCs2 then sndCs2:setVolume(0.5); table.insert(self.circleSounds, sndCs2) end
-
-    self.refreshAttempts = 3
-    self.maxRefreshAttempts = 3
-    self.refreshCooldown = 0
-    self.refreshCooldownMax = 30
-
-    self.contentButtons = {}
+    self.buttons = {}
+    self.lastMX = 0
+    self.lastMY = 0
     self.window.onDraw = function(_, cx, cy, cw, ch)
         self:drawContent(cx, cy, cw, ch)
     end
-    self.window.onMousePressed = function(_, x, y, button)
-        return self:handleClick(x, y, button)
+    self.window.onMousePressed = function(_, mx, my, btn)
+        if btn ~= 1 then return false end
+        for _, b in ipairs(self.buttons) do
+            if mx >= b.x and mx <= b.x + b.w and my >= b.y and my <= b.y + b.h then
+                self:handleButton(b.action, b)
+                return true
+            end
+        end
+        return true
     end
-
     return self
 end
 
 function Coding:toggleVisible()
     self.window.visible = not self.window.visible
     self.window.minimized = false
-end
-
-function Coding:getCodingLevel()
-    return self.codingLevel
 end
 
 function Coding:getNextXP()
@@ -141,13 +121,17 @@ function Coding:checkLevelUp()
     end
 end
 
+function Coding:getMaxAppsForSale()
+    if self.codingLevel >= 5 then return 3 end
+    if self.codingLevel >= 3 then return 2 end
+    return 1
+end
+
 function Coding:refreshProjects()
     self.availableProjects = {}
     local count = math.min(4, 2 + math.floor(self.codingLevel / 2))
     local available = {}
-    for _, p in ipairs(projectTypes) do
-        table.insert(available, p)
-    end
+    for _, p in ipairs(Coding.projectTypes) do table.insert(available, p) end
     for i = 1, count do
         if #available > 0 then
             local idx = math.random(#available)
@@ -157,91 +141,62 @@ function Coding:refreshProjects()
     end
 end
 
-function Coding:getMaxAppsForSale()
-    if self.codingLevel >= 5 then return 3 end
-    if self.codingLevel >= 3 then return 2 end
-    return 1
-end
-
-function Coding:startProject(index)
-    local projectType = self.availableProjects[index]
-    if not projectType then return end
-    if self.trabajoRef.money < projectType.baseCost then return end
-
-    local sellingCount = 0
-    for _, app in ipairs(self.publishedApps) do
-        if app.selling then sellingCount = sellingCount + 1 end
-    end
-    if sellingCount >= self:getMaxAppsForSale() then return end
-
-    self.trabajoRef.money = self.trabajoRef.money - projectType.baseCost
-    self.activeProject = projectType
-    self.projectName = projectType.name
-    self.projectProgress = 0
-    self.projectMaxProgress = projectType.baseHp
-    self.moneySpent = projectType.baseCost
-    self.costPerSecond = projectType.baseCost / 60
-    self.projectDaysLeft = 14
-    self.projectMaxDays = 14
-
-    self.nextMilestone = 1
-    self.milestoneActive = false
-    self.codeProgress = 0
-
-    self.circles = {}
-    self.floatingNumbers = {}
-    self.barShake = 0
-    self:recalcComponents()
-
-    self.state = "coding"
-end
-
 function Coding:recalcComponents()
     self.components = {}
     if not self.explorerRef then return end
-
-    local statMap = {gpu = "display", cpu = "cpu", ram = "ram", cooling = "cooling"}
-
+    local statMap = {gpu="display", cpu="cpu", ram="ram", cooling="cooling"}
     for _, id in ipairs(componentOrder) do
         local def = componentDefs[id]
         local stat = statMap[id]
         local level = self.explorerRef.upgradeLevels[stat] or 0
         local power = level > 0 and def.tiers[level].power or def.basePower
         local interval = level > 0 and def.tiers[level].interval or def.baseInterval
-
         if power > 0 then
-            local coreMult = 1.0
-            if stat == "display" then coreMult = 1.0 end
-            if stat == "cpu" then coreMult = 1.0 end
-            if stat == "ram" then coreMult = 0.5 end
-            if stat == "cooling" then coreMult = 0.5 end
-
+            local mult = (stat == "ram" or stat == "cooling") and 0.5 or 1.0
             table.insert(self.components, {
-                id = id, label = def.label, color = def.color,
-                power = math.floor(power * coreMult), interval = interval,
-                timer = 0, screenX = 0, screenY = 0, barX = 0, barY = 0, vibration = 0,
+                id=id, label=def.label, color=def.color,
+                power=math.floor(power*mult), interval=interval,
+                timer=0, screenX=0, screenY=0, barX=0, barY=0, vibration=0,
             })
         end
     end
 end
 
+function Coding:startProject(index)
+    local pt = self.availableProjects[index]
+    if not pt then return end
+    if not self.trabajoRef or self.trabajoRef.money < pt.baseCost then return end
+    local selling = 0
+    for _, app in ipairs(self.publishedApps) do
+        if app.selling then selling = selling + 1 end
+    end
+    if selling >= self:getMaxAppsForSale() then return end
+    self.trabajoRef.money = self.trabajoRef.money - pt.baseCost
+    self.activeProject = pt
+    self.projectProgress = 0
+    self.projectMaxProgress = pt.baseHp
+    self.moneySpent = pt.baseCost
+    self.costPerSecond = pt.baseCost / 60
+    self.projectDaysLeft = 14
+    self.projectMaxDays = 14
+    self.nextMilestone = 1
+    self.milestoneActive = false
+    self.circles = {}
+    self.floatingNumbers = {}
+    self.barShake = 0
+    self:recalcComponents()
+    self.state = "coding"
+end
+
 function Coding:sellApp()
     if not self.activeProject then return end
-
-    local projectType = self.activeProject
+    local pt = self.activeProject
     table.insert(self.publishedApps, {
-        name = self.projectName,
-        type = projectType,
-        revenuePerMonth = projectType.monthly,
-        monthsLeft = 12,
-        totalRevenue = 0,
-        selling = true,
-        updated = false,
-        updateCooldown = 0,
-        successScore = math.random(5, 9) / 10,
+        name=pt.name, type=pt, revenuePerMonth=pt.monthly,
+        monthsLeft=12, totalRevenue=0, selling=true,
+        updateCooldown=0, successScore=math.random(5,9)/10,
     })
-
-    self.codingXP = self.codingXP + math.floor(projectType.reward / 5)
+    self.codingXP = self.codingXP + math.floor(pt.reward / 5)
     self:checkLevelUp()
     self:resetProject()
 end
@@ -251,9 +206,8 @@ function Coding:resetProject()
     self.projectProgress = 0
     self.projectMaxProgress = 100
     self.moneySpent = 0
-    self.moneyPerSecond = 0
+    self.costPerSecond = 0
     self.projectDaysLeft = 0
-    self.projectMaxDays = 0
     self.circles = {}
     self.floatingNumbers = {}
     self.state = "browse"
@@ -261,118 +215,103 @@ end
 
 function Coding:cancelProject()
     if not self.activeProject then return end
-    self.trabajoRef.money = self.trabajoRef.money + math.floor(self.moneySpent * 0.3)
+    if self.trabajoRef then
+        self.trabajoRef.money = self.trabajoRef.money + math.floor(self.moneySpent * 0.3)
+    end
     self:resetProject()
 end
 
-function Coding:update(dt)
-    self:refreshCooldownUpdate(dt)
-    self:activeProjectUpdate(dt)
-    self:publishedAppsUpdate(dt)
-    self:updateMinigame(dt)
-
-    for i = #self.floatingNumbers, 1, -1 do
-        local num = self.floatingNumbers[i]
-        num.y = num.y + num.vy * dt
-        num.timer = num.timer - dt
-        if num.timer <= 0 then
-            table.remove(self.floatingNumbers, i)
-        end
-    end
-end
-
-function Coding:refreshCooldownUpdate(dt)
-    if self.refreshCooldown > 0 then
-        self.refreshCooldown = self.refreshCooldown - dt
-        if self.refreshCooldown <= 0 then
-            self.refreshAttempts = self.maxRefreshAttempts
-        end
-    end
-end
-
-function Coding:activeProjectUpdate(dt)
-    if self.state ~= "coding" then return end
-    if not self.activeProject then return end
-    if self.milestoneActive then return end
-
-    local costPerFrame = math.floor(self.costPerSecond * dt)
-    if costPerFrame > 0 and self.trabajoRef.money >= costPerFrame then
-        self.trabajoRef.money = self.trabajoRef.money - costPerFrame
-        self.moneySpent = self.moneySpent + costPerFrame
-    end
-
-    for _, comp in ipairs(self.components) do
-        comp.timer = comp.timer + dt
-        if comp.timer >= comp.interval then
-            comp.timer = comp.timer - comp.interval
-            self:generateCircle(comp)
-        end
-        if comp.vibration > 0 then
-            comp.vibration = comp.vibration - dt
-        end
-    end
-
-    for i = #self.circles, 1, -1 do
-        local circ = self.circles[i]
-        circ.x = circ.x + circ.vx * dt
-        circ.y = circ.y + circ.vy * dt
-        circ.life = circ.life - dt
-        if circ.life <= 0 then
-            self.projectProgress = self.projectProgress + circ.power
-            table.insert(self.floatingNumbers, {
-                text = "+" .. circ.power, x = circ.targetX, y = circ.targetY,
-                timer = 1.0, maxTimer = 1.0, vy = -40, isBug = circ.isBug,
-            })
-            self.barShake = 0.15
-            table.remove(self.circles, i)
-
-            if self.projectProgress >= self.projectMaxProgress then
-                self.state = "sell"
-                return
-            end
-        end
-    end
-
-    if self.nextMilestone <= #self.milestoneTargets then
-        local target = self.milestoneTargets[self.nextMilestone]
-        if self.projectProgress / self.projectMaxProgress >= target then
-            self:triggerMilestone()
-        end
-    end
-
-    self.projectDaysLeft = self.projectDaysLeft - dt * 0.05
-    if self.projectDaysLeft <= 0 then
+function Coding:handleButton(action, btn)
+    if action == "start_project" then
+        self:startProject(btn.index)
+    elseif action == "refresh" and self.refreshAttempts > 0 then
+        self:refreshProjects()
+        self.refreshAttempts = self.refreshAttempts - 1
+        if self.refreshAttempts == 0 then self.refreshCooldown = self.refreshCooldownMax end
+    elseif action == "sell_app" then
+        self:sellApp()
+    elseif action == "open_manage" then
+        self.state = "manage"
+    elseif action == "back_browse" then
+        self.state = "browse"
+    elseif action == "cancel_project" then
         self:cancelProject()
-    end
-
-    if self.barShake > 0 then
-        self.barShake = self.barShake - dt
+    elseif action == "do_update" and btn.index then
+        local app = self.publishedApps[btn.index]
+        if app and (app.updateCooldown or 0) >= 4 then
+            app.revenuePerMonth = math.floor(app.revenuePerMonth * 1.3)
+            app.monthsLeft = app.monthsLeft + 8
+            app.updateCooldown = 0
+        end
+    elseif action == "cancel_sale" and btn.index then
+        table.remove(self.publishedApps, btn.index)
     end
 end
 
-function Coding:triggerMilestone()
+function Coding:striggerMilestone()
     self.milestoneActive = true
-    self.codeLines = self.codeSnippets[math.random(#self.codeSnippets)]
+    self.codeLines = codeSnippets[math.random(#codeSnippets)]
     self.codeLineIndex = 1
     self.codeCharIndex = 0
-    self.codeProgress = 0
     self.codeScrollY = 0
-    self.codeTargetScrollY = 0
-    self.codeComplete = false
     self.nextMilestone = self.nextMilestone + 1
 end
 
-function Coding:updateMinigame(dt)
-    self.cursorBlink = self.cursorBlink + dt
-    local lineH = 16
-    local currentLineY = (self.codeLineIndex - 1) * lineH
-    local maxVisibleY = self.codeScrollY + (self.codeH or 300) - lineH * 3
-    if currentLineY > maxVisibleY then
-        self.codeScrollY = currentLineY - (self.codeH or 300) + lineH * 3
+function Coding:update(dt)
+    if self.refreshCooldown > 0 then
+        self.refreshCooldown = self.refreshCooldown - dt
+        if self.refreshCooldown <= 0 then self.refreshAttempts = self.maxRefreshAttempts end
     end
-end
-
-function Coding:publishedAppsUpdate(dt)
+    if self.state == "coding" and self.activeProject and not self.milestoneActive then
+        local cost = math.floor(self.costPerSecond * dt)
+        if cost > 0 and self.trabajoRef and self.trabajoRef.money >= cost then
+            self.trabajoRef.money = self.trabajoRef.money - cost
+            self.moneySpent = self.moneySpent + cost
+        end
+        for _, comp in ipairs(self.components) do
+            comp.timer = comp.timer + dt
+            if comp.timer >= comp.interval then
+                comp.timer = comp.timer - comp.interval
+                self:genCircle(comp)
+            end
+            if comp.vibration > 0 then comp.vibration = comp.vibration - dt end
+        end
+        for i = #self.circles, 1, -1 do
+            local c = self.circles[i]
+            c.x = c.x + c.vx * dt
+            c.y = c.y + c.vy * dt
+            c.life = c.life - dt
+            if c.life <= 0 then
+                self.projectProgress = self.projectProgress + c.power
+                table.insert(self.floatingNumbers, {text="+"..c.power, x=c.targetX, y=c.targetY, timer=1.0, maxTimer=1.0, vy=-40, isBug=c.isBug})
+                self.barShake = 0.15
+                if #self.circleSounds > 0 then
+                    local snd = self.circleSounds[math.random(#self.circleSounds)]
+                    snd:stop(); snd:play()
+                end
+                table.remove(self.circles, i)
+                if self.projectProgress >= self.projectMaxProgress then
+                    self.state = "sell"
+                    return
+                end
+            end
+        end
+        if self.nextMilestone <= #self.milestoneTargets then
+            local target = self.milestoneTargets[self.nextMilestone]
+            if self.projectProgress / self.projectMaxProgress >= target then
+                self:striggerMilestone()
+            end
+        end
+        self.projectDaysLeft = self.projectDaysLeft - dt * 0.05
+        if self.projectDaysLeft <= 0 then self:cancelProject() end
+        if self.barShake > 0 then self.barShake = self.barShake - dt end
+    end
+    for i = #self.floatingNumbers, 1, -1 do
+        local n = self.floatingNumbers[i]
+        n.y = n.y + n.vy * dt
+        n.timer = n.timer - dt
+        if n.timer <= 0 then table.remove(self.floatingNumbers, i) end
+    end
     for i = #self.publishedApps, 1, -1 do
         local app = self.publishedApps[i]
         if app.selling then
@@ -381,555 +320,420 @@ function Coding:publishedAppsUpdate(dt)
                 app.monthlyTimer = app.monthlyTimer - 30
                 local revenue = math.floor(app.revenuePerMonth * app.successScore * app.monthsLeft / 12)
                 app.totalRevenue = app.totalRevenue + revenue
-                if self.trabajoRef then
-                    self.trabajoRef.money = self.trabajoRef.money + revenue
-                end
+                if self.trabajoRef then self.trabajoRef.money = self.trabajoRef.money + revenue end
                 app.monthsLeft = app.monthsLeft - 1
-                app.updateCooldown = app.updateCooldown + 1
-                if app.monthsLeft <= 0 then
-                    app.selling = false
-                end
+                app.updateCooldown = (app.updateCooldown or 0) + 1
+                if app.monthsLeft <= 0 then app.selling = false end
             end
+        end
+    end
+    self.cursorBlink = self.cursorBlink + dt
+    if self.milestoneActive then
+        local lineH = 16
+        local currentLineY = (self.codeLineIndex - 1) * lineH
+        local maxVisibleY = self.codeScrollY + self.codeH - lineH * 3
+        if currentLineY > maxVisibleY then
+            self.codeScrollY = currentLineY - self.codeH + lineH * 3
         end
     end
 end
 
-function Coding:generateCircle(comp)
-    local targetX = comp.barX or 0
-    local targetY = comp.barY or 0
-
-    local bugChance = 0.03
-    local isBug = math.random() < bugChance
-    local circColor = isBug and {0.9, 0.15, 0.15} or comp.color
-    local basePower = isBug and math.floor(comp.power * 0.6) or comp.power
-    local circPower = math.floor(basePower)
-
-    local dx = targetX - comp.screenX
-    local dy = targetY - comp.screenY
-    local dist = math.max(1, math.sqrt(dx * dx + dy * dy))
+function Coding:genCircle(comp)
+    local tx, ty = comp.barX, comp.barY
+    local dx, dy = tx - comp.screenX, ty - comp.screenY
+    local dist = math.max(1, math.sqrt(dx*dx + dy*dy))
     local speed = 200
-
+    local isBug = math.random() < 0.03
+    local power = isBug and math.floor(comp.power * 0.6) or comp.power
     table.insert(self.circles, {
-        x = comp.screenX, y = comp.screenY,
-        vx = (dx / dist) * speed, vy = (dy / dist) * speed,
-        targetX = targetX, targetY = targetY,
-        color = circColor, power = circPower,
-        life = dist / speed + 0.1, radius = 12,
-        isBug = isBug,
+        x=comp.screenX, y=comp.screenY, vx=(dx/dist)*speed, vy=(dy/dist)*speed,
+        targetX=tx, targetY=ty, color=isBug and {0.9,0.15,0.15} or comp.color,
+        power=power, life=dist/speed+0.1, radius=12, isBug=isBug,
     })
     comp.vibration = 0.2
+end
 
-    if #self.circleSounds > 0 then
-        local snd = self.circleSounds[math.random(#self.circleSounds)]
-        snd:stop(); snd:play()
+function Coding:keypressed(key)
+    if self.state ~= "coding" or not self.milestoneActive then return end
+    if key == "lshift" or key == "rshift" or key == "lctrl" or key == "rctrl" or
+       key == "lalt" or key == "ralt" or key == "escape" or key == "tab" or
+       key == "capslock" or key == "return" or key == "up" or key == "down" or
+       key == "left" or key == "right" or key == "home" or key == "end" then return end
+    local charsPerKey = 1 + self.codingLevel
+    for i = 1, charsPerKey do
+        if self.codeLineIndex <= #self.codeLines then
+            local line = self.codeLines[self.codeLineIndex]
+            if self.codeCharIndex < #line then
+                self.codeCharIndex = self.codeCharIndex + 1
+            else
+                self.codeLineIndex = self.codeLineIndex + 1
+                self.codeCharIndex = 0
+            end
+        end
+    end
+    if self.codeLineIndex > #self.codeLines then
+        self.milestoneActive = false
+        local bonus = math.floor(self.activeProject.baseHp * 0.1)
+        self.projectProgress = self.projectProgress + bonus
+        self.codingXP = self.codingXP + 10
+        self:checkLevelUp()
     end
 end
 
 function Coding:drawContent(cx, cy, cw, ch)
-    self.contentButtons = {}
+    self.buttons = {}
     local prevFont = love.graphics.getFont()
-
+    love.graphics.setFont(self.smallFont)
     if self.state == "browse" then
         self:drawBrowse(cx, cy, cw, ch)
     elseif self.state == "coding" then
-        if self.milestoneActive then
-            self:drawMinigame(cx, cy, cw, ch)
-        else
-            self:drawCoding(cx, cy, cw, ch)
-        end
+        if self.milestoneActive then self:drawMinigame(cx, cy, cw, ch)
+        else self:drawCoding(cx, cy, cw, ch) end
     elseif self.state == "sell" then
         self:drawSell(cx, cy, cw, ch)
     elseif self.state == "manage" then
         self:drawManage(cx, cy, cw, ch)
     end
-
     love.graphics.setFont(prevFont)
+end
+
+function Coding:drawBevel(x, y, w, h)
+    love.graphics.setColor(W95.borderLight)
+    love.graphics.line(x, y, x+w, y); love.graphics.line(x, y, x, y+h)
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x+w, y, x+w, y+h); love.graphics.line(x, y+h, x+w, y+h)
+end
+
+function Coding:drawInset(x, y, w, h)
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x, y, x+w, y); love.graphics.line(x, y, x, y+h)
+    love.graphics.setColor(W95.borderLight)
+    love.graphics.line(x+w, y, x+w, y+h); love.graphics.line(x, y+h, x+w, y+h)
 end
 
 function Coding:drawBrowse(x, y, w, h)
     love.graphics.setColor(W95.bg)
-    love.graphics.rectangle("fill", x + 6, y + 4, w - 12, h - 8)
-    self:drawBevel(x + 6, y + 4, w - 12, h - 8)
-
+    love.graphics.rectangle("fill", x+6, y+4, w-12, h-8)
+    self:drawBevel(x+6, y+4, w-12, h-8)
     love.graphics.setColor(W95.text)
-    love.graphics.printf("Proyectos de Coding", x + 8, y + 8, w - 16, "center")
+    love.graphics.printf("Proyectos de Coding", x+8, y+8, w-16, "center")
     love.graphics.setColor(W95.yellow)
-    love.graphics.printf("Nivel: " .. self.codingLevel .. "  XP: " .. self.codingXP .. "/" .. self:getNextXP(), x + 8, y + 22, w - 16, "center")
-
+    love.graphics.printf("Nivel: "..self.codingLevel.."  XP: "..self.codingXP.."/"..self:getNextXP(), x+8, y+22, w-16, "center")
     love.graphics.setColor(W95.borderDark)
-    love.graphics.line(x + 8, y + 38, x + w - 8, y + 38)
-
-    if #self.availableProjects == 0 then
-        self:refreshProjects()
-    end
-
-    local itemH = 80
-    local startY = y + 44
-    for i, project in ipairs(self.availableProjects) do
-        local iy = startY + (i - 1) * (itemH + 10)
-        if iy + itemH < y + h then
-            local canAfford = self.trabajoRef and self.trabajoRef.money >= project.baseCost
-            love.graphics.setColor(canAfford and W95.bg or {0.9, 0.9, 0.9})
-            love.graphics.rectangle("fill", x + 12, iy, w - 24, itemH)
-            self:drawBevel(x + 12, iy, w - 24, itemH)
-
+    love.graphics.line(x+8, y+38, x+w-8, y+38)
+    if #self.availableProjects == 0 then self:refreshProjects() end
+    local itemH = 72
+    for i, pt in ipairs(self.availableProjects) do
+        local iy = y + 44 + (i-1) * (itemH + 8)
+        if iy + itemH < y + h - 40 then
+            local canAfford = self.trabajoRef and self.trabajoRef.money >= pt.baseCost
+            love.graphics.setColor(canAfford and W95.bg or {0.9,0.9,0.9})
+            love.graphics.rectangle("fill", x+12, iy, w-24, itemH)
+            self:drawBevel(x+12, iy, w-24, itemH)
             love.graphics.setColor(W95.highlight)
-            love.graphics.rectangle("fill", x + 14, iy + 2, 24, 24)
+            love.graphics.rectangle("fill", x+14, iy+2, 24, 24)
             love.graphics.setColor(W95.text)
-            love.graphics.printf(project.difficulty:sub(1, 1):upper(), x + 14, iy + 6, 24, "center")
-
+            love.graphics.printf(pt.difficulty:sub(1,1):upper(), x+14, iy+6, 24, "center")
             love.graphics.setColor(W95.text)
-            love.graphics.printf(project.name, x + 44, iy + 6, w - 60, "left")
-
-            local diffColor = W95.green
-            if project.difficulty == "dificil" then diffColor = W95.yellow end
-            if project.difficulty == "pesadilla" then diffColor = W95.red end
-            love.graphics.setColor(diffColor)
-            love.graphics.printf(project.difficulty:upper(), x + 44, iy + 22, 80, "left")
-
+            love.graphics.printf(pt.name, x+44, iy+6, w-60, "left")
+            local dc = W95.green
+            if pt.difficulty == "dificil" then dc = W95.yellow end
+            if pt.difficulty == "pesadilla" then dc = W95.red end
+            love.graphics.setColor(dc)
+            love.graphics.printf(pt.difficulty:upper(), x+44, iy+22, 80, "left")
             love.graphics.setColor(W95.textDim)
-            love.graphics.printf("$" .. project.baseCost .. "  |  $" .. project.monthly .. "/mes", x + 44, iy + 36, w - 60, "left")
-
-            local btnW = 80
-            local btnH = 20
-            local btnX = x + w - btnW - 20
-            local btnY = iy + itemH - 28
-            local btnHov = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
-
+            love.graphics.printf("$"..pt.baseCost.."  |  $"..pt.monthly.."/mes", x+44, iy+36, w-60, "left")
+            local btnW, btnH = 80, 20
+            local btnX, btnY = x+w-btnW-20, iy+itemH-28
+            local hov = self.lastMX >= btnX and self.lastMX <= btnX+btnW and self.lastMY >= btnY and self.lastMY <= btnY+btnH
             if canAfford then
-                love.graphics.setColor(btnHov and {0.85, 0.85, 0.85} or W95.bg)
+                love.graphics.setColor(hov and {0.85,0.85,0.85} or W95.bg)
                 love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
                 self:drawBevel(btnX, btnY, btnW, btnH)
                 love.graphics.setColor(W95.green)
-                love.graphics.printf("Iniciar", btnX, btnY + 4, btnW, "center")
-                table.insert(self.contentButtons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "start_project", index = i})
+                love.graphics.printf("Iniciar", btnX, btnY+4, btnW, "center")
+                self.buttons[#self.buttons+1] = {x=btnX, y=btnY, w=btnW, h=btnH, action="start_project", index=i}
             else
                 love.graphics.setColor(W95.textDim)
                 love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
                 self:drawBevel(btnX, btnY, btnW, btnH)
                 love.graphics.setColor(W95.red)
-                love.graphics.printf("Sin fondos", btnX, btnY + 4, btnW, "center")
+                love.graphics.printf("Sin fondos", btnX, btnY+4, btnW, "center")
             end
         end
     end
-
     if #self.publishedApps > 0 then
-        local manageBtnX = x + 12
-        local manageBtnY = y + h - 32
-        local manageBtnW = 120
-        local manageBtnH = 22
-        local mHov = self.lastMX >= manageBtnX and self.lastMX <= manageBtnX + manageBtnW and self.lastMY >= manageBtnY and self.lastMY <= manageBtnY + manageBtnH
-
-        love.graphics.setColor(mHov and {0.85, 0.85, 0.85} or W95.bg)
-        love.graphics.rectangle("fill", manageBtnX, manageBtnY, manageBtnW, manageBtnH)
-        self:drawBevel(manageBtnX, manageBtnY, manageBtnW, manageBtnH)
+        local mx, my, mw, mh = x+12, y+h-32, 120, 22
+        local hov = self.lastMX >= mx and self.lastMX <= mx+mw and self.lastMY >= my and self.lastMY <= my+mh
+        love.graphics.setColor(hov and {0.85,0.85,0.85} or W95.bg)
+        love.graphics.rectangle("fill", mx, my, mw, mh)
+        self:drawBevel(mx, my, mw, mh)
         love.graphics.setColor(W95.yellow)
-        love.graphics.printf("Mis Apps (" .. #self.publishedApps .. ")", manageBtnX, manageBtnY + 3, manageBtnW, "center")
-        table.insert(self.contentButtons, {x = manageBtnX, y = manageBtnY, w = manageBtnW, h = manageBtnH, action = "open_manage"})
+        love.graphics.printf("Mis Apps ("..#self.publishedApps..")", mx, my+3, mw, "center")
+        self.buttons[#self.buttons+1] = {x=mx, y=my, w=mw, h=mh, action="open_manage"}
     end
-
-    local refreshBtnX = x + w - 110 - 12
-    local refreshBtnY = y + h - 32
-    local refreshBtnW = 110
-    local refreshBtnH = 22
-    local rHov = self.lastMX >= refreshBtnX and self.lastMX <= refreshBtnX + refreshBtnW and self.lastMY >= refreshBtnY and self.lastMY <= refreshBtnY + refreshBtnH
-
+    local rx, ry, rw, rh = x+w-122, y+h-32, 110, 22
+    local rhov = self.lastMX >= rx and self.lastMX <= rx+rw and self.lastMY >= ry and self.lastMY <= ry+rh
     if self.refreshAttempts > 0 then
-        love.graphics.setColor(rHov and {0.85, 0.85, 0.85} or W95.bg)
-        love.graphics.rectangle("fill", refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
-        self:drawBevel(refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
+        love.graphics.setColor(rhov and {0.85,0.85,0.85} or W95.bg)
+        love.graphics.rectangle("fill", rx, ry, rw, rh)
+        self:drawBevel(rx, ry, rw, rh)
         love.graphics.setColor(W95.text)
-        love.graphics.printf("Refresh (" .. self.refreshAttempts .. ")", refreshBtnX, refreshBtnY + 3, refreshBtnW, "center")
-        table.insert(self.contentButtons, {x = refreshBtnX, y = refreshBtnY, w = refreshBtnW, h = refreshBtnH, action = "refresh"})
+        love.graphics.printf("Refresh ("..self.refreshAttempts..")", rx, ry+3, rw, "center")
+        self.buttons[#self.buttons+1] = {x=rx, y=ry, w=rw, h=rh, action="refresh"}
     else
         love.graphics.setColor(W95.textDim)
-        love.graphics.rectangle("fill", refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
-        self:drawBevel(refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH)
+        love.graphics.rectangle("fill", rx, ry, rw, rh)
+        self:drawBevel(rx, ry, rw, rh)
         love.graphics.setColor(W95.red)
-        love.graphics.printf(math.ceil(self.refreshCooldown) .. "s", refreshBtnX, refreshBtnY + 3, refreshBtnW, "center")
+        love.graphics.printf(math.ceil(self.refreshCooldown).."s", rx, ry+3, rw, "center")
     end
 end
 
 function Coding:drawCoding(x, y, w, h)
     love.graphics.setColor(W95.bg)
-    love.graphics.rectangle("fill", x + 6, y + 4, w - 12, h - 8)
-    self:drawBevel(x + 6, y + 4, w - 12, h - 8)
-
+    love.graphics.rectangle("fill", x+6, y+4, w-12, h-8)
+    self:drawBevel(x+6, y+4, w-12, h-8)
     love.graphics.setColor(W95.text)
-    love.graphics.printf("Codificando: " .. self.projectName, x + 8, y + 8, w - 16, "center")
-
-    local hpRatio = math.min(self.projectProgress / self.projectMaxProgress, 1)
-    local barX = x + 20
-    local barY = y + 28
-    local barW = w - 40
-    local barH = 22
-
-    local shakeOff = 0
-    if self.barShake > 0 then shakeOff = (math.random() - 0.5) * 4 end
-
-    love.graphics.setColor(W95.fieldBg)
-    love.graphics.rectangle("fill", barX + shakeOff, barY, barW, barH)
-    self:drawInset(barX + shakeOff, barY, barW, barH)
-    local barColor = hpRatio > 0.5 and W95.green or (hpRatio > 0.25 and W95.yellow or W95.red)
-    love.graphics.setColor(barColor)
-    love.graphics.rectangle("fill", barX + 2 + shakeOff, barY + 2, (barW - 4) * hpRatio, barH - 4)
+    love.graphics.printf("Codificando: "..(self.activeProject and self.activeProject.name or ""), x+8, y+8, w-16, "center")
+    local hpR = math.min(self.projectProgress / self.projectMaxProgress, 1)
+    local bx, by, bw, bh = x+20, y+28, w-40, 22
+    local shake = self.barShake > 0 and (math.random()-0.5)*4 or 0
     love.graphics.setColor(W95.white)
-    love.graphics.printf(math.floor(self.projectProgress) .. "/" .. self.projectMaxProgress, barX + shakeOff, barY + 3, barW, "center")
-
+    love.graphics.rectangle("fill", bx+shake, by, bw, bh)
+    self:drawInset(bx+shake, by, bw, bh)
+    local bc = hpR > 0.5 and W95.green or (hpR > 0.25 and W95.yellow or W95.red)
+    love.graphics.setColor(bc)
+    love.graphics.rectangle("fill", bx+2+shake, by+2, (bw-4)*hpR, bh-4)
+    love.graphics.setColor(W95.white)
+    love.graphics.printf(math.floor(self.projectProgress).."/"..self.projectMaxProgress, bx+shake, by+3, bw, "center")
     for _, target in ipairs(self.milestoneTargets) do
-        local mx = barX + (barW - 4) * target
-        local passed = hpRatio >= target
-        love.graphics.setColor(passed and {0.5, 1, 0.5} or {1, 0.5, 0.5})
-        love.graphics.line(mx + shakeOff, barY - 3, mx + shakeOff, barY + barH + 3)
+        local mx = bx + (bw-4) * target
+        local passed = hpR >= target
+        love.graphics.setColor(passed and {0.5,1,0.5} or {1,0.5,0.5})
+        love.graphics.line(mx+shake, by-3, mx+shake, by+bh+3)
         love.graphics.setColor(passed and W95.green or W95.yellow)
-        love.graphics.printf("V", mx + shakeOff - 12, barY - 14, 24, "center")
+        love.graphics.printf("V", mx+shake-12, by-14, 24, "center")
     end
-
-    local infoY = barY + barH + 4
+    local infoY = by + bh + 4
     love.graphics.setColor(W95.text)
-    love.graphics.print("Dias: " .. math.ceil(self.projectDaysLeft) .. "/" .. self.projectMaxDays, x + 16, infoY)
+    love.graphics.print("Dias: "..math.ceil(self.projectDaysLeft).."/"..self.projectMaxDays, x+16, infoY)
     love.graphics.setColor(W95.green)
-    love.graphics.print("Ingresos: $" .. math.floor(self.moneySpent), x + w - 100, infoY)
-
+    love.graphics.print("Ingresos: $"..math.floor(self.moneySpent), x+w-100, infoY)
     local compY = infoY + 18
-    local compW = (w - 40) / math.max(1, #self.components)
+    local compW = (w-40) / math.max(1, #self.components)
     for i, comp in ipairs(self.components) do
-        local cx = x + 16 + (i - 1) * compW
-        local vibOff = 0
-        if comp.vibration > 0 then vibOff = (math.random() - 0.5) * 4 end
-
-        love.graphics.setColor(W95.fieldBg)
-        love.graphics.rectangle("fill", cx + vibOff, compY, compW - 6, 50)
-        self:drawBevel(cx + vibOff, compY, compW - 6, 50)
-
+        local cx = x + 16 + (i-1) * compW
+        local vib = comp.vibration > 0 and (math.random()-0.5)*4 or 0
+        love.graphics.setColor(W95.white)
+        love.graphics.rectangle("fill", cx+vib, compY, compW-6, 50)
+        self:drawBevel(cx+vib, compY, compW-6, 50)
         love.graphics.setColor(comp.color)
-        love.graphics.rectangle("fill", cx + vibOff, compY, compW - 6, 3)
-        love.graphics.rectangle("fill", cx + vibOff, compY + 47, compW - 6, 3)
-
+        love.graphics.rectangle("fill", cx+vib, compY, compW-6, 3)
+        love.graphics.rectangle("fill", cx+vib, compY+47, compW-6, 3)
         love.graphics.setColor(W95.text)
-        love.graphics.printf(comp.label, cx + vibOff, compY + 5, compW - 6, "center")
+        love.graphics.printf(comp.label, cx+vib, compY+5, compW-6, "center")
         love.graphics.setColor(W95.textDim)
-        love.graphics.printf(comp.power .. " pts", cx + vibOff, compY + 18, compW - 6, "center")
-        love.graphics.printf(string.format("%.1fs", comp.interval), cx + vibOff, compY + 30, compW - 6, "center")
-
-        comp.screenX = cx + compW / 2
+        love.graphics.printf(comp.power.." pts", cx+vib, compY+18, compW-6, "center")
+        love.graphics.printf(string.format("%.1fs", comp.interval), cx+vib, compY+30, compW-6, "center")
+        comp.screenX = cx + compW/2
         comp.screenY = compY + 50
-        comp.barX = barX + barW * hpRatio
-        comp.barY = barY + barH / 2
+        comp.barX = bx + bw * hpR
+        comp.barY = by + bh/2
     end
-
-    for _, circ in ipairs(self.circles) do
-        love.graphics.setColor(0, 0, 0, 0.3)
-        love.graphics.circle("fill", circ.x + 2, circ.y + 2, circ.radius)
-        love.graphics.setColor(circ.color)
-        love.graphics.circle("fill", circ.x, circ.y, circ.radius)
-        love.graphics.setColor(0, 0, 0)
-        love.graphics.circle("line", circ.x, circ.y, circ.radius)
-        local prevFont = love.graphics.getFont()
+    for _, c in ipairs(self.circles) do
+        love.graphics.setColor(0,0,0,0.3)
+        love.graphics.circle("fill", c.x+2, c.y+2, c.radius)
+        love.graphics.setColor(c.color)
+        love.graphics.circle("fill", c.x, c.y, c.radius)
+        love.graphics.setColor(0,0,0)
+        love.graphics.circle("line", c.x, c.y, c.radius)
         love.graphics.setFont(love.graphics.newFont(13))
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.printf(circ.power, circ.x - 16, circ.y - 8, 32, "center")
-        love.graphics.setFont(prevFont)
+        love.graphics.setColor(1,1,1)
+        love.graphics.printf(c.power, c.x-16, c.y-8, 32, "center")
+        love.graphics.setFont(self.smallFont)
     end
-
-    for _, num in ipairs(self.floatingNumbers) do
-        local alpha = num.timer / num.maxTimer
-        love.graphics.setColor(num.isBug and {1, 0.2, 0.2, alpha} or {0.2, 1, 0.2, alpha})
-        love.graphics.printf(num.text, num.x - 30, num.y, 60, "center")
+    for _, n in ipairs(self.floatingNumbers) do
+        local alpha = n.timer / n.maxTimer
+        love.graphics.setColor(n.isBug and {1,0.2,0.2,alpha} or {0.2,1,0.2,alpha})
+        love.graphics.printf(n.text, n.x-30, n.y, 60, "center")
     end
-
-    local cancelBtnW = 100
-    local cancelBtnH = 24
-    local cancelBtnX = x + w - cancelBtnW - 16
-    local cancelBtnY = y + h - 36
-    local cHov = self.lastMX >= cancelBtnX and self.lastMX <= cancelBtnX + cancelBtnW and self.lastMY >= cancelBtnY and self.lastMY <= cancelBtnY + cancelBtnH
-
-    love.graphics.setColor(cHov and {0.85, 0.85, 0.85} or W95.bg)
-    love.graphics.rectangle("fill", cancelBtnX, cancelBtnY, cancelBtnW, cancelBtnH)
-    self:drawBevel(cancelBtnX, cancelBtnY, cancelBtnW, cancelBtnH)
+    local cx BtnW, btnH = 100, 24
+    local cxBtnX, cxBtnY = x+w-btnW-16, y+h-36
+    local cxHov = self.lastMX >= cxBtnX and self.lastMX <= cxBtnX+btnW and self.lastMY >= cxBtnY and self.lastMY <= cxBtnY+btnH
+    love.graphics.setColor(cxHov and {0.85,0.85,0.85} or W95.bg)
+    love.graphics.rectangle("fill", cxBtnX, cxBtnY, btnW, btnH)
+    self:drawBevel(cxBtnX, cxBtnY, btnW, btnH)
     love.graphics.setColor(W95.red)
-    love.graphics.printf("Cancelar", cancelBtnX, cancelBtnY + 5, cancelBtnW, "center")
-    table.insert(self.contentButtons, {x = cancelBtnX, y = cancelBtnY, w = cancelBtnW, h = cancelBtnH, action = "cancel_project"})
-
+    love.graphics.printf("Cancelar", cxBtnX, cxBtnY+5, btnW, "center")
+    self.buttons[#self.buttons+1] = {x=cxBtnX, y=cxBtnY, w=btnW, h=btnH, action="cancel_project"}
     love.graphics.setColor(W95.textDim)
-    love.graphics.printf("Cancelas y recuperas 30%", x + 16, y + h - 28, w / 2 - 20, "left")
+    love.graphics.printf("Recuperas 30%", x+16, y+h-28, w/2-20, "left")
 end
 
 function Coding:drawMinigame(x, y, w, h)
     love.graphics.setColor({0.15, 0.16, 0.18})
-    love.graphics.rectangle("fill", x + 6, y + 4, w - 12, h - 8)
-    self:drawBevel(x + 6, y + 4, w - 12, h - 8)
-
+    love.graphics.rectangle("fill", x+6, y+4, w-12, h-8)
+    self:drawBevel(x+6, y+4, w-12, h-8)
     love.graphics.setColor(W95.yellow)
-    love.graphics.setFont(self.smallFont or love.graphics.newFont(11))
-    love.graphics.printf("Escribe el codigo para completar el milestone", x + 8, y + 8, w - 16, "center")
-
-    local codeX = x + 12
-    local codeY = y + 24
-    local codeW = w - 24
-    local codeH = h - 50
+    love.graphics.printf("Escribe el codigo para completar el milestone", x+8, y+8, w-16, "center")
+    local codeX, codeY, codeW, codeH = x+12, y+24, w-24, h-50
     self.codeH = codeH
-
-    love.graphics.setColor({0.1, 0.1, 0.1})
+    love.graphics.setColor({0.1,0.1,0.1})
     love.graphics.rectangle("fill", codeX, codeY, codeW, codeH)
     self:drawBevel(codeX, codeY, codeW, codeH)
-
-    love.graphics.setScissor(codeX + 1, codeY + 1, codeW - 2, codeH - 2)
+    love.graphics.setScissor(codeX+1, codeY+1, codeW-2, codeH-2)
     love.graphics.setFont(self.codeFont)
     local lineH = 16
-    local maxLines = math.floor((codeH - 4) / lineH)
-
-    local startLine = math.max(1, math.floor(self.codeScrollY / lineH) + 1)
+    local maxLines = math.floor((codeH-4) / lineH)
+    local startLine = math.max(1, math.floor(self.codeScrollY/lineH)+1)
     local endLine = math.min(#self.codeLines, startLine + maxLines)
-
+    local kw = {"if","else","for","while","return","function","class","def","import","from","const","let","var","int","char","void","struct","typedef","include","define","printf","malloc","free"}
     for i = startLine, endLine do
-        local lineY = codeY + 2 + (i - startLine) * lineH
-        love.graphics.setColor({0.4, 0.4, 0.4})
-        love.graphics.printf(i, codeX + 4, lineY, 30, "right")
-
-        local lineText = ""
-        if i < self.codeLineIndex then
-            lineText = self.codeLines[i]
-        elseif i == self.codeLineIndex then
-            lineText = self.codeLines[i]:sub(1, self.codeCharIndex)
-        end
-
-        if #lineText > 0 then
-            local tokens = {}
-            local current = ""
-            for c in lineText:gmatch(".") do
+        local ly = codeY + 2 + (i-startLine) * lineH
+        love.graphics.setColor({0.4,0.4,0.4})
+        love.graphics.printf(i, codeX+4, ly, 30, "right")
+        local txt = ""
+        if i < self.codeLineIndex then txt = self.codeLines[i]
+        elseif i == self.codeLineIndex then txt = self.codeLines[i]:sub(1, self.codeCharIndex) end
+        if #txt > 0 then
+            local toks, cur = {}, ""
+            for c in txt:gmatch(".") do
                 if c:match("[%s%(%)%[%]{};,:%.]") then
-                    if #current > 0 then
-                        table.insert(tokens, current)
-                        current = ""
-                    end
-                    table.insert(tokens, c)
-                else
-                    current = current .. c
-                end
+                    if #cur > 0 then toks[#toks+1]=cur; cur="" end
+                    toks[#toks+1]=c
+                else cur = cur..c end
             end
-            if #current > 0 then table.insert(tokens, current) end
-
-            local keywords = {"if", "else", "for", "while", "return", "function", "class", "def", "import", "from", "const", "let", "var", "int", "char", "void", "struct", "typedef", "include", "define", "malloc", "free"}
-            local drawX = codeX + 38
-            for _, token in ipairs(tokens) do
-                local color = {0.97, 0.97, 0.94}
-                if token:match("^%d+$") then color = {0.68, 0.45, 0.97}
-                elseif token:match('".*"') or token:match("'.*'") then color = {0.90, 0.78, 0.35}
-                elseif token:match("^//") or token:match("^#") then color = {0.50, 0.52, 0.54}
-                else
-                    for _, kw in ipairs(keywords) do
-                        if token == kw then color = {0.98, 0.45, 0.36}; break end
-                    end
-                end
-                love.graphics.setColor(color)
-                love.graphics.print(token, drawX, lineY)
-                drawX = drawX + self.codeFont:getWidth(token)
+            if #cur > 0 then toks[#toks+1]=cur end
+            local dx = codeX + 38
+            for _, tk in ipairs(toks) do
+                local col = {0.97,0.97,0.94}
+                if tk:match("^%d+$") then col = {0.68,0.45,0.97}
+                elseif tk:match('".*"') or tk:match("'.*'") then col = {0.90,0.78,0.35}
+                elseif tk:match("^//") or tk:match("^#") then col = {0.50,0.52,0.54}
+                else for _, k in ipairs(kw) do if tk == k then col = {0.98,0.45,0.36}; break end end end
+                love.graphics.setColor(col)
+                love.graphics.print(tk, dx, ly)
+                dx = dx + self.codeFont:getWidth(tk)
             end
         end
-
-        if i == self.codeLineIndex and not self.codeComplete and math.floor(self.cursorBlink * 2) % 2 == 0 then
-            local cursorX = codeX + 38 + self.codeFont:getWidth(self.codeLines[i]:sub(1, self.codeCharIndex))
-            love.graphics.setColor({0.97, 0.97, 0.94})
-            love.graphics.rectangle("fill", cursorX, lineY, 8, 14)
+        if i == self.codeLineIndex and math.floor(self.cursorBlink*2)%2 == 0 then
+            local cx = codeX + 38 + self.codeFont:getWidth(self.codeLines[i]:sub(1, self.codeCharIndex))
+            love.graphics.setColor({0.97,0.97,0.94})
+            love.graphics.rectangle("fill", cx, ly, 8, 14)
         end
     end
     love.graphics.setScissor()
-
     love.graphics.setColor(W95.textDim)
-    love.graphics.setFont(self.smallFont or love.graphics.newFont(11))
-    love.graphics.printf("Presiona cualquier tecla para escribir codigo", x + 12, y + h - 14, w - 24, "center")
+    love.graphics.setFont(self.smallFont)
+    love.graphics.printf("Presiona cualquier tecla para escribir codigo", x+12, y+h-14, w-24, "center")
 end
 
 function Coding:drawSell(x, y, w, h)
     love.graphics.setColor(W95.bg)
-    love.graphics.rectangle("fill", x + 6, y + 4, w - 12, h - 8)
-    self:drawBevel(x + 6, y + 4, w - 12, h - 8)
-
+    love.graphics.rectangle("fill", x+6, y+4, w-12, h-8)
+    self:drawBevel(x+6, y+4, w-12, h-8)
     love.graphics.setColor(W95.green)
-    love.graphics.printf("Proyecto Completado!", x + 8, y + 20, w - 16, "center")
-
+    love.graphics.printf("Proyecto Completado!", x+8, y+20, w-16, "center")
     love.graphics.setColor(W95.text)
-    love.graphics.printf(self.projectName, x + 8, y + 45, w - 16, "center")
-
+    love.graphics.printf(self.activeProject and self.activeProject.name or "", x+8, y+45, w-16, "center")
     love.graphics.setColor(W95.yellow)
-    love.graphics.printf("XP ganado: +" .. math.floor(self.activeProject.reward / 5), x + 8, y + 65, w - 16, "center")
-
-    local btnW = 160
-    local btnH = 32
-    local btnX = x + (w - btnW) / 2
-    local btnY = y + 100
-    local btnHov = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
-
-    love.graphics.setColor(btnHov and {0.85, 0.85, 0.85} or W95.bg)
+    love.graphics.printf("XP ganado: +"..(self.activeProject and math.floor(self.activeProject.reward/5) or 0), x+8, y+65, w-16, "center")
+    local btnW, btnH = 160, 32
+    local btnX, btnY = x+(w-btnW)/2, y+100
+    local hov = self.lastMX >= btnX and self.lastMX <= btnX+btnW and self.lastMY >= btnY and self.lastMY <= btnY+btnH
+    love.graphics.setColor(hov and {0.85,0.85,0.85} or W95.bg)
     love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
     self:drawBevel(btnX, btnY, btnW, btnH)
     love.graphics.setColor(W95.green)
-    love.graphics.printf("Vender App", btnX, btnY + 8, btnW, "center")
-    table.insert(self.contentButtons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "sell_app"})
+    love.graphics.printf("Vender App", btnX, btnY+8, btnW, "center")
+    self.buttons[#self.buttons+1] = {x=btnX, y=btnY, w=btnW, h=btnH, action="sell_app"}
 end
 
 function Coding:drawManage(x, y, w, h)
     love.graphics.setColor(W95.bg)
-    love.graphics.rectangle("fill", x + 6, y + 4, w - 12, h - 8)
-    self:drawBevel(x + 6, y + 4, w - 12, h - 8)
-
+    love.graphics.rectangle("fill", x+6, y+4, w-12, h-8)
+    self:drawBevel(x+6, y+4, w-12, h-8)
     love.graphics.setColor(W95.text)
-    love.graphics.printf("Mis Aplicaciones", x + 8, y + 8, w - 16, "center")
-
+    love.graphics.printf("Mis Aplicaciones", x+8, y+8, w-16, "center")
     if #self.publishedApps == 0 then
         love.graphics.setColor(W95.textDim)
-        love.graphics.printf("No tienes apps publicadas.", x + 8, y + 50, w - 16, "center")
-
-        local backBtnW = 80
-        local backBtnH = 22
-        local backBtnX = x + (w - backBtnW) / 2
-        local backBtnY = y + h - 34
-        local bHov = self.lastMX >= backBtnX and self.lastMX <= backBtnX + backBtnW and self.lastMY >= backBtnY and self.lastMY <= backBtnY + backBtnH
-
-        love.graphics.setColor(bHov and {0.85, 0.85, 0.85} or W95.bg)
-        love.graphics.rectangle("fill", backBtnX, backBtnY, backBtnW, backBtnH)
-        self:drawBevel(backBtnX, backBtnY, backBtnW, backBtnH)
+        love.graphics.printf("No tienes apps publicadas.", x+8, y+50, w-16, "center")
+        local bw, bh = 80, 22
+        local bx, by = x+(w-bw)/2, y+h-34
+        local hov = self.lastMX >= bx and self.lastMX <= bx+bw and self.lastMY >= by and self.lastMY <= by+bh
+        love.graphics.setColor(hov and {0.85,0.85,0.85} or W95.bg)
+        love.graphics.rectangle("fill", bx, by, bw, bh)
+        self:drawBevel(bx, by, bw, bh)
         love.graphics.setColor(W95.text)
-        love.graphics.printf("Volver", backBtnX, backBtnY + 3, backBtnW, "center")
-        table.insert(self.contentButtons, {x = backBtnX, y = backBtnY, w = backBtnW, h = backBtnH, action = "back_browse"})
+        love.graphics.printf("Volver", bx, by+3, bw, "center")
+        self.buttons[#self.buttons+1] = {x=bx, y=by, w=bw, h=bh, action="back_browse"}
         return
     end
-
     local itemH = 60
-    local startY = y + 28
     for i, app in ipairs(self.publishedApps) do
-        local iy = startY + (i - 1) * (itemH + 8)
+        local iy = y + 28 + (i-1) * (itemH + 8)
         if iy + itemH < y + h - 40 then
             love.graphics.setColor(W95.bg)
-            love.graphics.rectangle("fill", x + 12, iy, w - 24, itemH)
-            self:drawBevel(x + 12, iy, w - 24, itemH)
-
+            love.graphics.rectangle("fill", x+12, iy, w-24, itemH)
+            self:drawBevel(x+12, iy, w-24, itemH)
             love.graphics.setColor(W95.text)
-            love.graphics.print(app.name, x + 20, iy + 4)
-
-            local status = app.selling and ("Vendiendo (" .. app.monthsLeft .. " meses)") or "Retirada"
+            love.graphics.print(app.name, x+20, iy+4)
+            local status = app.selling and ("Vendiendo ("..app.monthsLeft.." meses)") or "Retirada"
             love.graphics.setColor(app.selling and W95.green or W95.textDim)
-            love.graphics.print(status, x + 20, iy + 18)
-
+            love.graphics.print(status, x+20, iy+18)
             love.graphics.setColor(W95.yellow)
-            love.graphics.print("Total: $" .. app.totalRevenue, x + 20, iy + 32)
-
+            love.graphics.print("Total: $"..app.totalRevenue, x+20, iy+32)
             if app.selling then
-                local updateBtnW = 60
-                local updateBtnH = 16
-                local updateBtnX = x + w - updateBtnW - 20
-                local updateBtnY = iy + 4
-                local uHov = self.lastMX >= updateBtnX and self.lastMX <= updateBtnX + updateBtnW and self.lastMY >= updateBtnY and self.lastMY <= updateBtnY + updateBtnH
-
+                local uw, uh = 60, 16
+                local ux, uy = x+w-uw-20, iy+4
+                local uhov = self.lastMX >= ux and self.lastMX <= ux+uw and self.lastMY >= uy and self.lastMY <= uy+uh
                 if (app.updateCooldown or 0) >= 4 then
-                    love.graphics.setColor(uHov and {0.85, 0.85, 0.85} or W95.bg)
-                    love.graphics.rectangle("fill", updateBtnX, updateBtnY, updateBtnW, updateBtnH)
-                    self:drawBevel(updateBtnX, updateBtnY, updateBtnW, updateBtnH)
+                    love.graphics.setColor(uhov and {0.85,0.85,0.85} or W95.bg)
+                    love.graphics.rectangle("fill", ux, uy, uw, uh)
+                    self:drawBevel(ux, uy, uw, uh)
                     love.graphics.setColor(W95.green)
-                    love.graphics.printf("Update", updateBtnX, updateBtnY + 1, updateBtnW, "center")
-                    table.insert(self.contentButtons, {x = updateBtnX, y = updateBtnY, w = updateBtnW, h = updateBtnH, action = "do_update", index = i})
+                    love.graphics.printf("Update", ux, uy+1, uw, "center")
+                    self.buttons[#self.buttons+1] = {x=ux, y=uy, w=uw, h=uh, action="do_update", index=i}
                 else
                     love.graphics.setColor(W95.textDim)
-                    love.graphics.print("Update: " .. (4 - (app.updateCooldown or 0)) .. " meses", x + w - 110, iy + 18)
+                    love.graphics.print("Update: "..(4-(app.updateCooldown or 0)).." meses", x+w-110, iy+18)
                 end
-
-                local cancelAppW = 60
-                local cancelAppH = 16
-                local cancelAppX = x + w - cancelAppW - 20
-                local cancelAppY = iy + 24
-                local caHov = self.lastMX >= cancelAppX and self.lastMX <= cancelAppX + cancelAppW and self.lastMY >= cancelAppY and self.lastMY <= cancelAppY + cancelAppH
-
-                love.graphics.setColor(caHov and {0.85, 0.85, 0.85} or W95.bg)
-                love.graphics.rectangle("fill", cancelAppX, cancelAppY, cancelAppW, cancelAppH)
-                self:drawBevel(cancelAppX, cancelAppY, cancelAppW, cancelAppH)
+                local cw, ch = 60, 16
+                local cxBtnX, cxBtnY = x+w-cw-20, iy+24
+                local chov = self.lastMX >= cxBtnX and self.lastMX <= cxBtnX+cw and self.lastMY >= cxBtnY and self.lastMY <= cxBtnY+ch
+                love.graphics.setColor(chov and {0.85,0.85,0.85} or W95.bg)
+                love.graphics.rectangle("fill", cxBtnX, cxBtnY, cw, ch)
+                self:drawBevel(cxBtnX, cxBtnY, cw, ch)
                 love.graphics.setColor(W95.red)
-                love.graphics.printf("Quitar", cancelAppX, cancelAppY + 1, cancelAppW, "center")
-                table.insert(self.contentButtons, {x = cancelAppX, y = cancelAppY, w = cancelAppW, h = cancelAppH, action = "cancel_sale", index = i})
+                love.graphics.printf("Quitar", cxBtnX, cxBtnY+1, cw, "center")
+                self.buttons[#self.buttons+1] = {x=cxBtnX, y=cxBtnY, w=cw, h=ch, action="cancel_sale", index=i}
             end
         end
     end
-
-    local backBtnW = 80
-    local backBtnH = 22
-    local backBtnX = x + 12
-    local backBtnY = y + h - 34
-    local bHov = self.lastMX >= backBtnX and self.lastMX <= backBtnX + backBtnW and self.lastMY >= backBtnY and self.lastMY <= backBtnY + backBtnH
-
-    love.graphics.setColor(bHov and {0.85, 0.85, 0.85} or W95.bg)
-    love.graphics.rectangle("fill", backBtnX, backBtnY, backBtnW, backBtnH)
-    self:drawBevel(backBtnX, backBtnY, backBtnW, backBtnH)
+    local bw, bh = 80, 22
+    local bx, by = x+12, y+h-34
+    local hov = self.lastMX >= bx and self.lastMX <= bx+bw and self.lastMY >= by and self.lastMY <= by+bh
+    love.graphics.setColor(hov and {0.85,0.85,0.85} or W95.bg)
+    love.graphics.rectangle("fill", bx, by, bw, bh)
+    self:drawBevel(bx, by, bw, bh)
     love.graphics.setColor(W95.text)
-    love.graphics.printf("Volver", backBtnX, backBtnY + 3, backBtnW, "center")
-    table.insert(self.contentButtons, {x = backBtnX, y = backBtnY, w = backBtnW, h = backBtnH, action = "back_browse"})
+    love.graphics.printf("Volver", bx, by+3, bw, "center")
+    self.buttons[#self.buttons+1] = {x=bx, y=by, w=bw, h=bh, action="back_browse"}
 end
 
-function Coding:handleClick(x, y, button)
-    if button ~= 1 then return false end
-
-    for _, btn in ipairs(self.contentButtons) do
-        if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
-            if btn.action == "start_project" then
-                self:startProject(btn.index)
-            elseif btn.action == "refresh" and self.refreshAttempts > 0 then
-                self:refreshProjects()
-                self.refreshAttempts = self.refreshAttempts - 1
-                if self.refreshAttempts == 0 then
-                    self.refreshCooldown = self.refreshCooldownMax
-                end
-            elseif btn.action == "sell_app" then
-                self:sellApp()
-            elseif btn.action == "open_manage" then
-                self.state = "manage"
-            elseif btn.action == "back_browse" then
-                self.state = "browse"
-            elseif btn.action == "cancel_project" then
-                self:cancelProject()
-            elseif btn.action == "do_update" and btn.index then
-                local app = self.publishedApps[btn.index]
-                if app and app.updateCooldown >= 4 then
-                    app.revenuePerMonth = math.floor(app.revenuePerMonth * 1.3)
-                    app.monthsLeft = app.monthsLeft + 8
-                    app.updateCooldown = 0
-                end
-            elseif btn.action == "cancel_sale" and btn.index then
-                table.remove(self.publishedApps, btn.index)
-            end
-            return true
-        end
-    end
-    return true
-end
-
-function Coding:drawBevel(x, y, w, h)
-    love.graphics.setColor(W95.borderLight)
-    love.graphics.line(x, y, x + w, y)
-    love.graphics.line(x, y, x, y + h)
-    love.graphics.setColor(W95.borderDark)
-    love.graphics.line(x + w, y, x + w, y + h)
-    love.graphics.line(x, y + h, x + w, y + h)
-end
-
-function Coding:drawInset(x, y, w, h)
-    love.graphics.setColor(W95.borderDark)
-    love.graphics.line(x, y, x + w, y)
-    love.graphics.line(x, y, x, y + h)
-    love.graphics.setColor(W95.borderLight)
-    love.graphics.line(x + w, y, x + w, y + h)
-    love.graphics.line(x, y + h, x + w, y + h)
-end
-
-function Coding:mousemoved(x, y)
-    self.lastMX = x
-    self.lastMY = y
-    self.window:mousemoved(x, y)
+function Coding:mousemoved(mx, my)
+    self.lastMX = mx
+    self.lastMY = my
+    self.window:mousemoved(mx, my)
 end
 
 function Coding:mousereleased(x, y, button)
     self.window:mousereleased(x, y, button)
 end
 
-function Coding:draw(mx, my)
+function Coding:draw()
+    self.lastMX, self.lastMY = love.mouse.getPosition()
     self.window:drawFrame()
 end
 
@@ -941,50 +745,6 @@ function Coding:mousepressed(x, y, button)
     return self.window:mousepressed(x, y, button)
 end
 
-function Coding:keypressed(key)
-    if self.state ~= "coding" or not self.milestoneActive then return end
-    if key == "lshift" or key == "rshift" or key == "lctrl" or key == "rctrl" or
-       key == "lalt" or key == "ralt" or key == "escape" or key == "tab" or
-       key == "capslock" or key == "return" or key == "up" or key == "down" or
-       key == "left" or key == "right" or key == "home" or key == "end" then
-        return
-    end
-
-    local charsPerKey = 1 + self.codingLevel
-    for i = 1, charsPerKey do
-        if self.codeLineIndex <= #self.codeLines then
-            local currentLine = self.codeLines[self.codeLineIndex]
-            if self.codeCharIndex < #currentLine then
-                self.codeCharIndex = self.codeCharIndex + 1
-            else
-                self.codeLineIndex = self.codeLineIndex + 1
-                self.codeCharIndex = 0
-            end
-        end
-    end
-
-    local totalChars = 0
-    for _, line in ipairs(self.codeLines) do
-        totalChars = totalChars + #line + 1
-    end
-    local typedChars = 0
-    for i = 1, self.codeLineIndex - 1 do
-        typedChars = typedChars + #self.codeLines[i] + 1
-    end
-    typedChars = typedChars + self.codeCharIndex
-    self.codeProgress = math.min(1, typedChars / totalChars)
-
-    if self.codeLineIndex > #self.codeLines then
-        self.milestoneActive = false
-        self.codeComplete = false
-        local bonus = math.floor(self.activeProject.baseHp * 0.1)
-        self.projectProgress = self.projectProgress + bonus
-        self.codingXP = self.codingXP + 10
-        self:checkLevelUp()
-    end
-end
-
-function Coding:textinput(text)
-end
+function Coding:textinput(text) end
 
 return Coding
