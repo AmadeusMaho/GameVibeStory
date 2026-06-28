@@ -26,6 +26,7 @@ local W95 = {
     yellow = {0.8, 0.6, 0},
     favHover = {0, 0, 0.8},
     green = {0, 0.5, 0},
+    red = {0.8, 0, 0},
 }
 
 function Explorer.new(x, y)
