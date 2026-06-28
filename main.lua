@@ -60,6 +60,7 @@ pcStats = {
     disk = "850 MB HDD",
     display = "Standard PCI Graphics Adapter (VGA)",
     cooling = "Disipador basico",
+    motherboard = "Socket 5",
     bios = "American Megatrends  12/01/94",
     os = "Microsoft Windows 95  4.00.950",
 }
@@ -75,6 +76,7 @@ local bootLines = {
     {text = "HDD: " .. pcStats.disk, x = 80, y = 160, color = {0.8, 0.8, 0.8}},
     {text = "Video: " .. pcStats.display, x = 80, y = 180, color = {0.8, 0.8, 0.8}},
     {text = "Cooling: " .. pcStats.cooling, x = 80, y = 200, color = {0.8, 0.8, 0.8}},
+    {text = "Motherboard: " .. pcStats.motherboard, x = 80, y = 220, color = {0.8, 0.8, 0.8}},
     {text = "", x = 80, y = 220, color = {0.8, 0.8, 0.8}},
     {text = "WAIT...", x = 80, y = 240, color = {0.8, 0.8, 0.8}},
 }
@@ -1518,6 +1520,7 @@ function love.load()
         bootLines[8] = {text = "HDD: " .. pcStats.disk, x = 80, y = 375, color = {0.8, 0.8, 0.8}}
         bootLines[9] = {text = "Video: " .. pcStats.display, x = 80, y = 400, color = {0.8, 0.8, 0.8}}
         bootLines[10] = {text = "Cooling: " .. pcStats.cooling, x = 80, y = 425, color = {0.8, 0.8, 0.8}}
+        bootLines[11] = {text = "Motherboard: " .. pcStats.motherboard, x = 80, y = 450, color = {0.8, 0.8, 0.8}}
     end
 end
 

@@ -175,7 +175,8 @@ function MyPC:drawGeneralTab(x, y, w, h)
         {label = "Memoria:", value = ps.ram},
         {label = "Disco:", value = ps.disk},
         {label = "Pantalla:", value = ps.display},
-        {label = "Refrigeracion:", value = ps.sound or "Disipador basico"},
+        {label = "Refrigeracion:", value = ps.cooling or "Disipador basico"},
+        {label = "Placa Madre:", value = ps.motherboard or "Socket 5"},
         {label = "BIOS:", value = ps.bios},
     }
 

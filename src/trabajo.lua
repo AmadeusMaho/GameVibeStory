@@ -128,9 +128,25 @@ local componentDefs = {
         },
         passive = "Reduce fallos (bugs) en circulos",
     },
+    motherboard = {
+        label = "Placa Madre",
+        color = {0.4, 0.6, 0.9},
+        baseInterval = 0,
+        basePower = 0,
+        tiers = {
+            {interval = 0, power = 0, intervalReduction = 0.0, powerBonus = 0.0},
+            {interval = 0, power = 0, intervalReduction = 0.03, powerBonus = 0.01},
+            {interval = 0, power = 0, intervalReduction = 0.06, powerBonus = 0.02},
+            {interval = 0, power = 0, intervalReduction = 0.09, powerBonus = 0.03},
+            {interval = 0, power = 0, intervalReduction = 0.12, powerBonus = 0.04},
+            {interval = 0, power = 0, intervalReduction = 0.15, powerBonus = 0.05},
+            {interval = 0, power = 0, intervalReduction = 0.18, powerBonus = 0.06},
+        },
+        passive = "Reduce intervalos y potencia todos los componentes",
+    },
 }
 
-local componentOrder = {"gpu", "cpu", "ram", "cooling"}
+local componentOrder = {"gpu", "cpu", "ram", "cooling", "motherboard"}
 
 function Trabajo.new(x, y)
     local self = setmetatable({}, Trabajo)
@@ -261,6 +277,7 @@ function Trabajo:getComponentTier(componentId)
         cpu = "cpu",
         ram = "ram",
         cooling = "cooling",
+        motherboard = "motherboard",
     }
     local stat = statMap[componentId]
     if not stat then return 0 end
@@ -270,18 +287,39 @@ function Trabajo:getComponentTier(componentId)
     return 0
 end
 
+function Trabajo:getMotherboardBonus()
+    local mbTier = self:getComponentTier("motherboard")
+    local def = componentDefs.motherboard
+    if mbTier == 0 then return 0, 0 end
+    return def.tiers[mbTier].intervalReduction, def.tiers[mbTier].powerBonus
+end
+
 function Trabajo:getComponentInterval(componentId)
+    if componentId == "motherboard" then return 0 end
     local def = componentDefs[componentId]
     local tier = self:getComponentTier(componentId)
-    if tier == 0 then return def.baseInterval end
-    return def.tiers[tier].interval
+    local baseInterval
+    if tier == 0 then
+        baseInterval = def.baseInterval
+    else
+        baseInterval = def.tiers[tier].interval
+    end
+    local intervalReduction = self:getMotherboardBonus()
+    return baseInterval * (1 - intervalReduction)
 end
 
 function Trabajo:getComponentPower(componentId)
+    if componentId == "motherboard" then return 0 end
     local def = componentDefs[componentId]
     local tier = self:getComponentTier(componentId)
-    if tier == 0 then return def.basePower end
-    return def.tiers[tier].power
+    local basePower
+    if tier == 0 then
+        basePower = def.basePower
+    else
+        basePower = def.tiers[tier].power
+    end
+    local _, powerBonus = self:getMotherboardBonus()
+    return math.floor(basePower * (1 + powerBonus))
 end
 
 function Trabajo:recalcComponents()
@@ -292,7 +330,7 @@ function Trabajo:recalcComponents()
         local power = self:getComponentPower(id)
         local actualName = def.label
         if self.explorerRef and self.explorerRef.getComponentName then
-            local statMap = {gpu = "display", cpu = "cpu", ram = "ram", cooling = "cooling"}
+            local statMap = {gpu = "display", cpu = "cpu", ram = "ram", cooling = "cooling", motherboard = "motherboard"}
             actualName = self.explorerRef:getComponentName(statMap[id] or id)
         end
         table.insert(self.components, {
@@ -1047,11 +1085,18 @@ function Trabajo:drawParticularTab(x, y, w, h)
         love.graphics.setColor(W95.textDim)
         love.graphics.printf(comp.actualName, bx + vibOff, by + 29, boxW, "center")
 
-        love.graphics.setColor(comp.color)
-        love.graphics.printf("Potencia: " .. comp.power, bx + vibOff, by + 41, boxW, "center")
-
-        love.graphics.setColor(W95.textDim)
-        love.graphics.printf(string.format("%.1fs", comp.interval), bx + vibOff, by + 52, boxW, "center")
+        if comp.id == "motherboard" then
+            local intervalReduction, powerBonus = self:getMotherboardBonus()
+            love.graphics.setColor(comp.color)
+            love.graphics.printf(string.format("-%.0f%% intervalo", intervalReduction * 100), bx + vibOff, by + 41, boxW, "center")
+            love.graphics.setColor(W95.green)
+            love.graphics.printf(string.format("+%.0f%% potencia", powerBonus * 100), bx + vibOff, by + 52, boxW, "center")
+        else
+            love.graphics.setColor(comp.color)
+            love.graphics.printf("Potencia: " .. comp.power, bx + vibOff, by + 41, boxW, "center")
+            love.graphics.setColor(W95.textDim)
+            love.graphics.printf(string.format("%.1fs", comp.interval), bx + vibOff, by + 52, boxW, "center")
+        end
 
         comp.screenX = bx + boxW / 2 + vibOff
         comp.screenY = by + boxH / 2

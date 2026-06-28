@@ -200,6 +200,14 @@ function Explorer.new(x, y)
             {from = "Fuente 250W", to = "Fuente 300W", basePrice = 60, capacity = 300},
             {from = "Fuente 300W", to = "Fuente 350W", basePrice = 60, capacity = 350},
         },
+        motherboard = {
+            {from = "Socket 5", to = "Socket 7", basePrice = 150, watts = 5},
+            {from = "Socket 7", to = "Super Socket 7", basePrice = 150, watts = 8},
+            {from = "Super Socket 7", to = "Slot 1", basePrice = 150, watts = 12},
+            {from = "Slot 1", to = "Slot 2", basePrice = 150, watts = 16},
+            {from = "Slot 2", to = "Socket 370", basePrice = 150, watts = 20},
+            {from = "Socket 370", to = "Dual Socket 370", basePrice = 150, watts = 25},
+        },
     }
     
     self.exponentialMultiplier = 2.5
@@ -214,6 +222,7 @@ function Explorer.new(x, y)
         disk = {8, 10, 12, 15},
         display = {10, 15, 20, 25, 35, 45},
         cooling = {2, 4, 6, 9, 12, 16},
+        motherboard = {5, 8, 12, 16, 20, 25},
     }
 
     self.psuCapacity = {150, 200, 250, 300, 350}
@@ -1254,6 +1263,7 @@ function Explorer:handleClick(x, y, button)
                                 if stat == "display" then self.pcStatsRef.display = tier.to end
                                 if stat == "cooling" then self.pcStatsRef.cooling = tier.to end
                                 if stat == "psu" then self.pcStatsRef.psu = tier.to end
+                                if stat == "motherboard" then self.pcStatsRef.motherboard = tier.to end
                             end
                             self.upgrades = self:getVisibleUpgrades()
                         elseif not canBuyMoney then
@@ -1285,6 +1295,7 @@ function Explorer:handleClick(x, y, button)
                                 if upg.stat == "display" then self.pcStatsRef.display = upg.upgrade end
                                 if upg.stat == "cooling" then self.pcStatsRef.cooling = upg.upgrade end
                                 if upg.stat == "monitor" then self.pcStatsRef.monitor = upg.upgrade end
+                                if upg.stat == "motherboard" then self.pcStatsRef.motherboard = upg.upgrade end
                             end
                             self.upgrades = self:getVisibleUpgrades()
                         elseif upg.purchased then
