@@ -315,6 +315,17 @@ function Explorer:getPsuCapacity()
     return self.psuCapacity[level + 1] or 150
 end
 
+function Explorer:getComponentName(stat)
+    local level = self.upgradeLevels[stat] or 0
+    local tiers = self.upgradeTiers[stat]
+    if tiers and level == 0 and tiers[1] then
+        return tiers[1].from
+    elseif tiers and level >= 1 and level <= #tiers then
+        return tiers[level].to
+    end
+    return stat:upper()
+end
+
 function Explorer:canAffordWatts(watts)
     return self:getTotalWatts() + watts <= self:getPsuCapacity()
 end

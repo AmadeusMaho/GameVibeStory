@@ -67,52 +67,52 @@ local componentDefs = {
     gpu = {
         label = "GPU",
         color = {0.2, 0.8, 0.3},
-        baseInterval = 2.0,
+        baseInterval = 3.5,
         basePower = 3,
         tiers = {
-            {interval = 2.0, power = 3},
-            {interval = 1.6, power = 5},
-            {interval = 1.2, power = 8},
-            {interval = 0.8, power = 12},
+            {interval = 3.5, power = 3},
+            {interval = 2.8, power = 5},
+            {interval = 2.1, power = 8},
+            {interval = 1.5, power = 12},
         },
         passive = "Mayor daño por circulo",
     },
     cpu = {
         label = "CPU",
         color = {0.6, 0.2, 0.9},
-        baseInterval = 3.0,
+        baseInterval = 5.0,
         basePower = 2,
         tiers = {
-            {interval = 3.0, power = 2},
-            {interval = 2.4, power = 3},
-            {interval = 1.8, power = 5},
-            {interval = 1.2, power = 7},
+            {interval = 5.0, power = 2},
+            {interval = 4.0, power = 3},
+            {interval = 3.0, power = 5},
+            {interval = 2.0, power = 7},
         },
         passive = "Genera circulos mas rapido",
     },
     ram = {
         label = "RAM",
         color = {0.9, 0.5, 0.1},
-        baseInterval = 4.0,
+        baseInterval = 7.0,
         basePower = 0,
         tiers = {
-            {interval = 4.0, power = 0},
-            {interval = 3.2, power = 2},
-            {interval = 2.4, power = 4},
-            {interval = 1.6, power = 7},
+            {interval = 7.0, power = 0},
+            {interval = 5.5, power = 2},
+            {interval = 4.0, power = 4},
+            {interval = 2.8, power = 7},
         },
         passive = "Multiplicador de puntos al llegar",
     },
     cooling = {
         label = "Refrigeracion",
         color = {0.2, 0.8, 0.8},
-        baseInterval = 5.0,
+        baseInterval = 8.0,
         basePower = 0,
         tiers = {
-            {interval = 5.0, power = 0},
-            {interval = 4.0, power = 2},
-            {interval = 3.0, power = 4},
-            {interval = 2.0, power = 6},
+            {interval = 8.0, power = 0},
+            {interval = 6.5, power = 2},
+            {interval = 5.0, power = 4},
+            {interval = 3.5, power = 6},
         },
         passive = "Reduce fallos (bugs) en circulos",
     },
@@ -277,16 +277,25 @@ function Trabajo:recalcComponents()
     for _, id in ipairs(componentOrder) do
         local def = componentDefs[id]
         local tier = self:getComponentTier(id)
-        table.insert(self.components, {
-            id = id,
-            label = def.label,
-            color = def.color,
-            tier = tier,
-            timer = 0,
-            interval = self:getComponentInterval(id),
-            power = self:getComponentPower(id),
-            vibration = 0,
-        })
+        local power = self:getComponentPower(id)
+        if power > 0 then
+            local actualName = def.label
+            if self.explorerRef and self.explorerRef.getComponentName then
+                local statMap = {gpu = "display", cpu = "cpu", ram = "ram", cooling = "cooling"}
+                actualName = self.explorerRef:getComponentName(statMap[id] or id)
+            end
+            table.insert(self.components, {
+                id = id,
+                label = def.label,
+                actualName = actualName,
+                color = def.color,
+                tier = tier,
+                timer = 0,
+                interval = self:getComponentInterval(id),
+                power = power,
+                vibration = 0,
+            })
+        end
     end
 end
 
@@ -987,13 +996,6 @@ function Trabajo:drawParticularTab(x, y, w, h)
 
     local tierNames = {"Basico", "Avanzado", "Elite", "Legendario", "Maximo"}
 
-    local componentNames = {
-        gpu = "S3 Trio64",
-        cpu = "Pentium 133",
-        ram = "16MB EDO",
-        cooling = "Cooler Master",
-    }
-
     for i, comp in ipairs(self.components) do
         local col = (i - 1) % 2
         local row = math.floor((i - 1) / 2)
@@ -1029,10 +1031,13 @@ function Trabajo:drawParticularTab(x, y, w, h)
         love.graphics.printf(tierNames[comp.tier + 1] or "Basico", bx + vibOff, by + 17, boxW, "center")
 
         love.graphics.setColor(W95.textDim)
-        love.graphics.printf(componentNames[comp.id] or comp.label, bx + vibOff, by + 29, boxW, "center")
+        love.graphics.printf(comp.actualName, bx + vibOff, by + 29, boxW, "center")
 
         love.graphics.setColor(comp.color)
         love.graphics.printf("Potencia: " .. comp.power, bx + vibOff, by + 41, boxW, "center")
+
+        love.graphics.setColor(W95.textDim)
+        love.graphics.printf(string.format("%.1fs", comp.interval), bx + vibOff, by + 52, boxW, "center")
 
         comp.screenX = bx + boxW / 2 + vibOff
         comp.screenY = by + boxH / 2
