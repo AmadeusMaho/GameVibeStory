@@ -242,6 +242,7 @@ function Explorer.new(x, y)
         display = {label = "Placa de Video", icon = "GPU"},
         cooling = {label = "Refrigeracion", icon = "FAN"},
         psu = {label = "Fuente de Poder", icon = "PSU"},
+        motherboard = {label = "Placa Madre", icon = "MB"},
     }
 
     self.window.onDraw = function(_, cx, cy, cw, ch)
@@ -263,7 +264,7 @@ end
 
 function Explorer:getVisibleUpgrades()
     local visible = {}
-    local names = {cpu = "Procesador", ram = "Memoria RAM", disk = "Disco Duro", display = "Placa de Video", cooling = "Refrigeracion", monitor = "Monitor"}
+    local names = {cpu = "Procesador", ram = "Memoria RAM", disk = "Disco Duro", display = "Placa de Video", cooling = "Refrigeracion", monitor = "Monitor", motherboard = "Placa Madre"}
     for stat, tiers in pairs(self.upgradeTiers) do
         local level = self.upgradeLevels[stat] or 0
         if level < #tiers then
@@ -911,7 +912,7 @@ function Explorer:drawUpgradesPage(x, y, w, h)
 end
 
 function Explorer:drawShopGrid(x, y, w, h)
-    local componentOrder = {"cpu", "ram", "disk", "display", "cooling", "psu"}
+    local componentOrder = {"cpu", "ram", "disk", "display", "cooling", "psu", "motherboard"}
     local cols = 3
     local cellW = 120
     local cellH = 110
@@ -1016,6 +1017,8 @@ function Explorer:drawShopGrid(x, y, w, h)
                 bonusText = "Apps: " .. (1 + level)
             elseif stat == "psu" then
                 bonusText = "Capacidad"
+            elseif stat == "motherboard" then
+                bonusText = "Soporte: -int / +pot"
             end
 
             love.graphics.setColor(W95.yellow)
@@ -1100,13 +1103,25 @@ function Explorer:drawShopDetail(x, y, w, h)
     local tableX = x + 10
     local tableY = y + 50
     local rowH = 28
+    local headerH = rowH
 
     local isPsu = stat == "psu"
-    local headers = isPsu and {"Upgrade", "Capacidad", "Precio", "Estado"} or {"Upgrade", "Watts", "Precio", "Estado"}
+    local isMb = stat == "motherboard"
+    local headers = isPsu and {"Upgrade", "Capacidad", "Precio", "Estado"} or (isMb and {"Upgrade", "Reduccion", "Bonus", "Precio"} or {"Upgrade", "Watts", "Precio", "Estado"})
     local colW2 = {(w - 120) / 2, 50, 70, 80}
 
+    local tableContentH = #tiers * rowH
+    local tableVisibleH = h - 140
+    local tableScrollKey = "shopDetailScroll_" .. stat
+    if not self[tableScrollKey] then self[tableScrollKey] = 0 end
+
+    local maxTableScroll = math.max(0, tableContentH - tableVisibleH)
+    if self[tableScrollKey] > maxTableScroll then self[tableScrollKey] = maxTableScroll end
+
+    love.graphics.setScissor(tableX, tableY + headerH, w - 20, tableVisibleH)
+
     love.graphics.setColor(W95.highlight)
-    love.graphics.rectangle("fill", tableX, tableY, w - 20, rowH)
+    love.graphics.rectangle("fill", tableX, tableY, w - 20, headerH)
     love.graphics.setColor(W95.highlightText)
     local hx = tableX + 4
     for i, header in ipairs(headers) do
@@ -1115,73 +1130,83 @@ function Explorer:drawShopDetail(x, y, w, h)
     end
 
     for i, tier in ipairs(tiers) do
-        local ry = tableY + rowH + (i - 1) * rowH
+        local ry = tableY + headerH + (i - 1) * rowH - self[tableScrollKey]
         local isEven = i % 2 == 0
         local isCurrent = i == level + 1
         local isOwned = i <= level
 
-        if isEven then
-            love.graphics.setColor({0.92, 0.92, 0.92})
-            love.graphics.rectangle("fill", tableX, ry, w - 20, rowH)
-        end
+        if ry + rowH > tableY + headerH and ry < tableY + headerH + tableVisibleH then
+            if isEven then
+                love.graphics.setColor({0.92, 0.92, 0.92})
+                love.graphics.rectangle("fill", tableX, ry, w - 20, rowH)
+            end
 
-        love.graphics.setColor(W95.text)
-        local rx = tableX + 4
-        love.graphics.print(tier.from .. " -> " .. tier.to, rx, ry + 8)
-        rx = rx + colW2[1]
+            love.graphics.setColor(W95.text)
+            local rx = tableX + 4
+            love.graphics.print(tier.from .. " -> " .. tier.to, rx, ry + 8)
+            rx = rx + colW2[1]
 
-        love.graphics.setColor(W95.textDim)
-        if isPsu then
-            love.graphics.print(tier.capacity .. "W", rx, ry + 8)
-        else
-            love.graphics.print((tier.watts or 0) .. "W", rx, ry + 8)
-        end
-        rx = rx + colW2[2]
-
-        local price = self:getUpgradePrice(stat, i - 1)
-        local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= price
-        local canBuyWatts = isPsu or self:canAffordWatts(tier.watts or 0)
-        if canBuyMoney and canBuyWatts then
-            love.graphics.setColor(W95.green)
-        else
-            love.graphics.setColor({0.8, 0, 0})
-        end
-        love.graphics.print("$" .. price, rx, ry + 8)
-        rx = rx + colW2[3]
-
-        if isOwned then
-            love.graphics.setColor(W95.green)
-            love.graphics.print("Comprado", rx, ry + 8)
-        elseif isCurrent then
-            local btnW = 70
-            local btnH = 20
-            local btnX = rx
-            local btnY = ry + 4
-            local canBuy = canBuyMoney and canBuyWatts
-            local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
-            love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
-            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
-            self:drawBevel(btnX, btnY, btnW, btnH)
-            love.graphics.setColor(canBuy and W95.text or W95.textDim)
-            love.graphics.printf("Comprar", btnX, btnY + 4, btnW, "center")
-            table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "buy", stat = stat, tierIndex = i})
-        else
             love.graphics.setColor(W95.textDim)
-            love.graphics.print("Bloqueado", rx, ry + 8)
+            if isPsu then
+                love.graphics.print(tier.capacity .. "W", rx, ry + 8)
+            elseif isMb then
+                love.graphics.print(string.format("-%.0f%%", (tier.intervalReduction or 0) * 100), rx, ry + 8)
+                rx = rx + colW2[2]
+                love.graphics.setColor(W95.green)
+                love.graphics.print(string.format("+%.0f%%", (tier.powerBonus or 0) * 100), rx, ry + 8)
+            else
+                love.graphics.print((tier.watts or 0) .. "W", rx, ry + 8)
+            end
+            if not isMb then rx = rx + colW2[2] end
+
+            local price = self:getUpgradePrice(stat, i - 1)
+            local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= price
+            local canBuyWatts = isPsu or self:canAffordWatts(tier.watts or 0)
+            if canBuyMoney and canBuyWatts then
+                love.graphics.setColor(W95.green)
+            else
+                love.graphics.setColor({0.8, 0, 0})
+            end
+            love.graphics.print("$" .. price, rx, ry + 8)
+            rx = rx + colW2[3]
+
+            if isOwned then
+                love.graphics.setColor(W95.green)
+                love.graphics.print("Comprado", rx, ry + 8)
+            elseif isCurrent then
+                local btnW = 70
+                local btnH = 20
+                local btnX = rx
+                local btnY = ry + 4
+                local canBuy = canBuyMoney and canBuyWatts
+                local btnHovered = self.lastMX >= btnX and self.lastMX <= btnX + btnW and self.lastMY >= btnY and self.lastMY <= btnY + btnH
+                love.graphics.setColor(btnHovered and {0.85, 0.85, 0.85} or W95.bg)
+                love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+                self:drawBevel(btnX, btnY, btnW, btnH)
+                love.graphics.setColor(canBuy and W95.text or W95.textDim)
+                love.graphics.printf("Comprar", btnX, btnY + 4, btnW, "center")
+                table.insert(self.buttons, {x = btnX, y = btnY, w = btnW, h = btnH, action = "buy", stat = stat, tierIndex = i})
+            else
+                love.graphics.setColor(W95.textDim)
+                love.graphics.print("Bloqueado", rx, ry + 8)
+            end
         end
     end
 
-    local descY = y + h - 60
+    love.graphics.setScissor()
+
+    local descY = y + h - 80
     love.graphics.setColor(W95.borderDark)
     love.graphics.line(x + 10, descY, x + w - 10, descY)
 
     local descriptions = {
-        cpu = "Freelance: -30% tiempo de tarea por nivel\nProyecto: Genera circulos mas rapido\n\nEl CPU determina la velocidad\na la que completas tareas.\nCada nivel reduce significativamente\nel tiempo de cada tarea.",
-        ram = "Freelance: +1 slot de trabajo por nivel\nProyecto: +25% puntos por circulo\n\nLa RAM permite hacer multiples\ntrabajos simultaneamente.\nMas RAM = mas dinero por segundo.",
-        disk = "Almacenamiento del sistema\nDetermina cuantas apps puedes tener\n\nEl disco duro permite instalar\nmas aplicaciones y funciones\navanzadas del sistema.",
-        display = "Freelance: $1/$2/$4/$8/$16 por tarea\nProyecto: +30% daño por circulo\n\nLa GPU determina cuanto dinero\nganas por cada tarea completada.\nUpgrade mas impactante del juego.",
-        cooling = "Freelance: +10% boost a GPU y CPU\nProyecto: -2% bugs por circulo/nivel\n\nLa refrigeracion potencia otros\ncomponentes y reduce errores.\nComplementa GPU y CPU.",
-        psu = "Fuente de alimentacion\nDetermina la capacidad maxima de watts\n\nPermite instalar componentes mas\npotentes sin exceder el limite.\nSin PSU suficiente no puedes\ncomprar upgrades.",
+        cpu = "Freelance: -30% tiempo de tarea por nivel\nProyecto: Genera circulos mas rapido\n\nEl CPU determina la velocidad\na la que completas tareas.",
+        ram = "Freelance: +1 slot de trabajo por nivel\nProyecto: +25% puntos por circulo\n\nLa RAM permite hacer multiples\ntrabajos simultaneamente.",
+        disk = "Almacenamiento del sistema\nDetermina cuantas apps puedes tener\n\nEl disco duro permite instalar\nmas aplicaciones.",
+        display = "Freelance: +$X por tarea por nivel\nProyecto: +30% dano por circulo\n\nLa GPU determina cuanto dinero\nganas por cada tarea completada.",
+        cooling = "Freelance: +10% boost a GPU y CPU\nProyecto: -2% bugs por circulo/nivel\n\nLa refrigeracion potencia otros\ncomponentes y reduce errores.",
+        psu = "Fuente de alimentacion\nDetermina la capacidad maxima de watts\n\nPermite instalar componentes mas\npotentes sin exceder el limite.",
+        motherboard = "Placa madre del sistema\nReduce intervalos de todos los componentes\nPotencia +1% por tier a todos\n\nComponente soporte, no genera circulos.",
     }
 
     love.graphics.setColor(W95.text)
@@ -1193,7 +1218,7 @@ function Explorer:drawShopDetail(x, y, w, h)
     local lineY = descY + 22
     for line in descLines do
         love.graphics.print("  " .. line, x + 14, lineY)
-        lineY = lineY + 14
+        lineY = lineY + 12
     end
 end
 
@@ -1404,6 +1429,10 @@ function Explorer:wheelmoved(x, y)
     if self.currentPage == "upgrades" and self.shopView == "grid" then
         self.shopScrollY = self.shopScrollY - y * 20
         if self.shopScrollY < 0 then self.shopScrollY = 0 end
+    elseif self.currentPage == "upgrades" and self.shopView == "detail" and self.selectedComponent then
+        local scrollKey = "shopDetailScroll_" .. self.selectedComponent
+        self[scrollKey] = (self[scrollKey] or 0) - y * 20
+        if self[scrollKey] < 0 then self[scrollKey] = 0 end
     elseif self.currentPage == "apps" then
         self.appStoreScrollY = self.appStoreScrollY - y * 20
         if self.appStoreScrollY < 0 then self.appStoreScrollY = 0 end
