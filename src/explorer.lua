@@ -159,14 +159,18 @@ function Explorer.new(x, y)
         cpu = {
             {from = "Pentium 75MHz", to = "Pentium 100MHz", basePrice = 80, watts = 30},
             {from = "Pentium 100MHz", to = "Pentium 133MHz", basePrice = 80, watts = 40},
-            {from = "Pentium 133MHz", to = "Pentium 200MHz", basePrice = 80, watts = 55},
+            {from = "Pentium 133MHz", to = "Pentium 166MHz", basePrice = 80, watts = 50},
+            {from = "Pentium 166MHz", to = "Pentium 200MHz", basePrice = 80, watts = 55},
             {from = "Pentium 200MHz", to = "Pentium MMX 233", basePrice = 80, watts = 70},
+            {from = "Pentium MMX 233", to = "Pentium II 233", basePrice = 80, watts = 80},
         },
         ram = {
             {from = "16 MB", to = "32 MB", basePrice = 200, watts = 3},
-            {from = "32 MB", to = "64 MB", basePrice = 200, watts = 5},
-            {from = "64 MB", to = "128 MB", basePrice = 200, watts = 8},
-            {from = "128 MB", to = "256 MB", basePrice = 200, watts = 12},
+            {from = "32 MB", to = "48 MB", basePrice = 200, watts = 5},
+            {from = "48 MB", to = "64 MB", basePrice = 200, watts = 7},
+            {from = "64 MB", to = "128 MB", basePrice = 200, watts = 10},
+            {from = "128 MB", to = "192 MB", basePrice = 200, watts = 14},
+            {from = "192 MB", to = "256 MB", basePrice = 200, watts = 18},
         },
         disk = {
             {from = "850 MB", to = "1.2 GB", basePrice = 90, watts = 8},
@@ -177,14 +181,18 @@ function Explorer.new(x, y)
         display = {
             {from = "Standard VGA", to = "S3 Trio64", basePrice = 100, watts = 10},
             {from = "S3 Trio64", to = "S3 ViRGE", basePrice = 100, watts = 15},
-            {from = "S3 ViRGE", to = "3dfx Banshee", basePrice = 100, watts = 25},
-            {from = "3dfx Banshee", to = "Voodoo 3 3000", basePrice = 100, watts = 40},
+            {from = "S3 ViRGE", to = "Matrox Mystique", basePrice = 100, watts = 20},
+            {from = "Matrox Mystique", to = "ATI Rage Pro", basePrice = 100, watts = 25},
+            {from = "ATI Rage Pro", to = "3dfx Banshee", basePrice = 100, watts = 35},
+            {from = "3dfx Banshee", to = "Voodoo 3 3000", basePrice = 100, watts = 45},
         },
         cooling = {
             {from = "Disipador basico", to = "Ventilador activo", basePrice = 75, watts = 2},
             {from = "Ventilador activo", to = "Cooler Turbo", basePrice = 75, watts = 4},
-            {from = "Cooler Turbo", to = "Refrigeracion liquida", basePrice = 75, watts = 8},
-            {from = "Refrigeracion liquida", to = "Sistema custom", basePrice = 75, watts = 12},
+            {from = "Cooler Turbo", to = "Cooler Master", basePrice = 75, watts = 6},
+            {from = "Cooler Master", to = "Refrigeracion semiliquida", basePrice = 75, watts = 9},
+            {from = "Refrigeracion semiliquida", to = "Refrigeracion liquida", basePrice = 75, watts = 12},
+            {from = "Refrigeracion liquida", to = "Sistema custom", basePrice = 75, watts = 16},
         },
         psu = {
             {from = "Fuente 150W", to = "Fuente 200W", basePrice = 60, capacity = 200},
@@ -201,11 +209,11 @@ function Explorer.new(x, y)
     }
 
     self.componentWatts = {
-        cpu = {30, 40, 55, 70},
-        ram = {3, 5, 8, 12},
+        cpu = {30, 40, 50, 55, 70, 80},
+        ram = {3, 5, 7, 10, 14, 18},
         disk = {8, 10, 12, 15},
-        display = {10, 15, 25, 40},
-        cooling = {2, 4, 8, 12},
+        display = {10, 15, 20, 25, 35, 45},
+        cooling = {2, 4, 6, 9, 12, 16},
     }
 
     self.psuCapacity = {150, 200, 250, 300, 350}

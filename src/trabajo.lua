@@ -71,11 +71,14 @@ local componentDefs = {
         basePower = 3,
         tiers = {
             {interval = 3.5, power = 3},
-            {interval = 2.8, power = 5},
-            {interval = 2.1, power = 8},
-            {interval = 1.5, power = 12},
+            {interval = 3.0, power = 5},
+            {interval = 2.5, power = 8},
+            {interval = 2.2, power = 11},
+            {interval = 1.9, power = 14},
+            {interval = 1.6, power = 18},
+            {interval = 1.3, power = 22},
         },
-        passive = "Mayor daño por circulo",
+        passive = "Mayor dano por circulo",
     },
     cpu = {
         label = "CPU",
@@ -84,9 +87,12 @@ local componentDefs = {
         basePower = 2,
         tiers = {
             {interval = 5.0, power = 2},
-            {interval = 4.0, power = 3},
-            {interval = 3.0, power = 5},
-            {interval = 2.0, power = 7},
+            {interval = 4.5, power = 3},
+            {interval = 4.0, power = 5},
+            {interval = 3.5, power = 7},
+            {interval = 3.0, power = 9},
+            {interval = 2.5, power = 12},
+            {interval = 2.0, power = 15},
         },
         passive = "Genera circulos mas rapido",
     },
@@ -97,9 +103,12 @@ local componentDefs = {
         basePower = 0,
         tiers = {
             {interval = 7.0, power = 0},
-            {interval = 5.5, power = 2},
-            {interval = 4.0, power = 4},
-            {interval = 2.8, power = 7},
+            {interval = 6.0, power = 2},
+            {interval = 5.0, power = 4},
+            {interval = 4.5, power = 6},
+            {interval = 4.0, power = 8},
+            {interval = 3.5, power = 11},
+            {interval = 3.0, power = 14},
         },
         passive = "Multiplicador de puntos al llegar",
     },
@@ -110,9 +119,12 @@ local componentDefs = {
         basePower = 0,
         tiers = {
             {interval = 8.0, power = 0},
-            {interval = 6.5, power = 2},
-            {interval = 5.0, power = 4},
-            {interval = 3.5, power = 6},
+            {interval = 7.0, power = 2},
+            {interval = 6.0, power = 4},
+            {interval = 5.5, power = 6},
+            {interval = 5.0, power = 8},
+            {interval = 4.5, power = 11},
+            {interval = 4.0, power = 14},
         },
         passive = "Reduce fallos (bugs) en circulos",
     },
@@ -992,9 +1004,11 @@ function Trabajo:drawParticularTab(x, y, w, h)
         {0.2, 0.4, 0.9},
         {0.6, 0.2, 0.9},
         {0.9, 0.6, 0.1},
+        {0.9, 0.3, 0.1},
+        {1.0, 0.0, 0.5},
     }
 
-    local tierNames = {"Basico", "Avanzado", "Elite", "Legendario", "Maximo"}
+    local tierNames = {"Basico", "Avanzado", "Elite", "Legendario", "Epico", "Mitico", "Supremo"}
 
     for i, comp in ipairs(self.components) do
         local col = (i - 1) % 2
@@ -1034,12 +1048,7 @@ function Trabajo:drawParticularTab(x, y, w, h)
         love.graphics.printf(comp.actualName, bx + vibOff, by + 29, boxW, "center")
 
         love.graphics.setColor(comp.color)
-        if comp.power > 0 then
-            love.graphics.printf("Potencia: " .. comp.power, bx + vibOff, by + 41, boxW, "center")
-        else
-            love.graphics.setColor(W95.textDim)
-            love.graphics.printf("Sin circulos", bx + vibOff, by + 41, boxW, "center")
-        end
+        love.graphics.printf("Potencia: " .. comp.power, bx + vibOff, by + 41, boxW, "center")
 
         love.graphics.setColor(W95.textDim)
         love.graphics.printf(string.format("%.1fs", comp.interval), bx + vibOff, by + 52, boxW, "center")
