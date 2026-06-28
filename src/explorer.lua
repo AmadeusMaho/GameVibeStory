@@ -122,6 +122,9 @@ function Explorer.new(x, y)
     self.selectedApp = nil
 
     self.allProjects = {
+        {name = "Ordenar papeleria", desc = "Ordenar 50 hojas\nen carpetas.", baseHp = 75, days = 14, reward = 80, difficulty = "infantil"},
+        {name = "Copiar disquetes", desc = "Copiar 20 disquetes\ncon archivos.", baseHp = 75, days = 14, reward = 90, difficulty = "infantil"},
+        {name = "Etiquetar cajas", desc = "Poner etiquetas\nen 30 cajas.", baseHp = 75, days = 14, reward = 70, difficulty = "infantil"},
         {name = "Digitacion de formularios", desc = "Digitar 200 formularios\nde seguros.", baseHp = 150, days = 14, reward = 150, difficulty = "facil"},
         {name = "Clasificacion de archivos", desc = "Clasificar 500 archivos\npor categoria y fecha.", baseHp = 150, days = 14, reward = 180, difficulty = "facil"},
         {name = "Traduccion de documentos", desc = "Traducir 10 documentos\nlegales al espanol.", baseHp = 150, days = 14, reward = 200, difficulty = "facil"},
@@ -141,8 +144,17 @@ function Explorer.new(x, y)
         {name = "Presentacion multimedia", desc = "Slides con animaciones\ny transiciones.", baseHp = 1100, days = 14, reward = 3000, difficulty = "muy_dificil"},
         {name = "Soporte de red", desc = "Configurar red local\nentre 5 computadoras.", baseHp = 1100, days = 14, reward = 3500, difficulty = "muy_dificil"},
         {name = "App de inventario", desc = "Programa de control\nde stock en Visual Basic.", baseHp = 1100, days = 14, reward = 5000, difficulty = "muy_dificil"},
+        {name = "Compilador basico", desc = "Crear compilador para\nlenguaje simple.", baseHp = 1400, days = 14, reward = 7000, difficulty = "extremo"},
+        {name = "Servidor web", desc = "Montar servidor HTTP\ncon CGI scripts.", baseHp = 1400, days = 14, reward = 8500, difficulty = "extremo"},
+        {name = "Motor de busqueda", desc = "Indexador de paginas\nweb con spiders.", baseHp = 1400, days = 14, reward = 10000, difficulty = "extremo"},
         {name = "Sistema de facturacion", desc = "Generador de facturas\ncon base de datos.", baseHp = 1600, days = 14, reward = 8000, difficulty = "pesadilla"},
         {name = "Conversor de formatos", desc = "Herramienta para convertir\narchivos entre formatos.", baseHp = 1600, days = 14, reward = 10000, difficulty = "pesadilla"},
+        {name = "Editor de codigo fuente", desc = "IDE con resaltado\nde sintaxis.", baseHp = 2200, days = 14, reward = 15000, difficulty = "pesadilla_estelar"},
+        {name = "Cliente de correo", desc = "Cliente SMTP/POP3\ncon interfaz grafica.", baseHp = 2200, days = 14, reward = 18000, difficulty = "pesadilla_estelar"},
+        {name = "Anti-virus", desc = "Escaneador de virus\ncon firmas actualizadas.", baseHp = 2200, days = 14, reward = 22000, difficulty = "pesadilla_estelar"},
+        {name = "Sistema operativo", desc = "Kernel con multitarea\ny sistema de archivos.", baseHp = 3000, days = 14, reward = 30000, difficulty = "demoniaco"},
+        {name = "Base de datos relacional", desc = "Motor SQL completo\ncon transacciones.", baseHp = 3000, days = 14, reward = 35000, difficulty = "demoniaco"},
+        {name = "Navegador web", desc = "Browser con motor\nrender HTML 3.2.", baseHp = 3000, days = 14, reward = 40000, difficulty = "demoniaco"},
     }
     self:refreshJobBoard()
 
@@ -743,18 +755,26 @@ function Explorer:drawJobsPage(x, y, w, h)
             love.graphics.printf(job.name, cx + 8, cy + 8, cellW - 16, "center")
 
             local diffColors = {
+                infantil = {0.6, 0.9, 0.6},
                 facil = {0.2, 0.8, 0.2},
                 normal = {0.9, 0.9, 0.2},
                 dificil = {0.9, 0.6, 0.2},
                 muy_dificil = {0.9, 0.3, 0.3},
+                extremo = {1.0, 0.2, 0.0},
                 pesadilla = {0.6, 0.0, 0.6},
+                pesadilla_estelar = {0.8, 0.0, 1.0},
+                demoniaco = {1.0, 0.0, 0.3},
             }
             local diffLabels = {
+                infantil = "Infantil",
                 facil = "Facil",
                 normal = "Normal",
                 dificil = "Dificil",
                 muy_dificil = "Muy Dificil",
+                extremo = "Extremo",
                 pesadilla = "Pesadilla",
+                pesadilla_estelar = "Pesadilla Estelar",
+                demoniaco = "Demoniaco",
             }
             love.graphics.setColor(diffColors[job.difficulty] or W95.text)
             love.graphics.printf(diffLabels[job.difficulty] or job.difficulty, cx + 8, cy + 28, cellW - 16, "center")

@@ -26,11 +26,15 @@ local W95 = {
 }
 
 local projectDifficulties = {
+    {id = "infantil", label = "Infantil", color = {0.6, 0.9, 0.6}, hpMult = 0.5, rewardMult = 0.5},
     {id = "facil", label = "Facil", color = {0.2, 0.8, 0.2}, hpMult = 1.0, rewardMult = 1.0},
     {id = "normal", label = "Normal", color = {0.9, 0.9, 0.2}, hpMult = 1.0, rewardMult = 1.0},
     {id = "dificil", label = "Dificil", color = {0.9, 0.6, 0.2}, hpMult = 1.0, rewardMult = 1.0},
     {id = "muy_dificil", label = "Muy Dificil", color = {0.9, 0.3, 0.3}, hpMult = 1.0, rewardMult = 1.0},
+    {id = "extremo", label = "Extremo", color = {1.0, 0.2, 0.0}, hpMult = 1.0, rewardMult = 1.0},
     {id = "pesadilla", label = "Pesadilla", color = {0.6, 0.0, 0.6}, hpMult = 1.0, rewardMult = 1.0},
+    {id = "pesadilla_estelar", label = "Pesadilla Estelar", color = {0.8, 0.0, 1.0}, hpMult = 1.0, rewardMult = 1.0},
+    {id = "demoniaco", label = "Demoniaco", color = {1.0, 0.0, 0.3}, hpMult = 1.0, rewardMult = 1.0},
 }
 
 local freelanceTasks = {
@@ -297,7 +301,7 @@ function Trabajo:startProject(projectData)
     end
 
     if isFirstProject then
-        self.projectMaxProgress = 100
+        self.projectMaxProgress = projectData.baseHp or 150
     else
         local baseHp = projectData.baseHp or 150
         local hpMult = diffInfo and diffInfo.hpMult or 1.0
