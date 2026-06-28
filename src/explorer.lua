@@ -149,12 +149,12 @@ function Explorer.new(x, y)
         {name = "Motor de busqueda", desc = "Indexador de paginas\nweb con spiders.", baseHp = 1400, days = 14, reward = 10000, difficulty = "extremo"},
         {name = "Sistema de facturacion", desc = "Generador de facturas\ncon base de datos.", baseHp = 1600, days = 14, reward = 8000, difficulty = "pesadilla"},
         {name = "Conversor de formatos", desc = "Herramienta para convertir\narchivos entre formatos.", baseHp = 1600, days = 14, reward = 10000, difficulty = "pesadilla"},
-        {name = "Editor de codigo fuente", desc = "IDE con resaltado\nde sintaxis.", baseHp = 2200, days = 14, reward = 15000, difficulty = "pesadilla_estelar"},
-        {name = "Cliente de correo", desc = "Cliente SMTP/POP3\ncon interfaz grafica.", baseHp = 2200, days = 14, reward = 18000, difficulty = "pesadilla_estelar"},
-        {name = "Anti-virus", desc = "Escaneador de virus\ncon firmas actualizadas.", baseHp = 2200, days = 14, reward = 22000, difficulty = "pesadilla_estelar"},
-        {name = "Sistema operativo", desc = "Kernel con multitarea\ny sistema de archivos.", baseHp = 3000, days = 14, reward = 30000, difficulty = "demoniaco"},
-        {name = "Base de datos relacional", desc = "Motor SQL completo\ncon transacciones.", baseHp = 3000, days = 14, reward = 35000, difficulty = "demoniaco"},
-        {name = "Navegador web", desc = "Browser con motor\nrender HTML 3.2.", baseHp = 3000, days = 14, reward = 40000, difficulty = "demoniaco"},
+        {name = "Editor de codigo fuente", desc = "IDE con resaltado\nde sintaxis.", baseHp = 2200, days = 14, reward = 15000, difficulty = "inframundo"},
+        {name = "Cliente de correo", desc = "Cliente SMTP/POP3\ncon interfaz grafica.", baseHp = 2200, days = 14, reward = 18000, difficulty = "inframundo"},
+        {name = "Anti-virus", desc = "Escaneador de virus\ncon firmas actualizadas.", baseHp = 2200, days = 14, reward = 22000, difficulty = "inframundo"},
+        {name = "Sistema operativo", desc = "Kernel con multitarea\ny sistema de archivos.", baseHp = 3000, days = 14, reward = 30000, difficulty = "infierno"},
+        {name = "Base de datos relacional", desc = "Motor SQL completo\ncon transacciones.", baseHp = 3000, days = 14, reward = 35000, difficulty = "infierno"},
+        {name = "Navegador web", desc = "Browser con motor\nrender HTML 3.2.", baseHp = 3000, days = 14, reward = 40000, difficulty = "infierno"},
     }
     self:refreshJobBoard()
 
@@ -762,8 +762,8 @@ function Explorer:drawJobsPage(x, y, w, h)
                 muy_dificil = {0.9, 0.3, 0.3},
                 extremo = {1.0, 0.2, 0.0},
                 pesadilla = {0.6, 0.0, 0.6},
-                pesadilla_estelar = {0.8, 0.0, 1.0},
-                demoniaco = {1.0, 0.0, 0.3},
+                inframundo = {0.8, 0.0, 1.0},
+                infierno = {1.0, 0.0, 0.3},
             }
             local diffLabels = {
                 infantil = "Infantil",
@@ -773,8 +773,8 @@ function Explorer:drawJobsPage(x, y, w, h)
                 muy_dificil = "Muy Dificil",
                 extremo = "Extremo",
                 pesadilla = "Pesadilla",
-                pesadilla_estelar = "Pesadilla Estelar",
-                demoniaco = "Demoniaco",
+                pesadilla_estelar = "Inframundo",
+                demoniaco = "Infierno",
             }
             love.graphics.setColor(diffColors[job.difficulty] or W95.text)
             love.graphics.printf(diffLabels[job.difficulty] or job.difficulty, cx + 8, cy + 28, cellW - 16, "center")

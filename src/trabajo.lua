@@ -33,8 +33,8 @@ local projectDifficulties = {
     {id = "muy_dificil", label = "Muy Dificil", color = {0.9, 0.3, 0.3}, hpMult = 1.0, rewardMult = 1.0},
     {id = "extremo", label = "Extremo", color = {1.0, 0.2, 0.0}, hpMult = 1.0, rewardMult = 1.0},
     {id = "pesadilla", label = "Pesadilla", color = {0.6, 0.0, 0.6}, hpMult = 1.0, rewardMult = 1.0},
-    {id = "pesadilla_estelar", label = "Pesadilla Estelar", color = {0.8, 0.0, 1.0}, hpMult = 1.0, rewardMult = 1.0},
-    {id = "demoniaco", label = "Demoniaco", color = {1.0, 0.0, 0.3}, hpMult = 1.0, rewardMult = 1.0},
+    {id = "inframundo", label = "Inframundo", color = {0.8, 0.0, 1.0}, hpMult = 1.0, rewardMult = 1.0},
+    {id = "infierno", label = "Infierno", color = {1.0, 0.0, 0.3}, hpMult = 1.0, rewardMult = 1.0},
 }
 
 local freelanceTasks = {
