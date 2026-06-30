@@ -68,6 +68,21 @@ function Notepad:update(dt)
     local hasCompletedProject = self.trabajoRef.completedProjects and self.trabajoRef.completedProjects > 0
 
     for i, obj in ipairs(self.objectives) do
+        if not obj.shown and not obj.done then
+            local shouldShow = false
+            if obj.id == "work5" and tasksDone >= 5 then shouldShow = true
+            elseif obj.id == "money20" and money >= 20 then shouldShow = true
+            elseif obj.id == "work15" and tasksDone >= 15 then shouldShow = true
+            elseif obj.id == "firstProject" and hasCompletedProject then shouldShow = true
+            elseif obj.id == "money300" and money >= 300 then shouldShow = true
+            elseif obj.id == "work30" and tasksDone >= 30 then shouldShow = true
+            elseif obj.id == "money750" and money >= 750 then shouldShow = true
+            end
+            if shouldShow then obj.shown = true end
+        end
+    end
+
+    for i, obj in ipairs(self.objectives) do
         if not obj.done then
             if obj.id == "work5" and tasksDone >= 5 then
                 obj.done = true

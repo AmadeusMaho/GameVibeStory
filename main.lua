@@ -1080,6 +1080,21 @@ function love.load()
     local ok18, img18 = pcall(love.graphics.newImage, "assets/sprites/coding.png")
     if ok18 then iconImages["coding"] = img18 end
 
+    local okCpu, imgCpu = pcall(love.graphics.newImage, "assets/sprites/cpuIcon.png")
+    if okCpu then iconImages["cpuIcon"] = imgCpu end
+    local okGpu, imgGpu = pcall(love.graphics.newImage, "assets/sprites/gpuIcon.png")
+    if okGpu then iconImages["gpuIcon"] = imgGpu end
+    local okRam, imgRam = pcall(love.graphics.newImage, "assets/sprites/ramIcon.png")
+    if okRam then iconImages["ramIcon"] = imgRam end
+    local okHdd, imgHdd = pcall(love.graphics.newImage, "assets/sprites/hddIcon.png")
+    if okHdd then iconImages["hddIcon"] = imgHdd end
+    local okPsu, imgPsu = pcall(love.graphics.newImage, "assets/sprites/psuIcon.png")
+    if okPsu then iconImages["psuIcon"] = imgPsu end
+    local okFan, imgFan = pcall(love.graphics.newImage, "assets/sprites/fanIcon.png")
+    if okFan then iconImages["fanIcon"] = imgFan end
+    local okMb, imgMb = pcall(love.graphics.newImage, "assets/sprites/mbIcon.png")
+    if okMb then iconImages["mbIcon"] = imgMb end
+
     local ok8, snd8 = pcall(love.audio.newSource, "assets/sounds/songw95_1.wav", "stream")
     if ok8 then
         winampMusic = snd8
@@ -1445,6 +1460,7 @@ function love.load()
             for i, obj in ipairs(data.notepad.objectives) do
                 if notepad.objectives[i] then
                     notepad.objectives[i].done = obj.done
+                    notepad.objectives[i].shown = obj.shown
                 end
             end
         end
@@ -1914,10 +1930,10 @@ function drawDesktop()
 
         if startMenuOpen then
             local menuX = 2
-            local menuY = taskY - 290
+            local menuY = taskY - 350
             local menuW = 190
             local sidebarW = 30
-            local menuH = 290
+            local menuH = 350
 
             love.graphics.setColor(W95.bg)
             love.graphics.rectangle("fill", menuX, menuY, menuW, menuH)
@@ -2298,7 +2314,7 @@ function love.mousepressed(screenX, screenY, button)
 
         if startMenuOpen then
             local menuX = 2
-            local menuY = taskY - 290
+            local menuY = taskY - 350
             local menuW = 190
             local sidebarW = 30
             local contentX = menuX + sidebarW + 4

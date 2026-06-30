@@ -975,10 +975,21 @@ function Explorer:drawShopGrid(x, y, w, h)
             love.graphics.rectangle("fill", cx, cy, cellW, cellH)
             self:drawBevel(cx, cy, cellW, cellH)
 
+            local iconMap = {cpu = "cpuIcon", display = "gpuIcon", ram = "ramIcon", disk = "hddIcon", psu = "psuIcon", cooling = "fanIcon", motherboard = "mbIcon"}
+            local iconKey = iconMap[stat]
+            local compIcon = iconKey and self.iconImagesRef and self.iconImagesRef[iconKey]
+
             love.graphics.setColor(W95.highlight)
             love.graphics.rectangle("fill", cx + 4, cy + 4, cellW - 8, 30)
-            love.graphics.setColor(W95.highlightText)
-            love.graphics.printf(comp.icon, cx + 4, cy + 12, cellW - 8, "center")
+            if compIcon then
+                love.graphics.setColor(1, 1, 1)
+                local imgW, imgH = compIcon:getDimensions()
+                local iconScale = math.min(24 / imgW, 24 / imgH)
+                love.graphics.draw(compIcon, cx + (cellW - 24) / 2, cy + 7, 0, iconScale, iconScale)
+            else
+                love.graphics.setColor(W95.highlightText)
+                love.graphics.printf(comp.icon, cx + 4, cy + 12, cellW - 8, "center")
+            end
 
             love.graphics.setColor(W95.text)
             love.graphics.printf(comp.label, cx, cy + 40, cellW, "center")
