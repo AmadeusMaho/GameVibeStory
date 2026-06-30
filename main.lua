@@ -1198,7 +1198,7 @@ function love.load()
         triggerHardwareInstall()
     end
     explorer.onUpgradePurchased = function(stat, level)
-        if trabajo and trabajo.activeProject then
+        if trabajo then
             trabajo:recalcComponents()
         end
         if coding and coding.state == "coding" then
