@@ -367,6 +367,8 @@ function Coding:advanceSnippet()
     local current = self.snippetLines[self.snippetIndex]
     if current.typing then
         self.typingMode = true
+        self.waitingForAutoInput = false
+        self.autoStarted = false
         self.currentTypingLine = current.text
         self.typedChars = ""
         self.typingError = false
@@ -453,6 +455,7 @@ function Coding:update(dt)
                     self.autoCharIndex = 0
                 end
             else
+                print("AUTO FINISHED, calling finishAutoSection")
                 self:finishAutoSection()
             end
         end
@@ -496,10 +499,12 @@ function Coding:keypressed(key)
        key == "lalt" or key == "ralt" or key == "escape" or key == "tab" or
        key == "capslock" or key == "up" or key == "down" or
        key == "left" or key == "right" or key == "home" or key == "end" then return end
+    print("keypressed: key='"..key.."', waitingForAuto="..tostring(self.waitingForAutoInput)..", autoStarted="..tostring(self.autoStarted)..", typingMode="..tostring(self.typingMode))
     if self.waitingForAutoInput then
         if key == "return" or key == "space" then
             self.waitingForAutoInput = false
             self.autoStarted = true
+            print("AUTO STARTED!")
         end
         return
     end
