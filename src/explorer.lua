@@ -121,6 +121,7 @@ function Explorer.new(x, y)
     }
     self.appStoreScrollY = 0
     self.selectedApp = nil
+    self.jobScrollY = 0
 
     self.allProjects = {
         {name = "Digitacion de formularios", desc = "Digitar 200 formularios\nde seguros.", baseHp = 150, days = 14, reward = 150, difficulty = "facil"},
@@ -763,9 +764,15 @@ function Explorer:drawJobsPage(x, y, w, h)
     local padding = 16
     local startX = x + (w - cols * (cellW + padding) + padding) / 2
 
-    Screen.setScissor(x, y + 44, w, h - 120)
+    local rows = math.ceil(#self.jobBoard / cols)
+    local totalContentH = rows * (cellH + padding)
+    local visibleH = h - 120
+    local maxScroll = math.max(0, totalContentH - visibleH)
+    if self.jobScrollY > maxScroll then self.jobScrollY = maxScroll end
 
-    local scrollOffset = 0
+    Screen.setScissor(x, y + 44, w, visibleH)
+
+    local scrollOffset = -self.jobScrollY
 
     for i, job in ipairs(self.jobBoard) do
         local col = (i - 1) % cols
@@ -924,7 +931,7 @@ function Explorer:drawShopGrid(x, y, w, h)
     local psuCap = self:getPsuCapacity()
 
     love.graphics.setColor(W95.text)
-    love.graphics.printf("Consumo: " .. totalWatts .. "W / " .. psuCap .. "W", x, y - 16, w, "center")
+    love.graphics.printf("Consumo: " .. totalWatts .. "W / " .. psuCap .. "W", x, y - 8, w, "center")
 
     local kbdItems = {
         {index = 1, name = "NK Cream", price = 200},
@@ -1095,14 +1102,17 @@ function Explorer:drawShopDetail(x, y, w, h)
     love.graphics.setColor(W95.text)
     love.graphics.printf(comp.label, x, y, w, "center")
 
-    love.graphics.setColor(W95.borderDark)
-    love.graphics.line(x + 10, y + 18, x + w - 10, y + 18)
+    love.graphics.setColor(W95.textDim)
+    love.graphics.printf("Nivel: " .. level .. " / " .. #tiers, x, y + 18, w, "center")
 
     love.graphics.setColor(W95.text)
-    love.graphics.printf("Nivel actual: " .. level .. "/" .. #tiers .. "  |  Consumo: " .. totalWatts .. "W / " .. psuCap .. "W", x, y + 24, w, "center")
+    love.graphics.printf("Consumo: " .. totalWatts .. "W / " .. psuCap .. "W", x, y + 32, w, "center")
+
+    love.graphics.setColor(W95.borderDark)
+    love.graphics.line(x + 10, y + 48, x + w - 10, y + 48)
 
     local tableX = x + 10
-    local tableY = y + 50
+    local tableY = y + 54
     local rowH = 28
     local headerH = rowH
 
@@ -1112,7 +1122,7 @@ function Explorer:drawShopDetail(x, y, w, h)
     local colW2 = {math.floor((w - 220) / 2), 60, 70, 90}
 
     local tableContentH = #tiers * rowH
-    local tableVisibleH = h - 160
+    local tableVisibleH = h - 140
     local tableScrollKey = "shopDetailScroll_" .. stat
     if not self[tableScrollKey] then self[tableScrollKey] = 0 end
 
@@ -1438,6 +1448,9 @@ function Explorer:wheelmoved(x, y)
     elseif self.currentPage == "apps" then
         self.appStoreScrollY = self.appStoreScrollY - y * 20
         if self.appStoreScrollY < 0 then self.appStoreScrollY = 0 end
+    elseif self.currentPage == "jobs" then
+        self.jobScrollY = self.jobScrollY - y * 20
+        if self.jobScrollY < 0 then self.jobScrollY = 0 end
     end
 end
 
