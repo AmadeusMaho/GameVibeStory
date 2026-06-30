@@ -523,6 +523,7 @@ function Coding:keypressed(key)
         end
         return
     end
+    print("keypressed: key='"..key.."', typingMode="..tostring(self.typingMode))
 end
 
 function Coding:completeTypingLine()
@@ -1026,7 +1027,9 @@ function Coding:textinput(text)
     if self.state ~= "coding" or not self.milestoneActive or self.snippetComplete then return end
     if not self.typingMode then return end
     if self.typingErrorTimer > 0 then return end
+    if not self.currentTypingLine or #self.currentTypingLine == 0 then return end
     local expectedChar = self.currentTypingLine:sub(#self.typedChars + 1, #self.typedChars + 1)
+    print("textinput called: text='"..text.."', expected='"..expectedChar.."', typingMode="..tostring(self.typingMode))
     if text == expectedChar then
         self.typedChars = self.typedChars .. text
         self.codeCharIndex = #self.typedChars
