@@ -1,3 +1,4 @@
+local Screen = require("src.screen")
 local WindowManager = {}
 WindowManager.__index = WindowManager
 
@@ -130,9 +131,9 @@ function WindowManager:drawFrame()
 
     if self.onDraw then
         local cx, cy, cw, ch = self:getContentArea()
-        love.graphics.setScissor(cx, cy, cw, ch)
+        Screen.setScissor(cx, cy, cw, ch)
         self:onDraw(cx, cy, cw, ch)
-        love.graphics.setScissor()
+        Screen.setScissor()
     end
 end
 
@@ -166,9 +167,9 @@ function WindowManager:mousepressed(x, y, button)
                 if self.fullscreen then
                     self.prevX, self.prevY = self.x, self.y
                     self.prevW, self.prevH = self.w, self.h
-                    local ww, wh = love.graphics.getDimensions()
+                    local Screen = require("src.screen")
                     self.x, self.y = 0, 0
-                    self.w, self.h = ww, wh
+                    self.w, self.h = Screen.getWidth(), Screen.getHeight()
                 else
                     self.x, self.y = self.prevX, self.prevY
                     self.w, self.h = self.prevW, self.prevH

@@ -1,6 +1,7 @@
 local Coding = {}
 Coding.__index = Coding
 
+local Screen = require("src.screen")
 local WindowManager = require("src.window")
 
 local W95 = {
@@ -583,7 +584,7 @@ function Coding:drawMinigame(x, y, w, h)
     love.graphics.setColor({0.1,0.1,0.1})
     love.graphics.rectangle("fill", codeX, codeY, codeW, codeH)
     self:drawBevel(codeX, codeY, codeW, codeH)
-    love.graphics.setScissor(codeX+1, codeY+1, codeW-2, codeH-2)
+    Screen.setScissor(codeX+1, codeY+1, codeW-2, codeH-2)
     love.graphics.setFont(self.codeFont)
     local lineH = 16
     local maxLines = math.floor((codeH-4) / lineH)
@@ -624,7 +625,7 @@ function Coding:drawMinigame(x, y, w, h)
             love.graphics.rectangle("fill", cx, ly, 8, 14)
         end
     end
-    love.graphics.setScissor()
+    Screen.setScissor()
     love.graphics.setColor(W95.textDim)
     love.graphics.setFont(self.smallFont)
     love.graphics.printf("Presiona cualquier tecla para escribir codigo", x+12, y+h-14, w-24, "center")

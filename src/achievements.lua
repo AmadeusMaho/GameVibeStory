@@ -1,3 +1,4 @@
+local Screen = require("src.screen")
 local Achievements = {}
 Achievements.__index = Achievements
 
@@ -333,7 +334,7 @@ function Achievements:drawAchievementsTab(x, y, w, h)
 
     local scrollArea = y + 24
     local scrollH = h - 28
-    love.graphics.setScissor(x, scrollArea, w, scrollH)
+    Screen.setScissor(x, scrollArea, w, scrollH)
 
     local rowH = 36
     local rowY = scrollArea + 2
@@ -375,7 +376,7 @@ function Achievements:drawAchievementsTab(x, y, w, h)
         rowY = rowY + rowH
     end
 
-    love.graphics.setScissor()
+    Screen.setScissor()
 end
 
 function Achievements:drawStatsTab(x, y, w, h)
@@ -459,7 +460,7 @@ function Achievements:drawNotifications()
     local prevFont = love.graphics.getFont()
     love.graphics.setFont(self.notifFont)
 
-    local screenW, screenH = love.graphics.getDimensions()
+    local screenW, screenH = Screen.getWidth(), Screen.getHeight()
 
     for i = #self.pendingNotifications, 1, -1 do
         local notif = self.pendingNotifications[i]
@@ -508,7 +509,7 @@ function Achievements:drawComboHud()
     local bigFont = love.graphics.newFont(18)
     love.graphics.setFont(bigFont)
 
-    local screenW, screenH = love.graphics.getDimensions()
+    local screenW, screenH = Screen.getWidth(), Screen.getHeight()
     local comboColor = self:getComboColor()
 
     local hudW = 140

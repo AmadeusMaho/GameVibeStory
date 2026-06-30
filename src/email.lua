@@ -1,6 +1,7 @@
 local Email = {}
 Email.__index = Email
 
+local Screen = require("src.screen")
 local WindowManager = require("src.window")
 
 local W95 = {
@@ -331,7 +332,7 @@ function Email:drawContent(cx, cy, cw, ch)
     local totalInboxH = #self.inbox * 18
     self.maxInboxScroll = math.max(0, totalInboxH - inboxContentH)
 
-    love.graphics.setScissor(cx + 2, inboxContentY, listW - 4, inboxContentH)
+    Screen.setScissor(cx + 2, inboxContentY, listW - 4, inboxContentH)
     for i, email in ipairs(self.inbox) do
         local ey = inboxContentY + (i - 1) * 18 + self.inboxScrollY
         if ey + 18 < inboxContentY or ey > inboxContentY + inboxContentH then
@@ -372,7 +373,7 @@ function Email:drawContent(cx, cy, cw, ch)
         table.insert(self.buttons, {x = cx + 2, y = ey, w = listW - 4, h = 17, action = "select", index = i})
         end
     end
-    love.graphics.setScissor()
+    Screen.setScissor()
 
     if self.maxInboxScroll > 0 then
         local scrollBarX = cx + listW - 14
@@ -424,13 +425,13 @@ function Email:drawContent(cx, cy, cw, ch)
         local totalTextH = #lines * lineH
         self.maxScroll = math.max(0, totalTextH - bodyH)
 
-        love.graphics.setScissor(cx + 2, bodyY, cw - 4, bodyH)
+        Screen.setScissor(cx + 2, bodyY, cw - 4, bodyH)
         for j, line in ipairs(lines) do
             local ly = bodyY + (j - 1) * lineH + self.scrollY
             love.graphics.setColor(W95.text)
             love.graphics.print(line, cx + 10, ly)
         end
-        love.graphics.setScissor()
+        Screen.setScissor()
 
         if not email.handled then
             local btnY = contentY + contentH - 28

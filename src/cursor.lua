@@ -45,6 +45,22 @@ function CursorManager.draw()
     end
 end
 
+function CursorManager.drawAt(vx, vy)
+    if not gameVisible then return end
+    local img = cursorImages[currentCursor]
+    if img then
+        local scale = 0.75
+        local ox, oy = 0, 0
+        if currentCursor == "normal" then
+            ox, oy = 1, 1
+        elseif currentCursor == "link" then
+            ox, oy = 4, 1
+        end
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(img, vx - ox * scale, vy - oy * scale, 0, scale, scale)
+    end
+end
+
 function CursorManager.set(name)
     if cursorImages[name] then
         currentCursor = name

@@ -1,6 +1,7 @@
 local Explorer = {}
 Explorer.__index = Explorer
 
+local Screen = require("src.screen")
 local WindowManager = require("src.window")
 
 local W95 = {
@@ -644,7 +645,7 @@ function Explorer:drawAppsPage(x, y, w, h)
     local padding = 16
     local startX = x + (w - cols * (cellW + padding) + padding) / 2
 
-    love.graphics.setScissor(x, y + 44, w, h - 44)
+    Screen.setScissor(x, y + 44, w, h - 44)
 
     local scrollOffset = -self.appStoreScrollY
 
@@ -728,7 +729,7 @@ function Explorer:drawAppsPage(x, y, w, h)
         end
     end
 
-    love.graphics.setScissor()
+    Screen.setScissor()
 
     if self.selectedApp then
         local app = self.selectedApp
@@ -762,7 +763,7 @@ function Explorer:drawJobsPage(x, y, w, h)
     local padding = 16
     local startX = x + (w - cols * (cellW + padding) + padding) / 2
 
-    love.graphics.setScissor(x, y + 44, w, h - 44)
+    Screen.setScissor(x, y + 44, w, h - 44)
 
     local scrollOffset = 0
 
@@ -839,7 +840,7 @@ function Explorer:drawJobsPage(x, y, w, h)
         end
     end
 
-    love.graphics.setScissor()
+    Screen.setScissor()
 
     local refreshBtnW = 140
     local refreshBtnH = 24
@@ -938,7 +939,7 @@ function Explorer:drawShopGrid(x, y, w, h)
     self.maxShopScroll = math.max(0, totalContentH - h + 20)
     if self.shopScrollY > self.maxShopScroll then self.shopScrollY = self.maxShopScroll end
 
-    love.graphics.setScissor(x, y, w, h)
+    Screen.setScissor(x, y, w, h)
 
     local scrollOffset = -self.shopScrollY
 
@@ -1077,7 +1078,7 @@ function Explorer:drawShopGrid(x, y, w, h)
         end
     end
 
-    love.graphics.setScissor()
+    Screen.setScissor()
 end
 
 function Explorer:drawShopDetail(x, y, w, h)
@@ -1118,7 +1119,7 @@ function Explorer:drawShopDetail(x, y, w, h)
     local maxTableScroll = math.max(0, tableContentH - tableVisibleH)
     if self[tableScrollKey] > maxTableScroll then self[tableScrollKey] = maxTableScroll end
 
-    love.graphics.setScissor(tableX, tableY + headerH, w - 20, tableVisibleH)
+    Screen.setScissor(tableX, tableY + headerH, w - 20, tableVisibleH)
 
     love.graphics.setColor(W95.highlight)
     love.graphics.rectangle("fill", tableX, tableY, w - 20, headerH)
@@ -1194,7 +1195,7 @@ function Explorer:drawShopDetail(x, y, w, h)
         end
     end
 
-    love.graphics.setScissor()
+    Screen.setScissor()
 
     local descY = y + h - 80
     love.graphics.setColor(W95.borderDark)

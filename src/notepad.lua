@@ -1,3 +1,4 @@
+local Screen = require("src.screen")
 local Notepad = {}
 Notepad.__index = Notepad
 
@@ -140,7 +141,7 @@ function Notepad:drawContent(cx, cy, cw, ch)
     love.graphics.rectangle("fill", cx, cy, cw, ch)
     self:drawInset(cx, cy, cw, ch)
 
-    love.graphics.setScissor(cx + 2, cy + 2, cw - 4, ch - 4)
+    Screen.setScissor(cx + 2, cy + 2, cw - 4, ch - 4)
 
     local money = 0
     if self.trabajoRef then
@@ -175,7 +176,7 @@ function Notepad:drawContent(cx, cy, cw, ch)
     love.graphics.setColor(W95.textDim)
     love.graphics.print("  Dinero total: $" .. money, cx + 16, y)
 
-    love.graphics.setScissor()
+    Screen.setScissor()
     love.graphics.setFont(prevFont)
 end
 
@@ -196,7 +197,7 @@ function Notepad:drawNotifications()
     local prevFont = love.graphics.getFont()
     love.graphics.setFont(self.notifFont)
 
-    local screenW, screenH = love.graphics.getDimensions()
+    local screenW, screenH = Screen.getWidth(), Screen.getHeight()
 
     for i = #self.pendingNotifications, 1, -1 do
         local notif = self.pendingNotifications[i]

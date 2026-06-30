@@ -1,3 +1,4 @@
+local Screen = require("src.screen")
 local CursorManager = require("src.cursor")
 local WinampClass = require("src.winamp")
 local MyPCClass = require("src.mypc")
@@ -226,7 +227,7 @@ function triggerHardwareInstall()
 end
 
 function drawBSOD()
-    local w, h = love.graphics.getDimensions()
+    local w, h = Screen.getWidth(), Screen.getHeight()
     local margin = 80
 
     love.graphics.setColor(0, 0, 0.65)
@@ -253,7 +254,7 @@ function drawBSOD()
 end
 
 function drawMalwarePopup()
-    local w, h = love.graphics.getDimensions()
+    local w, h = Screen.getWidth(), Screen.getHeight()
     local popupW = 420
     local popupH = 180
     local popupX = (w - popupW) / 2
@@ -313,7 +314,7 @@ function triggerProjectPopup()
 end
 
 function drawProjectPopup()
-    local w, h = love.graphics.getDimensions()
+    local w, h = Screen.getWidth(), Screen.getHeight()
     local popupW = 420
     local popupH = 180
     local popupX = (w - popupW) / 2
@@ -381,7 +382,7 @@ function getSaveSlotInfo(slot)
 end
 
 function drawSaveLoadPopup()
-    local w, h = love.graphics.getDimensions()
+    local w, h = Screen.getWidth(), Screen.getHeight()
     local popupW = 400
     local popupH = 300
     local popupX = (w - popupW) / 2
@@ -493,7 +494,7 @@ function drawSaveLoadPopup()
 end
 
 function drawInstallScreen()
-    local w, h = love.graphics.getDimensions()
+    local w, h = Screen.getWidth(), Screen.getHeight()
     local alpha = 1.0
     local fadeTime = 0.4
     if installTimer < fadeTime then
@@ -625,7 +626,7 @@ end
 
 function getNextCascadePosition(w, h)
     local cascadeOffset = 24
-    local screenW, screenH = love.graphics.getDimensions()
+    local screenW, screenH = Screen.getWidth(), Screen.getHeight()
     local taskbarH = 40
     local visibleWindows = {}
 
@@ -1094,10 +1095,17 @@ function love.load()
     local okShader, s = pcall(love.graphics.newShader, "assets/shaders/crt.glsl")
     if okShader then shader = s end
 
-    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-    local pad = 0.15
-    mainCanvas = love.graphics.newCanvas(w * (1 + pad * 2), h * (1 + pad * 2))
+    Screen.init()
+    local vw, vh = Screen.getWidth(), Screen.getHeight()
+    local crtPad = 0.15
+    mainCanvas = love.graphics.newCanvas(vw * (1 + crtPad * 2), vh * (1 + crtPad * 2))
     mainCanvas:setWrap("repeat", "repeat")
+    Screen.setCanvasPad(mainCanvas:getWidth() * 0.065)
+
+    love._realGetPosition = love.mouse.getPosition
+    love.mouse.getPosition = function()
+        return Screen.getMouse()
+    end
 
     local font = love.graphics.newFont(16)
     love.graphics.setFont(font)
@@ -1753,10 +1761,10 @@ function drawDesktopIcon(icon, mx, my)
 end
 
 function drawDesktop()
-    local winW = love.graphics.getWidth()
-    local winH = love.graphics.getHeight()
+    local winW = Screen.getWidth()
+    local winH = Screen.getHeight()
     local taskH = 40
-    local mx, my = love.mouse.getPosition()
+    local mx, my = Screen.getMouse()
 
     love.graphics.setFont(defaultFont)
     CursorManager.set("normal")
@@ -2010,7 +2018,8 @@ function drawDesktop()
 end
 
 function love.draw()
-    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local vw, vh = Screen.getWidth(), Screen.getHeight()
     local pad = mainCanvas:getWidth() * 0.065
 
     love.graphics.setCanvas(mainCanvas)
@@ -2058,18 +2067,6 @@ function love.draw()
 
     end
 
-    love.graphics.pop()
-    love.graphics.setCanvas()
-
-    if shader then
-        shader:send("screen_size", {w, h})
-        shader:send("time", love.timer.getTime())
-        shader:send("curvature", CURVATURE)
-        love.graphics.setShader(shader)
-    end
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(mainCanvas, -pad, -pad)
-    love.graphics.setShader()
     if gameState == "desktop" then
         local appDrawMap = {
             winamp = winamp, mypc = mypc, explorer = explorer,
@@ -2080,7 +2077,7 @@ function love.draw()
         for _, id in ipairs(windowOrder) do
             local app = appDrawMap[id]
             if app then
-                local mx, my = love.mouse.getPosition()
+                local mx, my = Screen.getMouse()
                 app:draw(mx, my)
             end
         end
@@ -2101,8 +2098,8 @@ function love.draw()
     if saveMessageTimer > 0 and saveMessage ~= "" then
         local msgW = 300
         local msgH = 60
-        local msgX = (love.graphics.getWidth() - msgW) / 2
-        local msgY = (love.graphics.getHeight() - msgH) / 2
+        local msgX = (vw - msgW) / 2
+        local msgY = (vh - msgH) / 2
         love.graphics.setColor(0.75, 0.75, 0.75)
         love.graphics.rectangle("fill", msgX, msgY, msgW, msgH)
         love.graphics.setColor(0.5, 0.5, 0.5)
@@ -2110,19 +2107,43 @@ function love.draw()
         love.graphics.setColor(0, 0, 0)
         love.graphics.printf(saveMessage, msgX, msgY + 20, msgW, "center")
     end
-    CursorManager.draw()
+
+    local mx, my = Screen.getMouse()
+    CursorManager.drawAt(mx, my)
+
+    love.graphics.pop()
+    love.graphics.setCanvas()
+
+    if shader then
+        shader:send("screen_size", {screenW, screenH})
+        shader:send("time", love.timer.getTime())
+        shader:send("curvature", CURVATURE)
+        love.graphics.setShader(shader)
+    end
+
+    love.graphics.setColor(1, 1, 1)
+    local s = Screen.getScale()
+    local ox, oy = Screen.getOffset()
+    love.graphics.draw(mainCanvas, -pad * s + ox, -pad * s + oy, 0, s, s)
+
+    love.graphics.setShader()
+
     if installActive then
+        love.graphics.push()
+        Screen.applyTransform()
         drawInstallScreen()
+        love.graphics.pop()
     end
 end
 
-function love.mousepressed(x, y, button)
+function love.mousepressed(screenX, screenY, button)
+    local x, y = Screen.toVirtual(screenX, screenY)
     if button ~= 1 then return end
 
     if gameState == "boot" then
         return
     elseif gameState == "malware_popup" then
-        local w, h = love.graphics.getDimensions()
+        local w, h = Screen.getWidth(), Screen.getHeight()
         local popupW = 420
         local popupH = 180
         local popupX = (w - popupW) / 2
@@ -2142,7 +2163,7 @@ function love.mousepressed(x, y, button)
     end
 
     if popupActive then
-        local w, h = love.graphics.getDimensions()
+        local w, h = Screen.getWidth(), Screen.getHeight()
         local popupW = 400
         local popupH = 300
         local popupX = (w - popupW) / 2
@@ -2233,7 +2254,7 @@ function love.mousepressed(x, y, button)
     end
 
     if projectPopupActive then
-        local w, h = love.graphics.getDimensions()
+        local w, h = Screen.getWidth(), Screen.getHeight()
         local popupW = 420
         local popupH = 180
         local popupX = (w - popupW) / 2
@@ -2264,7 +2285,7 @@ function love.mousepressed(x, y, button)
             end
         end
 
-        local winH = love.graphics.getHeight()
+        local winH = Screen.getHeight()
         local taskH = 40
         local taskY = winH - taskH
         local startHover = x >= 2 and x <= 90 and y >= taskY + 2 and y <= taskY + taskH - 2
@@ -2391,7 +2412,8 @@ function love.mousepressed(x, y, button)
     end
 end
 
-function love.mousereleased(x, y, button)
+function love.mousereleased(screenX, screenY, button)
+    local x, y = Screen.toVirtual(screenX, screenY)
     local appMap = {
         winamp = winamp, mypc = mypc, explorer = explorer,
         notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
@@ -2404,7 +2426,8 @@ function love.mousereleased(x, y, button)
     end
 end
 
-function love.mousemoved(x, y)
+function love.mousemoved(screenX, screenY)
+    local x, y = Screen.toVirtual(screenX, screenY)
     local appMap = {
         winamp = winamp, mypc = mypc, explorer = explorer,
         notepad = notepad, trabajo = trabajo, email = email, recyclebin = recyclebin,
@@ -2417,7 +2440,15 @@ function love.mousemoved(x, y)
     end
 end
 
+function love.resize(w, h)
+    Screen.recalc()
+end
+
 function love.keypressed(key)
+    if key == "f11" or (key == "return" and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt"))) then
+        Screen.toggleFullscreen()
+        return
+    end
     if key == "f1" and trabajo then
         trabajo.money = trabajo.money + 1000
         trabajo.totalEarned = trabajo.totalEarned + 1000
