@@ -1119,7 +1119,25 @@ function Explorer:drawShopDetail(x, y, w, h)
     local isPsu = stat == "psu"
     local isMb = stat == "motherboard"
     local headers = isPsu and {"Upgrade", "Capacidad", "Precio", "Estado"} or (isMb and {"Upgrade", "Reduccion", "Bonus", "Precio"} or {"Upgrade", "Watts", "Precio", "Estado"})
-    local colW2 = {math.floor((w - 200) / 2), 60, 70, 70}
+
+    local maxCol1W = w - 220
+    local col1W = 0
+    for _, tier in ipairs(tiers) do
+        local tw = self.smallFont:getWidth(tier.from .. " -> " .. tier.to)
+        if tw > col1W then col1W = tw end
+    end
+    col1W = math.max(120, math.min(col1W + 12, maxCol1W))
+    local colW2 = {col1W, 60, 70, 70}
+
+    local function truncateText(text, maxW)
+        if self.smallFont:getWidth(text) <= maxW then return text end
+        local out = ""
+        for c in text:gmatch(".") do
+            if self.smallFont:getWidth(out .. c .. "...") > maxW then return out .. "..." end
+            out = out .. c
+        end
+        return out
+    end
 
     local tableContentH = #tiers * rowH
     local tableVisibleH = h - 165
@@ -1154,7 +1172,8 @@ function Explorer:drawShopDetail(x, y, w, h)
 
             love.graphics.setColor(W95.text)
             local rx = tableX + 4
-            love.graphics.print(tier.from .. " -> " .. tier.to, rx, ry + 8)
+            local nameText = truncateText(tier.from .. " -> " .. tier.to, colW2[1] - 8)
+            love.graphics.print(nameText, rx, ry + 8)
             rx = rx + colW2[1]
 
             love.graphics.setColor(W95.textDim)
