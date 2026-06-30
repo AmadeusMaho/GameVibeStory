@@ -243,16 +243,29 @@ function Coding:startProject(index)
     self.projectProgress = 0
     self.projectMaxProgress = pt.baseHp
     self.moneySpent = pt.baseCost
-    self.costPerSecond = pt.baseCost / 60
     self.projectDaysLeft = 14
     self.projectMaxDays = 14
-    self.nextMilestone = 1
-    self.milestoneActive = false
-    self.circles = {}
-    self.floatingNumbers = {}
-    self.barShake = 0
-    self:recalcComponents()
     self.state = "coding"
+    self:startNextSnippet()
+end
+
+function Coding:startNextSnippet()
+    self.milestoneActive = true
+    local snippet = codeSnippets[math.random(#codeSnippets)]
+    self.snippetLines = snippet
+    self.snippetIndex = 1
+    self.codeLines = {}
+    self.codeLineIndex = 1
+    self.codeCharIndex = 0
+    self.codeScrollY = 0
+    self.combo = 0
+    self.linesCompleted = 0
+    self.snippetComplete = false
+    self.snippetBonus = 0
+    self.typedChars = ""
+    self.typingError = false
+    self.typingErrorTimer = 0
+    self:advanceSnippet()
 end
 
 function Coding:sellApp()
@@ -273,10 +286,9 @@ function Coding:resetProject()
     self.projectProgress = 0
     self.projectMaxProgress = 100
     self.moneySpent = 0
-    self.costPerSecond = 0
     self.projectDaysLeft = 0
-    self.circles = {}
-    self.floatingNumbers = {}
+    self.milestoneActive = false
+    self.snippetComplete = false
     self.state = "browse"
 end
 
@@ -380,49 +392,9 @@ function Coding:update(dt)
         self.refreshCooldown = self.refreshCooldown - dt
         if self.refreshCooldown <= 0 then self.refreshAttempts = self.maxRefreshAttempts end
     end
-    if self.state == "coding" and self.activeProject and not self.milestoneActive then
-        local cost = math.floor(self.costPerSecond * dt)
-        if cost > 0 and self.trabajoRef and self.trabajoRef.money >= cost then
-            self.trabajoRef.money = self.trabajoRef.money - cost
-            self.moneySpent = self.moneySpent + cost
-        end
-        for _, comp in ipairs(self.components) do
-            comp.timer = comp.timer + dt
-            if comp.timer >= comp.interval then
-                comp.timer = comp.timer - comp.interval
-                self:genCircle(comp)
-            end
-            if comp.vibration > 0 then comp.vibration = comp.vibration - dt end
-        end
-        for i = #self.circles, 1, -1 do
-            local c = self.circles[i]
-            c.x = c.x + c.vx * dt
-            c.y = c.y + c.vy * dt
-            c.life = c.life - dt
-            if c.life <= 0 then
-                self.projectProgress = self.projectProgress + c.power
-                table.insert(self.floatingNumbers, {text="+"..c.power, x=c.targetX, y=c.targetY, timer=1.0, maxTimer=1.0, vy=-40, isBug=c.isBug})
-                self.barShake = 0.15
-                if #self.circleSounds > 0 then
-                    local snd = self.circleSounds[math.random(#self.circleSounds)]
-                    snd:stop(); snd:play()
-                end
-                table.remove(self.circles, i)
-                if self.projectProgress >= self.projectMaxProgress then
-                    self.state = "sell"
-                    return
-                end
-            end
-        end
-        if self.nextMilestone <= #self.milestoneTargets then
-            local target = self.milestoneTargets[self.nextMilestone]
-            if self.projectProgress / self.projectMaxProgress >= target then
-                self:striggerMilestone()
-            end
-        end
+    if self.state == "coding" and self.activeProject then
         self.projectDaysLeft = self.projectDaysLeft - dt * 0.05
         if self.projectDaysLeft <= 0 then self:cancelProject() end
-        if self.barShake > 0 then self.barShake = self.barShake - dt end
     end
     for i = #self.floatingNumbers, 1, -1 do
         local n = self.floatingNumbers[i]
@@ -501,7 +473,11 @@ end
 function Coding:keypressed(key)
     if self.state ~= "coding" or not self.milestoneActive then return end
     if self.snippetComplete then
-        self.milestoneActive = false
+        if self.projectProgress >= self.projectMaxProgress then
+            self.state = "sell"
+        else
+            self:startNextSnippet()
+        end
         return
     end
     if key == "lshift" or key == "rshift" or key == "lctrl" or key == "rctrl" or
@@ -569,8 +545,7 @@ function Coding:drawContent(cx, cy, cw, ch)
     if self.state == "browse" then
         self:drawBrowse(cx, cy, cw, ch)
     elseif self.state == "coding" then
-        if self.milestoneActive then self:drawMinigame(cx, cy, cw, ch)
-        else self:drawCoding(cx, cy, cw, ch) end
+        self:drawMinigame(cx, cy, cw, ch)
     elseif self.state == "sell" then
         self:drawSell(cx, cy, cw, ch)
     elseif self.state == "manage" then
@@ -758,25 +733,44 @@ function Coding:drawMinigame(x, y, w, h)
     love.graphics.rectangle("fill", x+6, y+4, w-12, h-8)
     self:drawBevel(x+6, y+4, w-12, h-8)
 
+    love.graphics.setColor(W95.text)
+    love.graphics.printf("Codificando: "..(self.activeProject and self.activeProject.name or ""), x+8, y+8, w-16, "center")
+
+    local hpR = math.min(self.projectProgress / self.projectMaxProgress, 1)
+    local bx, by, bw, bh = x+16, y+24, w-32, 16
+    love.graphics.setColor(W95.white)
+    love.graphics.rectangle("fill", bx, by, bw, bh)
+    self:drawInset(bx, by, bw, bh)
+    local bc = hpR > 0.5 and W95.green or (hpR > 0.25 and W95.yellow or W95.red)
+    love.graphics.setColor(bc)
+    love.graphics.rectangle("fill", bx+2, by+2, (bw-4)*hpR, bh-4)
+    love.graphics.setColor(W95.white)
+    love.graphics.printf(math.floor(self.projectProgress).."/"..self.projectMaxProgress, bx, by+1, bw, "center")
+
+    local infoY = by + bh + 4
+    love.graphics.setColor(W95.textDim)
+    love.graphics.print("Dias: "..math.ceil(self.projectDaysLeft).."/"..self.projectMaxDays, x+16, infoY)
+
     if self.snippetComplete then
         love.graphics.setColor(W95.green)
-        love.graphics.printf("Snippet completado!", x+8, y+20, w-16, "center")
+        love.graphics.printf("Snippet completado!", x+8, y+60, w-16, "center")
         love.graphics.setColor(W95.yellow)
-        love.graphics.printf("+" .. self.snippetBonus .. " HP", x+8, y+45, w-16, "center")
+        love.graphics.printf("+" .. self.snippetBonus .. " HP", x+8, y+80, w-16, "center")
         love.graphics.setColor(W95.text)
-        love.graphics.printf("Combo maximo: x" .. self.maxCombo, x+8, y+65, w-16, "center")
-        love.graphics.printf("Lineas completadas: " .. self.linesCompleted, x+8, y+85, w-16, "center")
+        love.graphics.printf("Combo maximo: x" .. self.maxCombo, x+8, y+100, w-16, "center")
+        love.graphics.printf("Lineas completadas: " .. self.linesCompleted, x+8, y+120, w-16, "center")
         love.graphics.setColor(W95.textDim)
-        love.graphics.printf("Presiona cualquier tecla para continuar", x+8, y+120, w-16, "center")
+        love.graphics.printf("Presiona cualquier tecla para continuar", x+8, y+150, w-16, "center")
         return
     end
 
+    local statusY = infoY + 16
     love.graphics.setColor(W95.yellow)
     if self.typingMode then
-        love.graphics.printf("Escribe esta linea:", x+8, y+8, w-16, "center")
+        love.graphics.printf("Escribe esta linea:", x+8, statusY, w-16, "center")
     else
         love.graphics.setColor({0.5, 1, 0.5})
-        love.graphics.printf("Continua escribiendo...", x+8, y+8, w-16, "center")
+        love.graphics.printf("Continua escribiendo...", x+8, statusY, w-16, "center")
     end
 
     local comboText = "Combo: x" .. self.combo
@@ -785,9 +779,9 @@ function Coding:drawMinigame(x, y, w, h)
     elseif self.combo >= 5 then comboColor = W95.yellow
     elseif self.combo >= 1 then comboColor = W95.green end
     love.graphics.setColor(comboColor)
-    love.graphics.printf(comboText, x+8, y+22, w-16, "right")
+    love.graphics.printf(comboText, x+8, statusY, w-16, "right")
 
-    local codeX, codeY, codeW, codeH = x+12, y+38, w-24, h-66
+    local codeX, codeY, codeW, codeH = x+12, statusY+16, w-24, h-statusY-36
     self.codeH = codeH
     love.graphics.setColor({0.1,0.1,0.1})
     love.graphics.rectangle("fill", codeX, codeY, codeW, codeH)
@@ -866,10 +860,20 @@ function Coding:drawMinigame(x, y, w, h)
     love.graphics.setColor(W95.textDim)
     love.graphics.setFont(self.smallFont)
     if self.typingMode then
-        love.graphics.printf("Escribe cada caracter correctamente", x+12, y+h-14, w-24, "center")
+        love.graphics.printf("Escribe cada caracter correctamente", x+12, y+h-28, w-24, "center")
     else
-        love.graphics.printf("Presiona ENTER para continuar", x+12, y+h-14, w-24, "center")
+        love.graphics.printf("Presiona ENTER para continuar", x+12, y+h-28, w-24, "center")
     end
+
+    local btnW, btnH = 80, 18
+    local btnX, btnY = x+w-btnW-12, y+h-20
+    local hov = self.lastMX >= btnX and self.lastMX <= btnX+btnW and self.lastMY >= btnY and self.lastMY <= btnY+btnH
+    love.graphics.setColor(hov and {0.85,0.85,0.85} or W95.bg)
+    love.graphics.rectangle("fill", btnX, btnY, btnW, btnH)
+    self:drawBevel(btnX, btnY, btnW, btnH)
+    love.graphics.setColor(W95.red)
+    love.graphics.printf("Cancelar", btnX, btnY+2, btnW, "center")
+    self.buttons[#self.buttons+1] = {x=btnX, y=btnY, w=btnW, h=btnH, action="cancel_project"}
 end
 
 function Coding:drawSell(x, y, w, h)
