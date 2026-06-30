@@ -145,6 +145,10 @@ function Coding.new(x, y)
     self.autoTypingCharIndex = 0
     self.snippetComplete = false
     self.snippetBonus = 0
+    self.waitingForAutoInput = false
+    self.autoStarted = false
+    self.autoLines = {}
+    self.autoLineIndex = 1
     self.codeFont = love.graphics.newFont(12)
     self.smallFont = love.graphics.newFont(11)
     self.circleFont = love.graphics.newFont(13)
@@ -265,6 +269,10 @@ function Coding:startNextSnippet()
     self.typedChars = ""
     self.typingError = false
     self.typingErrorTimer = 0
+    self.waitingForAutoInput = false
+    self.autoStarted = false
+    self.autoLines = {}
+    self.autoLineIndex = 1
     self:advanceSnippet()
 end
 
@@ -368,6 +376,8 @@ function Coding:advanceSnippet()
         self.codeCharIndex = 0
     else
         self.typingMode = false
+        self.waitingForAutoInput = true
+        self.autoStarted = false
         self.codeLines = {}
         self.codeLineIndex = 1
         self.codeCharIndex = 0
@@ -424,7 +434,7 @@ function Coding:update(dt)
             self.typingError = false
         end
     end
-    if self.milestoneActive and not self.typingMode and not self.snippetComplete and self.autoLines then
+    if self.milestoneActive and not self.typingMode and not self.snippetComplete and self.autoStarted and self.autoLines then
         self.autoTypingTimer = self.autoTypingTimer + dt
         if self.autoTypingTimer >= self.autoTypingSpeed then
             self.autoTypingTimer = self.autoTypingTimer - self.autoTypingSpeed
@@ -442,6 +452,8 @@ function Coding:update(dt)
                     self.autoLineIndex = self.autoLineIndex + 1
                     self.autoCharIndex = 0
                 end
+            else
+                self:finishAutoSection()
             end
         end
     end
@@ -484,6 +496,19 @@ function Coding:keypressed(key)
        key == "lalt" or key == "ralt" or key == "escape" or key == "tab" or
        key == "capslock" or key == "up" or key == "down" or
        key == "left" or key == "right" or key == "home" or key == "end" then return end
+    if self.waitingForAutoInput then
+        if key == "return" or key == "space" then
+            self.waitingForAutoInput = false
+            self.autoStarted = true
+        end
+        return
+    end
+    if self.autoStarted and not self.typingMode then
+        if key == "return" then
+            self:finishAutoSection()
+        end
+        return
+    end
     if not self.typingMode then
         if key == "return" or key == "space" then
             self:finishAutoSection()
@@ -766,9 +791,12 @@ function Coding:drawMinigame(x, y, w, h)
 
     local statusY = infoY + 16
     love.graphics.setColor(W95.yellow)
-    if self.typingMode then
+    if self.waitingForAutoInput then
+        love.graphics.setColor({0.5, 1, 0.5})
+        love.graphics.printf("Presiona ENTER para escribir codigo", x+8, statusY, w-16, "center")
+    elseif self.typingMode then
         love.graphics.printf("Escribe esta linea:", x+8, statusY, w-16, "center")
-    else
+    elseif self.autoStarted then
         love.graphics.setColor({0.5, 1, 0.5})
         love.graphics.printf("Continua escribiendo...", x+8, statusY, w-16, "center")
     end
@@ -859,10 +887,12 @@ function Coding:drawMinigame(x, y, w, h)
 
     love.graphics.setColor(W95.textDim)
     love.graphics.setFont(self.smallFont)
-    if self.typingMode then
+    if self.waitingForAutoInput then
+        love.graphics.printf("Presiona ENTER para escribir codigo", x+12, y+h-28, w-24, "center")
+    elseif self.typingMode then
         love.graphics.printf("Escribe cada caracter correctamente", x+12, y+h-28, w-24, "center")
-    else
-        love.graphics.printf("Presiona ENTER para continuar", x+12, y+h-28, w-24, "center")
+    elseif self.autoStarted then
+        love.graphics.printf("Escribiendo codigo... (ENTER para saltar)", x+12, y+h-28, w-24, "center")
     end
 
     local btnW, btnH = 80, 18
