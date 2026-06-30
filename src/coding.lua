@@ -39,10 +39,60 @@ local componentDefs = {
 local componentOrder = {"gpu","cpu","ram","cooling"}
 
 local codeSnippets = {
-    {'def calculate_total(items):','    total = 0','    for item in items:','        total += item.price','    return total','','def save_report(data):','    with open("report.txt", "w") as f:','        f.write(str(data))'},
-    {'class Database:','    def __init__(self, name):','        self.name = name','        self.tables = {}','','    def create_table(self, name, cols):','        table = {"name": name, "columns": cols}','        self.tables[name] = table'},
-    {'function processData(input) {','    const result = [];','    for (let i = 0; i < input.length; i++) {','        if (input[i].valid) {','            result.push(transform(input[i]));','        }','    }','    return result;','}'},
-    {'#include <stdlib.h>','#include <string.h>','','typedef struct {','    char *name;','    int id;','    float value;','} Record;','','Record* create_record(const char *n) {','    Record *r = malloc(sizeof(Record));','    r->name = strdup(n);','    return r;','}'},
+    {
+        {text='def calculate_total(items):', typing=true},
+        {text='    total = 0', typing=false},
+        {text='    for item in items:', typing=false},
+        {text='        total += item.price', typing=true},
+        {text='    return total', typing=false},
+    },
+    {
+        {text='class Database:', typing=true},
+        {text='    def __init__(self, name):', typing=false},
+        {text='        self.name = name', typing=false},
+        {text='        self.tables = {}', typing=true},
+        {text='    def create_table(self, name, cols):', typing=false},
+        {text='        table = {"name": name}', typing=true},
+    },
+    {
+        {text='function processData(input) {', typing=true},
+        {text='    const result = [];', typing=false},
+        {text='    for (let i = 0; i < input.length; i++) {', typing=false},
+        {text='        if (input[i].valid) {', typing=true},
+        {text='            result.push(transform(input[i]));', typing=false},
+        {text='        }', typing=false},
+        {text='    }', typing=false},
+        {text='    return result;', typing=true},
+        {text='}', typing=false},
+    },
+    {
+        {text='#include <stdlib.h>', typing=true},
+        {text='#include <string.h>', typing=false},
+        {text='typedef struct {', typing=false},
+        {text='    char *name;', typing=true},
+        {text='    int id;', typing=false},
+        {text='    float value;', typing=false},
+        {text='} Record;', typing=true},
+        {text='Record* create_record(const char *n) {', typing=false},
+        {text='    Record *r = malloc(sizeof(Record));', typing=true},
+        {text='    return r;', typing=false},
+        {text='}', typing=false},
+    },
+    {
+        {text='def save_report(data, filename):', typing=true},
+        {text='    with open(filename, "w") as f:', typing=false},
+        {text='        for line in data:', typing=false},
+        {text='            f.write(str(line) + "\\n")', typing=true},
+        {text='    print("Report saved!")', typing=false},
+    },
+    {
+        {text='class FileManager:', typing=true},
+        {text='    def __init__(self, path):', typing=false},
+        {text='        self.path = path', typing=false},
+        {text='        self.files = []', typing=true},
+        {text='    def list_files(self):', typing=false},
+        {text='        return os.listdir(self.path)', typing=true},
+    },
 }
 
 function Coding.new(x, y)
@@ -80,6 +130,21 @@ function Coding.new(x, y)
     self.codeScrollY = 0
     self.codeH = 300
     self.cursorBlink = 0
+    self.snippetLines = {}
+    self.snippetIndex = 1
+    self.typingMode = false
+    self.currentTypingLine = ""
+    self.typedChars = ""
+    self.typingError = false
+    self.typingErrorTimer = 0
+    self.combo = 0
+    self.maxCombo = 0
+    self.linesCompleted = 0
+    self.autoTypingSpeed = 0.03
+    self.autoTypingTimer = 0
+    self.autoTypingCharIndex = 0
+    self.snippetComplete = false
+    self.snippetBonus = 0
     self.codeFont = love.graphics.newFont(12)
     self.smallFont = love.graphics.newFont(11)
     self.circleFont = love.graphics.newFont(13)
@@ -252,11 +317,62 @@ end
 
 function Coding:striggerMilestone()
     self.milestoneActive = true
-    self.codeLines = codeSnippets[math.random(#codeSnippets)]
+    local snippet = codeSnippets[math.random(#codeSnippets)]
+    self.snippetLines = snippet
+    self.snippetIndex = 1
+    self.codeLines = {}
     self.codeLineIndex = 1
     self.codeCharIndex = 0
     self.codeScrollY = 0
     self.nextMilestone = self.nextMilestone + 1
+    self.combo = 0
+    self.linesCompleted = 0
+    self.snippetComplete = false
+    self.snippetBonus = 0
+    self.typedChars = ""
+    self.typingError = false
+    self.typingErrorTimer = 0
+    self:advanceSnippet()
+end
+
+function Coding:advanceSnippet()
+    if self.snippetIndex > #self.snippetLines then
+        self.snippetComplete = true
+        self.snippetBonus = math.floor(self.activeProject.baseHp * 0.15)
+        self.projectProgress = self.projectProgress + self.snippetBonus
+        self.codingXP = self.codingXP + 15
+        self:checkLevelUp()
+        return
+    end
+    local current = self.snippetLines[self.snippetIndex]
+    if current.typing then
+        self.typingMode = true
+        self.currentTypingLine = current.text
+        self.typedChars = ""
+        self.typingError = false
+        self.typingErrorTimer = 0
+        table.insert(self.codeLines, current.text)
+        self.codeLineIndex = #self.codeLines
+        self.codeCharIndex = 0
+    else
+        self.typingMode = false
+        self.codeLines = {}
+        self.codeLineIndex = 1
+        self.codeCharIndex = 0
+        self.autoTypingTimer = 0
+        self.autoTypingCharIndex = 0
+        local autoStart = self.snippetIndex
+        local autoEnd = autoStart
+        while autoEnd <= #self.snippetLines and not self.snippetLines[autoEnd].typing do
+            autoEnd = autoEnd + 1
+        end
+        self.autoLines = {}
+        for i = autoStart, autoEnd - 1 do
+            table.insert(self.autoLines, self.snippetLines[i].text)
+        end
+        self.autoLineIndex = 1
+        self.autoCharIndex = 0
+    end
 end
 
 function Coding:update(dt)
@@ -330,6 +446,33 @@ function Coding:update(dt)
         end
     end
     self.cursorBlink = self.cursorBlink + dt
+    if self.typingErrorTimer > 0 then
+        self.typingErrorTimer = self.typingErrorTimer - dt
+        if self.typingErrorTimer <= 0 then
+            self.typingError = false
+        end
+    end
+    if self.milestoneActive and not self.typingMode and not self.snippetComplete and self.autoLines then
+        self.autoTypingTimer = self.autoTypingTimer + dt
+        if self.autoTypingTimer >= self.autoTypingSpeed then
+            self.autoTypingTimer = self.autoTypingTimer - self.autoTypingSpeed
+            if self.autoLineIndex <= #self.autoLines then
+                local currentLine = self.autoLines[self.autoLineIndex]
+                if self.autoCharIndex < #currentLine then
+                    self.autoCharIndex = self.autoCharIndex + 1
+                    if #self.codeLines < self.autoLineIndex then
+                        table.insert(self.codeLines, "")
+                    end
+                    self.codeLines[self.autoLineIndex] = currentLine:sub(1, self.autoCharIndex)
+                    self.codeLineIndex = self.autoLineIndex
+                    self.codeCharIndex = self.autoCharIndex
+                else
+                    self.autoLineIndex = self.autoLineIndex + 1
+                    self.autoCharIndex = 0
+                end
+            end
+        end
+    end
     if self.milestoneActive then
         local lineH = 16
         local currentLineY = (self.codeLineIndex - 1) * lineH
@@ -357,29 +500,66 @@ end
 
 function Coding:keypressed(key)
     if self.state ~= "coding" or not self.milestoneActive then return end
+    if self.snippetComplete then
+        self.milestoneActive = false
+        return
+    end
     if key == "lshift" or key == "rshift" or key == "lctrl" or key == "rctrl" or
        key == "lalt" or key == "ralt" or key == "escape" or key == "tab" or
-       key == "capslock" or key == "return" or key == "up" or key == "down" or
+       key == "capslock" or key == "up" or key == "down" or
        key == "left" or key == "right" or key == "home" or key == "end" then return end
-    local charsPerKey = 1 + self.codingLevel
-    for i = 1, charsPerKey do
-        if self.codeLineIndex <= #self.codeLines then
-            local line = self.codeLines[self.codeLineIndex]
-            if self.codeCharIndex < #line then
-                self.codeCharIndex = self.codeCharIndex + 1
-            else
-                self.codeLineIndex = self.codeLineIndex + 1
-                self.codeCharIndex = 0
-            end
+    if not self.typingMode then
+        if key == "return" or key == "space" then
+            self:finishAutoSection()
         end
+        return
     end
-    if self.codeLineIndex > #self.codeLines then
-        self.milestoneActive = false
-        local bonus = math.floor(self.activeProject.baseHp * 0.1)
-        self.projectProgress = self.projectProgress + bonus
-        self.codingXP = self.codingXP + 10
-        self:checkLevelUp()
+    if key == "return" then return end
+    if key == "backspace" then
+        if #self.typedChars > 0 then
+            self.typedChars = self.typedChars:sub(1, -2)
+            self.codeCharIndex = #self.typedChars
+        end
+        return
     end
+end
+
+function Coding:completeTypingLine()
+    local damage = math.floor(self.activeProject.baseHp * 0.03)
+    local comboMult = 1.0 + self.combo * 0.1
+    damage = math.floor(damage * comboMult)
+    self.projectProgress = self.projectProgress + damage
+    self.combo = self.combo + 1
+    if self.combo > self.maxCombo then self.maxCombo = self.combo end
+    self.linesCompleted = self.linesCompleted + 1
+    self.codingXP = self.codingXP + 5
+    self:checkLevelUp()
+    table.insert(self.floatingNumbers, {
+        text = "+" .. damage .. (self.combo > 1 and (" x" .. self.combo) or ""),
+        x = self.window.x + self.window.w / 2,
+        y = self.window.y + 100,
+        timer = 1.5, maxTimer = 1.5, vy = -50, isBug = false,
+    })
+    self.barShake = 0.2
+    self.snippetIndex = self.snippetIndex + 1
+    self:advanceSnippet()
+    if self.projectProgress >= self.projectMaxProgress then
+        self.state = "sell"
+    end
+end
+
+function Coding:finishAutoSection()
+    for _, line in ipairs(self.autoLines) do
+        table.insert(self.codeLines, line)
+    end
+    self.codeLineIndex = #self.codeLines
+    self.codeCharIndex = #self.codeLines[#self.codeLines]
+    self.snippetIndex = self.snippetIndex + #self.autoLines
+    self.typingMode = false
+    self.autoLines = {}
+    self.autoLineIndex = 1
+    self.autoCharIndex = 0
+    self:advanceSnippet()
 end
 
 function Coding:drawContent(cx, cy, cw, ch)
@@ -577,27 +757,65 @@ function Coding:drawMinigame(x, y, w, h)
     love.graphics.setColor({0.15, 0.16, 0.18})
     love.graphics.rectangle("fill", x+6, y+4, w-12, h-8)
     self:drawBevel(x+6, y+4, w-12, h-8)
+
+    if self.snippetComplete then
+        love.graphics.setColor(W95.green)
+        love.graphics.printf("Snippet completado!", x+8, y+20, w-16, "center")
+        love.graphics.setColor(W95.yellow)
+        love.graphics.printf("+" .. self.snippetBonus .. " HP", x+8, y+45, w-16, "center")
+        love.graphics.setColor(W95.text)
+        love.graphics.printf("Combo maximo: x" .. self.maxCombo, x+8, y+65, w-16, "center")
+        love.graphics.printf("Lineas completadas: " .. self.linesCompleted, x+8, y+85, w-16, "center")
+        love.graphics.setColor(W95.textDim)
+        love.graphics.printf("Presiona cualquier tecla para continuar", x+8, y+120, w-16, "center")
+        return
+    end
+
     love.graphics.setColor(W95.yellow)
-    love.graphics.printf("Escribe el codigo para completar el milestone", x+8, y+8, w-16, "center")
-    local codeX, codeY, codeW, codeH = x+12, y+24, w-24, h-50
+    if self.typingMode then
+        love.graphics.printf("Escribe esta linea:", x+8, y+8, w-16, "center")
+    else
+        love.graphics.setColor({0.5, 1, 0.5})
+        love.graphics.printf("Continua escribiendo...", x+8, y+8, w-16, "center")
+    end
+
+    local comboText = "Combo: x" .. self.combo
+    local comboColor = W95.textDim
+    if self.combo >= 10 then comboColor = {1, 0.5, 0}
+    elseif self.combo >= 5 then comboColor = W95.yellow
+    elseif self.combo >= 1 then comboColor = W95.green end
+    love.graphics.setColor(comboColor)
+    love.graphics.printf(comboText, x+8, y+22, w-16, "right")
+
+    local codeX, codeY, codeW, codeH = x+12, y+38, w-24, h-66
     self.codeH = codeH
     love.graphics.setColor({0.1,0.1,0.1})
     love.graphics.rectangle("fill", codeX, codeY, codeW, codeH)
     self:drawBevel(codeX, codeY, codeW, codeH)
     Screen.setScissor(codeX+1, codeY+1, codeW-2, codeH-2)
+
     love.graphics.setFont(self.codeFont)
     local lineH = 16
     local maxLines = math.floor((codeH-4) / lineH)
-    local startLine = math.max(1, math.floor(self.codeScrollY/lineH)+1)
-    local endLine = math.min(#self.codeLines, startLine + maxLines)
+    local totalLines = #self.codeLines
+    local startLine = math.max(1, totalLines - maxLines + 1)
+    local endLine = totalLines
+
     local kw = {"if","else","for","while","return","function","class","def","import","from","const","let","var","int","char","void","struct","typedef","include","define","printf","malloc","free"}
+
     for i = startLine, endLine do
-        local ly = codeY + 2 + (i-startLine) * lineH
+        local ly = codeY + 2 + (i - startLine) * lineH
         love.graphics.setColor({0.4,0.4,0.4})
         love.graphics.printf(i, codeX+4, ly, 30, "right")
-        local txt = ""
-        if i < self.codeLineIndex then txt = self.codeLines[i]
-        elseif i == self.codeLineIndex then txt = self.codeLines[i]:sub(1, self.codeCharIndex) end
+
+        local txt = self.codeLines[i] or ""
+        local isCurrentTyping = self.typingMode and i == #self.codeLines
+
+        if isCurrentTyping then
+            love.graphics.setColor({0.2, 0.3, 0.2})
+            love.graphics.rectangle("fill", codeX+34, ly-1, codeW-38, lineH)
+        end
+
         if #txt > 0 then
             local toks, cur = {}, ""
             for c in txt:gmatch(".") do
@@ -619,16 +837,39 @@ function Coding:drawMinigame(x, y, w, h)
                 dx = dx + self.codeFont:getWidth(tk)
             end
         end
-        if i == self.codeLineIndex and math.floor(self.cursorBlink*2)%2 == 0 then
-            local cx = codeX + 38 + self.codeFont:getWidth(self.codeLines[i]:sub(1, self.codeCharIndex))
-            love.graphics.setColor({0.97,0.97,0.94})
-            love.graphics.rectangle("fill", cx, ly, 8, 14)
+
+        if isCurrentTyping and self.typingMode then
+            local typedPart = self.typedChars
+            local remainingPart = self.currentTypingLine:sub(#typedPart + 1)
+            local typedW = self.codeFont:getWidth(typedPart)
+            local baseX = codeX + 38
+
+            if #typedPart > 0 then
+                love.graphics.setColor(self.typingError and {1, 0.3, 0.3} or {0.3, 1, 0.3})
+                love.graphics.print(typedPart, baseX, ly)
+            end
+
+            if #remainingPart > 0 then
+                love.graphics.setColor({0.6, 0.6, 0.6})
+                love.graphics.print(remainingPart, baseX + typedW, ly)
+            end
+
+            if math.floor(self.cursorBlink*2)%2 == 0 then
+                love.graphics.setColor({0.97,0.97,0.94})
+                love.graphics.rectangle("fill", baseX + typedW, ly, 8, 14)
+            end
         end
     end
+
     Screen.setScissor()
+
     love.graphics.setColor(W95.textDim)
     love.graphics.setFont(self.smallFont)
-    love.graphics.printf("Presiona cualquier tecla para escribir codigo", x+12, y+h-14, w-24, "center")
+    if self.typingMode then
+        love.graphics.printf("Escribe cada caracter correctamente", x+12, y+h-14, w-24, "center")
+    else
+        love.graphics.printf("Presiona ENTER para continuar", x+12, y+h-14, w-24, "center")
+    end
 end
 
 function Coding:drawSell(x, y, w, h)
@@ -747,6 +988,23 @@ function Coding:mousepressed(x, y, button)
     return self.window:mousepressed(x, y, button)
 end
 
-function Coding:textinput(text) end
+function Coding:textinput(text)
+    if self.state ~= "coding" or not self.milestoneActive or self.snippetComplete then return end
+    if not self.typingMode then return end
+    if self.typingErrorTimer > 0 then return end
+    local expectedChar = self.currentTypingLine:sub(#self.typedChars + 1, #self.typedChars + 1)
+    if text == expectedChar then
+        self.typedChars = self.typedChars .. text
+        self.codeCharIndex = #self.typedChars
+        self.typingError = false
+        if #self.typedChars >= #self.currentTypingLine then
+            self:completeTypingLine()
+        end
+    else
+        self.typingError = true
+        self.typingErrorTimer = 0.3
+        self.combo = 0
+    end
+end
 
 return Coding
