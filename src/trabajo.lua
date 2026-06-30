@@ -1033,7 +1033,7 @@ function Trabajo:drawParticularTab(x, y, w, h)
     local gridY = infoY + 18
     local gridX = x + 16
     local boxW = (w - 40) / 2
-    local boxH = 60
+    local boxH = 72
     local gapX = 8
     local gapY = 6
 
