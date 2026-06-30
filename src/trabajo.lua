@@ -370,17 +370,14 @@ function Trabajo:startProject(projectData)
 
     self.projectDifficulty = diffInfo
     local baseDays = projectData.days or 14
-    local completed = self.completedProjects or 0
-    local scaleFactor = math.max(0.3, 1.0 - completed * 0.1)
-    local scaledDays = math.max(4, math.floor(baseDays * scaleFactor))
-    self.projectDaysLeft = scaledDays
-    self.projectMaxDays = scaledDays
+    self.projectDaysLeft = baseDays
+    self.projectMaxDays = baseDays
 
     if isFirstProject then
         self.projectReward = projectData.reward
     else
         local rewardMult = diffInfo and diffInfo.rewardMult or 1.0
-        local dayMult = 1.0 + (14 - scaledDays) * 0.02
+        local dayMult = 1.0 + (14 - baseDays) * 0.02
         self.projectReward = math.floor(projectData.reward * rewardMult * dayMult)
     end
 
