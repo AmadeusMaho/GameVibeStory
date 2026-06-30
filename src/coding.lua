@@ -362,6 +362,7 @@ function Coding:advanceSnippet()
         self.projectProgress = self.projectProgress + self.snippetBonus
         self.codingXP = self.codingXP + 15
         self:checkLevelUp()
+        print("SNIPPET COMPLETE")
         return
     end
     local current = self.snippetLines[self.snippetIndex]
@@ -376,6 +377,7 @@ function Coding:advanceSnippet()
         table.insert(self.codeLines, current.text)
         self.codeLineIndex = #self.codeLines
         self.codeCharIndex = 0
+        print("TYPING MODE: "..current.text)
     else
         self.typingMode = false
         self.waitingForAutoInput = true
@@ -396,6 +398,7 @@ function Coding:advanceSnippet()
         end
         self.autoLineIndex = 1
         self.autoCharIndex = 0
+        print("AUTO SECTION: waitingForAutoInput=true, autoLines="..#self.autoLines)
     end
 end
 
@@ -539,6 +542,7 @@ function Coding:completeTypingLine()
     self.combo = self.combo + 1
     if self.combo > self.maxCombo then self.maxCombo = self.combo end
     self.linesCompleted = self.linesCompleted + 1
+    print("LINE COMPLETED! combo="..self.combo..", snippetIndex="..self.snippetIndex)
     self.codingXP = self.codingXP + 5
     self:checkLevelUp()
     table.insert(self.floatingNumbers, {
