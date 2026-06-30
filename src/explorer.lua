@@ -1119,7 +1119,7 @@ function Explorer:drawShopDetail(x, y, w, h)
     local isPsu = stat == "psu"
     local isMb = stat == "motherboard"
     local headers = isPsu and {"Upgrade", "Capacidad", "Precio", "Estado"} or (isMb and {"Upgrade", "Reduccion", "Bonus", "Precio"} or {"Upgrade", "Watts", "Precio", "Estado"})
-    local colW2 = {math.floor((w - 220) / 2), 60, 70, 90}
+    local colW2 = {math.floor((w - 200) * 0.45), 50, 60, 90}
 
     local tableContentH = #tiers * rowH
     local tableVisibleH = h - 165
@@ -1154,7 +1154,7 @@ function Explorer:drawShopDetail(x, y, w, h)
 
             love.graphics.setColor(W95.text)
             local rx = tableX + 4
-            love.graphics.print(tier.from .. " -> " .. tier.to, rx, ry + 8)
+            love.graphics.printf(tier.from .. " -> " .. tier.to, rx, ry + 8, colW2[1] - 4, "left")
             rx = rx + colW2[1]
 
             love.graphics.setColor(W95.textDim)
