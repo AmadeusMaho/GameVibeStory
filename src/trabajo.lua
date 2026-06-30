@@ -380,7 +380,8 @@ function Trabajo:startProject(projectData)
         self.projectReward = projectData.reward
     else
         local rewardMult = diffInfo and diffInfo.rewardMult or 1.0
-        self.projectReward = math.floor(projectData.reward * rewardMult)
+        local dayMult = 1.0 + (14 - scaledDays) * 0.02
+        self.projectReward = math.floor(projectData.reward * rewardMult * dayMult)
     end
 
     self.resultMessage = ""
