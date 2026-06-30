@@ -124,6 +124,9 @@ function Explorer.new(x, y)
     self.jobScrollY = 0
 
     self.allProjects = {
+        {name = "Ordenar escritorio", desc = "Organizar papeles\ny limpiar escritorio.", baseHp = 40, days = 14, reward = 50, difficulty = "muy_facil"},
+        {name = "Archivar recibos", desc = "Guardar 50 recibos\nen carpetas.", baseHp = 40, days = 14, reward = 60, difficulty = "muy_facil"},
+        {name = "Copiar documentos", desc = "Hacer 20 copias\nde formularios.", baseHp = 40, days = 14, reward = 70, difficulty = "muy_facil"},
         {name = "Digitacion de formularios", desc = "Digitar 200 formularios\nde seguros.", baseHp = 150, days = 14, reward = 150, difficulty = "facil"},
         {name = "Clasificacion de archivos", desc = "Clasificar 500 archivos\npor categoria y fecha.", baseHp = 150, days = 14, reward = 180, difficulty = "facil"},
         {name = "Traduccion de documentos", desc = "Traducir 10 documentos\nlegales al espanol.", baseHp = 150, days = 14, reward = 200, difficulty = "facil"},
@@ -289,7 +292,7 @@ end
 function Explorer:refreshJobBoard()
     self.jobBoard = {}
     local available = {}
-    local unlocked = self.trabajoRef and self.trabajoRef.unlockedDifficulties or {facil = true, normal = true}
+    local unlocked = self.trabajoRef and self.trabajoRef.unlockedDifficulties or {muy_facil = true, facil = true, normal = true}
     for _, project in ipairs(self.allProjects) do
         if unlocked[project.difficulty] then
             table.insert(available, project)
@@ -792,6 +795,7 @@ function Explorer:drawJobsPage(x, y, w, h)
             love.graphics.printf(job.name, cx + 8, cy + 8, cellW - 16, "center")
 
             local diffColors = {
+                muy_facil = {0.5, 1.0, 0.5},
                 infantil = {0.6, 0.9, 0.6},
                 facil = {0.2, 0.8, 0.2},
                 normal = {0.9, 0.9, 0.2},
@@ -803,6 +807,7 @@ function Explorer:drawJobsPage(x, y, w, h)
                 infierno = {1.0, 0.0, 0.3},
             }
             local diffLabels = {
+                muy_facil = "Muy Facil",
                 facil = "Facil",
                 normal = "Normal",
                 dificil = "Dificil",

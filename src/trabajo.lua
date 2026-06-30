@@ -26,6 +26,7 @@ local W95 = {
 }
 
 local projectDifficulties = {
+    {id = "muy_facil", label = "Muy Facil", color = {0.5, 1.0, 0.5}, hpMult = 1.0, rewardMult = 1.0},
     {id = "facil", label = "Facil", color = {0.2, 0.8, 0.2}, hpMult = 1.0, rewardMult = 1.0},
     {id = "normal", label = "Normal", color = {0.9, 0.9, 0.2}, hpMult = 1.0, rewardMult = 1.0},
     {id = "dificil", label = "Dificil", color = {0.9, 0.6, 0.2}, hpMult = 1.0, rewardMult = 1.0},
@@ -170,7 +171,7 @@ function Trabajo.new(x, y)
 
     self.activeJobs = {}
     self.maxJobs = 1
-    self.unlockedDifficulties = {facil = true, normal = true}
+    self.unlockedDifficulties = {muy_facil = true, facil = true, normal = true}
     self.difficultyProgression = {"facil", "normal", "dificil", "muy_dificil", "extremo", "pesadilla", "inframundo", "infierno"}
     self.newDifficultyUnlocked = nil
 

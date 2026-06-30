@@ -1131,7 +1131,7 @@ function love.load()
     bsodBigFont = love.graphics.newFont(24)
     bsodMedFont = love.graphics.newFont(18)
     popupTitleFont = love.graphics.newFont(12)
-    installFont = love.graphics.newFont(24)
+    installFont = love.graphics.newFont(48)
     love.graphics.setFont(font)
 
     CursorManager.init()

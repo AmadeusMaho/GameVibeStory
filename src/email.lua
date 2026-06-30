@@ -24,6 +24,7 @@ local W95 = {
 }
 
 local projectDifficulties = {
+    {id = "muy_facil", label = "Muy Facil", color = {0.5, 1.0, 0.5}, hpMult = 0.3, rewardMult = 0.6},
     {id = "facil", label = "Fácil", color = {0.2, 0.8, 0.2}, hpMult = 1.0, rewardMult = 1.0},
     {id = "normal", label = "Normal", color = {0.9, 0.9, 0.2}, hpMult = 2.67, rewardMult = 1.4},
     {id = "dificil", label = "Difícil", color = {0.9, 0.6, 0.2}, hpMult = 4.67, rewardMult = 1.8},
@@ -32,11 +33,12 @@ local projectDifficulties = {
 }
 
 local function getDifficultyForProject(index)
-    if index <= 4 then return projectDifficulties[1]
-    elseif index <= 8 then return projectDifficulties[2]
-    elseif index <= 13 then return projectDifficulties[3]
-    elseif index <= 17 then return projectDifficulties[4]
-    else return projectDifficulties[5]
+    if index <= 2 then return projectDifficulties[1]
+    elseif index <= 6 then return projectDifficulties[2]
+    elseif index <= 10 then return projectDifficulties[3]
+    elseif index <= 15 then return projectDifficulties[4]
+    elseif index <= 19 then return projectDifficulties[5]
+    else return projectDifficulties[6]
     end
 end
 
