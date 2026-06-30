@@ -1122,7 +1122,7 @@ function Explorer:drawShopDetail(x, y, w, h)
     local colW2 = {math.floor((w - 220) / 2), 60, 70, 90}
 
     local tableContentH = #tiers * rowH
-    local tableVisibleH = h - 140
+    local tableVisibleH = h - 165
     local tableScrollKey = "shopDetailScroll_" .. stat
     if not self[tableScrollKey] then self[tableScrollKey] = 0 end
 
