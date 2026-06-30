@@ -922,9 +922,9 @@ end
 function Explorer:drawShopGrid(x, y, w, h)
     local componentOrder = {"cpu", "ram", "disk", "display", "cooling", "psu", "motherboard"}
     local cols = 3
-    local cellW = 120
-    local cellH = 110
-    local padding = 16
+    local cellW = 130
+    local cellH = 130
+    local padding = 14
     local startX = x + (w - cols * (cellW + padding) + padding) / 2
 
     local totalWatts = self:getTotalWatts()
@@ -976,19 +976,19 @@ function Explorer:drawShopGrid(x, y, w, h)
             self:drawBevel(cx, cy, cellW, cellH)
 
             love.graphics.setColor(W95.highlight)
-            love.graphics.rectangle("fill", cx + 4, cy + 4, cellW - 8, 28)
+            love.graphics.rectangle("fill", cx + 4, cy + 4, cellW - 8, 30)
             love.graphics.setColor(W95.highlightText)
-            love.graphics.printf(comp.icon, cx + 4, cy + 10, cellW - 8, "center")
+            love.graphics.printf(comp.icon, cx + 4, cy + 12, cellW - 8, "center")
 
             love.graphics.setColor(W95.text)
-            love.graphics.printf(comp.label, cx, cy + 36, cellW, "center")
+            love.graphics.printf(comp.label, cx, cy + 40, cellW, "center")
 
             love.graphics.setColor(W95.textDim)
-            love.graphics.printf("Lv." .. level, cx, cy + 50, cellW, "center")
+            love.graphics.printf("Lv." .. level, cx, cy + 56, cellW, "center")
 
             if isMaxed then
                 love.graphics.setColor(W95.green)
-                love.graphics.printf("MAX", cx, cy + 54, cellW, "center")
+                love.graphics.printf("MAX", cx, cy + 72, cellW, "center")
             else
                 local price = self:getUpgradePrice(stat, level)
                 local canBuyMoney = self.trabajoRef and self.trabajoRef.money >= price
@@ -998,17 +998,17 @@ function Explorer:drawShopGrid(x, y, w, h)
                 else
                     love.graphics.setColor({0.8, 0, 0})
                 end
-                love.graphics.printf("$" .. price, cx, cy + 54, cellW, "center")
+                love.graphics.printf("$" .. price, cx, cy + 72, cellW, "center")
             end
 
             if stat == "psu" then
                 local psuLevel = self.upgradeLevels.psu or 0
                 local nextCap = self.psuCapacity[psuLevel + 2] or self.psuCapacity[#self.psuCapacity]
                 love.graphics.setColor(W95.textDim)
-                love.graphics.printf("-> " .. nextCap .. "W", cx, cy + 70, cellW, "center")
+                love.graphics.printf("-> " .. nextCap .. "W", cx, cy + 88, cellW, "center")
             else
                 love.graphics.setColor(W95.textDim)
-                love.graphics.printf(currentWatts .. "W", cx, cy + 70, cellW, "center")
+                love.graphics.printf(currentWatts .. "W", cx, cy + 88, cellW, "center")
             end
 
             local bonusText = ""
@@ -1030,7 +1030,7 @@ function Explorer:drawShopGrid(x, y, w, h)
             end
 
             love.graphics.setColor(W95.yellow)
-            love.graphics.printf(bonusText, cx, cy + 86, cellW, "center")
+            love.graphics.printf(bonusText, cx, cy + 104, cellW, "center")
 
             table.insert(self.buttons, {x = cx, y = cy, w = cellW, h = cellH, action = "component", stat = stat})
         end
