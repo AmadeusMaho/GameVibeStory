@@ -1100,6 +1100,7 @@ function love.load()
     local crtPad = 0.15
     mainCanvas = love.graphics.newCanvas(vw * (1 + crtPad * 2), vh * (1 + crtPad * 2))
     mainCanvas:setWrap("repeat", "repeat")
+    mainCanvas:setFilter("linear", "linear")
     Screen.setCanvasPad(mainCanvas:getWidth() * 0.065)
 
     love._realGetPosition = love.mouse.getPosition

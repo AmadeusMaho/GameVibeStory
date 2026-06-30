@@ -645,7 +645,7 @@ function Explorer:drawAppsPage(x, y, w, h)
     local padding = 16
     local startX = x + (w - cols * (cellW + padding) + padding) / 2
 
-    Screen.setScissor(x, y + 44, w, h - 44)
+    Screen.setScissor(x, y + 44, w, h - 110)
 
     local scrollOffset = -self.appStoreScrollY
 
@@ -763,7 +763,7 @@ function Explorer:drawJobsPage(x, y, w, h)
     local padding = 16
     local startX = x + (w - cols * (cellW + padding) + padding) / 2
 
-    Screen.setScissor(x, y + 44, w, h - 44)
+    Screen.setScissor(x, y + 44, w, h - 120)
 
     local scrollOffset = 0
 
@@ -1112,7 +1112,7 @@ function Explorer:drawShopDetail(x, y, w, h)
     local colW2 = {math.floor((w - 220) / 2), 60, 70, 90}
 
     local tableContentH = #tiers * rowH
-    local tableVisibleH = h - 140
+    local tableVisibleH = h - 160
     local tableScrollKey = "shopDetailScroll_" .. stat
     if not self[tableScrollKey] then self[tableScrollKey] = 0 end
 
