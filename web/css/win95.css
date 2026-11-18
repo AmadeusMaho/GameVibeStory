@@ -1,0 +1,259 @@
+/* =========================================================================
+   Tema Windows 95
+   Todo lo visual de la era vive aquí. Las apps solo usan clases genéricas
+   (.btn, .field, .group, .tabs, .progress...) para que otra era pueda
+   cambiar este archivo sin tocar el código.
+   ========================================================================= */
+
+.theme-win95 {
+  --face: #c0c0c0;
+  --light: #dfdfdf;
+  --hilight: #ffffff;
+  --shadow: #808080;
+  --dkshadow: #000000;
+  --window: #ffffff;
+  --text: #000000;
+  --gray-text: #808080;
+  --select: #000080;
+  --select-text: #ffffff;
+  --title: #000080;
+  --title-text: #ffffff;
+  --title-inactive: #808080;
+  --title-inactive-text: #c0c0c0;
+  --desktop: #008080;
+  --tooltip: #ffffe1;
+  --ok: #008000;
+  --bad: #c00000;
+  --warn: #a07000;
+  --link: #0000ee;
+
+  --raised: inset -1px -1px var(--dkshadow), inset 1px 1px var(--hilight),
+            inset -2px -2px var(--shadow), inset 2px 2px var(--light);
+  --raised-pressed: inset -1px -1px var(--hilight), inset 1px 1px var(--dkshadow),
+                    inset -2px -2px var(--light), inset 2px 2px var(--shadow);
+  --window-edge: inset -1px -1px var(--dkshadow), inset 1px 1px var(--light),
+                 inset -2px -2px var(--shadow), inset 2px 2px var(--hilight);
+  --sunken: inset -1px -1px var(--hilight), inset 1px 1px var(--shadow),
+            inset -2px -2px var(--light), inset 2px 2px var(--dkshadow);
+  --shallow: inset -1px -1px var(--hilight), inset 1px 1px var(--shadow);
+  --shallow-up: inset -1px -1px var(--shadow), inset 1px 1px var(--hilight);
+
+  --checker: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2' shape-rendering='crispEdges'%3E%3Crect width='2' height='2' fill='%23c0c0c0'/%3E%3Crect width='1' height='1' fill='%23fff'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23fff'/%3E%3C/svg%3E");
+
+  font-family: "Microsoft Sans Serif", "MS Sans Serif", Tahoma, Arial, sans-serif;
+  font-size: 11px;
+  color: var(--text);
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+.theme-win95 ::selection { background: var(--select); color: var(--select-text); }
+
+/* ---------- Escritorio ---------- */
+.theme-win95 .desktop { background-color: var(--desktop); background-size: cover; background-position: center; }
+
+.theme-win95 .desk-icon { width: 75px; color: #fff; }
+.theme-win95 .desk-icon img { width: 32px; height: 32px; }
+.theme-win95 .desk-icon .label { padding: 1px 2px; border: 1px dotted transparent; line-height: 13px; }
+.theme-win95 .desk-icon.selected img { filter: brightness(0.55) sepia(1) hue-rotate(195deg) saturate(6); }
+.theme-win95 .desk-icon.selected .label { background: var(--select); border-color: #ffff80; }
+.theme-win95 .desk-icon .badge { background: #c00000; color: #fff; font-weight: bold; padding: 0 3px; }
+
+/* ---------- Ventanas ---------- */
+.theme-win95 .window {
+  background: var(--face);
+  box-shadow: var(--window-edge);
+  padding: 3px;
+}
+.theme-win95 .title-bar {
+  height: 18px;
+  background: var(--title-inactive);
+  color: var(--title-inactive-text);
+  padding: 0 2px 0 2px;
+  font-weight: bold;
+  gap: 3px;
+}
+.theme-win95 .window.active .title-bar { background: var(--title); color: var(--title-text); }
+.theme-win95 .title-bar .title-icon { width: 16px; height: 16px; }
+.theme-win95 .title-controls { gap: 0; }
+.theme-win95 .title-controls button { width: 16px; height: 14px; }
+.theme-win95 .title-controls button[data-wm="close"] { margin-left: 2px; }
+.theme-win95 .window-body { margin-top: 2px; }
+
+/* Botones de título (también usados en barras de desplazamiento) */
+.theme-win95 .title-controls button,
+.theme-win95 .btn {
+  background: var(--face);
+  box-shadow: var(--raised);
+  border: none;
+  border-radius: 0;
+  color: var(--text);
+  font: inherit;
+  padding: 0;
+}
+.theme-win95 .title-controls button:active { box-shadow: var(--raised-pressed); }
+.theme-win95 .title-controls button:active svg { transform: translate(1px, 1px); }
+
+/* ---------- Botón normal ---------- */
+.theme-win95 .btn {
+  min-width: 75px;
+  min-height: 23px;
+  padding: 0 10px;
+  position: relative;
+}
+.theme-win95 .btn.small { min-width: 0; min-height: 19px; padding: 0 6px; }
+.theme-win95 .btn.default { box-shadow: inset 0 0 0 1px var(--dkshadow), inset -2px -2px var(--dkshadow), inset 2px 2px var(--hilight), inset -3px -3px var(--shadow), inset 3px 3px var(--light); }
+.theme-win95 .btn:not(:disabled):active,
+.theme-win95 .btn.pressed { box-shadow: var(--raised-pressed); padding-top: 2px; padding-left: 12px; }
+.theme-win95 .btn.small:not(:disabled):active { padding-left: 8px; }
+.theme-win95 .btn:focus-visible { outline: 1px dotted #000; outline-offset: -5px; }
+.theme-win95 .btn:disabled,
+.theme-win95 .disabled-text { color: var(--gray-text); text-shadow: 1px 1px 0 var(--hilight); }
+
+/* ---------- Campos y paneles hundidos ---------- */
+.theme-win95 .field { background: var(--window); box-shadow: var(--sunken); padding: 3px 4px; }
+.theme-win95 .sunken { box-shadow: var(--sunken); padding: 2px; }
+.theme-win95 .shallow { box-shadow: var(--shallow); padding: 1px 3px; }
+.theme-win95 .raised { box-shadow: var(--raised); padding: 2px; }
+.theme-win95 .raised-thin { box-shadow: var(--shallow-up); }
+
+/* ---------- Group box (marco grabado) ---------- */
+.theme-win95 .group {
+  border: none;
+  box-shadow: inset -1px -1px var(--hilight), inset 1px 1px var(--shadow),
+              inset -2px -2px var(--shadow), inset 2px 2px var(--hilight);
+  padding: 12px 8px 8px;
+  margin: 8px 0 0;
+  position: relative;
+}
+.theme-win95 .group > legend,
+.theme-win95 .group > .legend {
+  position: absolute; top: -7px; left: 7px;
+  background: var(--face); padding: 0 2px;
+}
+
+/* ---------- Separadores ---------- */
+.theme-win95 hr,
+.theme-win95 .sep { border: none; height: 2px; box-shadow: inset 0 1px var(--shadow), inset 0 -1px var(--hilight); margin: 6px 0; }
+.theme-win95 .vsep { width: 2px; box-shadow: inset 1px 0 var(--shadow), inset -1px 0 var(--hilight); align-self: stretch; margin: 2px 2px; }
+
+/* ---------- Barra de progreso (bloques) ---------- */
+.theme-win95 .progress { height: 16px; background: var(--window); box-shadow: var(--shallow); padding: 2px; position: relative; }
+.theme-win95 .progress > .fill {
+  height: 100%;
+  background: repeating-linear-gradient(90deg, var(--select) 0 8px, transparent 8px 10px);
+}
+.theme-win95 .progress.smooth > .fill { background: var(--select); }
+.theme-win95 .progress.ok > .fill { background: repeating-linear-gradient(90deg, #008000 0 8px, transparent 8px 10px); }
+.theme-win95 .progress.warn > .fill { background: repeating-linear-gradient(90deg, #a08000 0 8px, transparent 8px 10px); }
+.theme-win95 .progress.bad > .fill { background: repeating-linear-gradient(90deg, #c00000 0 8px, transparent 8px 10px); }
+.theme-win95 .progress > .label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; mix-blend-mode: difference; color: #fff; }
+
+/* ---------- Pestañas ---------- */
+.theme-win95 .tabs { display: flex; padding-left: 2px; position: relative; z-index: 1; }
+.theme-win95 .tabs > .tab {
+  background: var(--face);
+  border: none; font: inherit; color: inherit;
+  padding: 3px 8px 2px;
+  margin-top: 2px;
+  box-shadow: inset 1px 1px var(--hilight), inset -1px 0 var(--dkshadow), inset -2px 0 var(--shadow), inset 2px 2px var(--light);
+  border-radius: 3px 3px 0 0;
+}
+.theme-win95 .tabs > .tab.active { margin-top: 0; padding: 4px 10px 4px; margin-left: -2px; margin-right: -2px; margin-bottom: -2px; }
+.theme-win95 .tab-panel { box-shadow: var(--window-edge); padding: 10px 8px 8px; background: var(--face); }
+
+/* ---------- Barra de menú ---------- */
+.theme-win95 .menubar { display: flex; padding: 1px 0 2px; }
+.theme-win95 .menubar > span { padding: 2px 6px; }
+.theme-win95 .menubar > span:hover { box-shadow: var(--shallow-up); }
+.theme-win95 .menubar u { text-decoration: underline; }
+
+/* ---------- Barra de herramientas ---------- */
+.theme-win95 .toolbar { display: flex; align-items: center; gap: 1px; padding: 2px; box-shadow: inset 0 1px var(--hilight), inset 0 -1px var(--shadow); }
+.theme-win95 .tool { background: var(--face); border: none; font: inherit; color: inherit; padding: 2px 5px; min-width: 44px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.theme-win95 .tool:hover:not(:disabled) { box-shadow: var(--shallow-up); }
+.theme-win95 .tool:active:not(:disabled) { box-shadow: var(--shallow); }
+.theme-win95 .tool:disabled { color: var(--gray-text); text-shadow: 1px 1px 0 #fff; }
+
+/* ---------- Barra de estado ---------- */
+.theme-win95 .statusbar { display: flex; gap: 2px; margin-top: 2px; }
+.theme-win95 .statusbar > div { box-shadow: var(--shallow); padding: 2px 4px; flex: 1; white-space: nowrap; overflow: hidden; }
+
+/* ---------- Listas / tablas ---------- */
+.theme-win95 .list { background: var(--window); box-shadow: var(--sunken); padding: 2px; overflow: auto; }
+.theme-win95 .list .row { padding: 1px 3px; display: flex; gap: 6px; white-space: nowrap; }
+.theme-win95 .list .row.selected { background: var(--select); color: var(--select-text); }
+.theme-win95 .list .row.unread { font-weight: bold; }
+.theme-win95 table.grid { border-collapse: collapse; width: 100%; background: var(--window); }
+.theme-win95 table.grid th { background: var(--face); box-shadow: var(--raised); font-weight: normal; text-align: left; padding: 2px 5px; }
+.theme-win95 table.grid td { padding: 2px 5px; }
+.theme-win95 table.grid tr.selected td { background: var(--select); color: var(--select-text); }
+
+/* ---------- Barras de desplazamiento ---------- */
+.theme-win95 ::-webkit-scrollbar { width: 16px; height: 16px; }
+.theme-win95 ::-webkit-scrollbar-track { background-image: var(--checker); image-rendering: pixelated; }
+.theme-win95 ::-webkit-scrollbar-thumb { background: var(--face); box-shadow: var(--raised); }
+.theme-win95 ::-webkit-scrollbar-corner { background: var(--face); }
+.theme-win95 ::-webkit-scrollbar-button:single-button { background-color: var(--face); box-shadow: var(--raised); display: block; height: 16px; width: 16px; background-repeat: no-repeat; background-position: center; }
+.theme-win95 ::-webkit-scrollbar-button:single-button:active { box-shadow: var(--raised-pressed); }
+.theme-win95 ::-webkit-scrollbar-button:single-button:vertical:decrement { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Cpath d='M7 6h1v1h1v1h1v1h1v1H4V9h1V8h1V7h1z'/%3E%3C/svg%3E"); }
+.theme-win95 ::-webkit-scrollbar-button:single-button:vertical:increment { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Cpath d='M4 6H11V7H10V8H9V9H8V10H7V9H6V8H5V7H4z'/%3E%3C/svg%3E"); }
+.theme-win95 ::-webkit-scrollbar-button:single-button:horizontal:decrement { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Cpath d='M9 4V11H8V10H7V9H6V8H5V7H6V6H7V5H8V4z'/%3E%3C/svg%3E"); }
+.theme-win95 ::-webkit-scrollbar-button:single-button:horizontal:increment { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Cpath d='M6 4H7V5H8V6H9V7H10V8H9V9H8V10H7V11H6z'/%3E%3C/svg%3E"); }
+
+/* ---------- Barra de tareas ---------- */
+.theme-win95 .taskbar {
+  height: 28px;
+  background: var(--face);
+  box-shadow: inset 0 1px var(--light), inset 0 2px var(--hilight);
+  padding: 4px 2px 2px;
+  gap: 4px;
+}
+.theme-win95 .start-button {
+  height: 22px; padding: 0 4px 0 3px; gap: 3px;
+  font-weight: bold;
+  background: var(--face); box-shadow: var(--raised); border: none; font-family: inherit; font-size: 11px; color: #000;
+}
+.theme-win95 .start-button.open { box-shadow: var(--raised-pressed); padding: 1px 3px 0 4px; }
+.theme-win95 .start-button.open .start-text { outline: 1px dotted #000; outline-offset: 0; }
+.theme-win95 .task-buttons { gap: 3px; }
+.theme-win95 .task-btn {
+  width: 160px; min-width: 40px; height: 22px; flex: 0 1 160px;
+  background: var(--face); box-shadow: var(--raised); border: none; font: inherit; color: #000;
+  padding: 0 4px; gap: 3px; justify-content: flex-start;
+}
+.theme-win95 .task-btn img { width: 16px; height: 16px; }
+.theme-win95 .task-btn.active {
+  box-shadow: var(--raised-pressed);
+  background-image: var(--checker); image-rendering: pixelated;
+  font-weight: bold; padding-top: 1px;
+}
+.theme-win95 .tray { height: 22px; box-shadow: var(--shallow); padding: 0 8px; gap: 10px; }
+.theme-win95 .tray .money { color: #006000; font-weight: bold; }
+
+/* ---------- Menú Inicio ---------- */
+.theme-win95 .start-menu { background: var(--face); box-shadow: var(--window-edge); padding: 3px; }
+.theme-win95 .start-menu .banner {
+  width: 21px; background: var(--shadow);
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  padding: 6px 0 0; font-size: 18px; font-family: "Arial Black", Arial, sans-serif; font-weight: 900; letter-spacing: -0.5px;
+  color: var(--face); line-height: 21px;
+}
+.theme-win95 .start-menu .banner b { color: #fff; font-family: "Arial", sans-serif; font-weight: 400; }
+.theme-win95 .start-menu .item { height: 32px; padding: 0 20px 0 4px; gap: 8px; }
+.theme-win95 .start-menu .item img { width: 24px; height: 24px; }
+.theme-win95 .start-menu .item:hover { background: var(--select); color: var(--select-text); }
+.theme-win95 .start-menu .item u { text-decoration: underline; }
+.theme-win95 .start-menu .msep { height: 2px; margin: 2px 2px; box-shadow: inset 0 1px var(--shadow), inset 0 -1px var(--hilight); }
+
+/* ---------- Diálogos ---------- */
+.theme-win95 .msg-body { gap: 14px; padding: 12px 12px 4px; }
+.theme-win95 .msg-buttons { gap: 6px; padding: 10px 0 6px; }
+
+/* ---------- Tooltip / globo ---------- */
+.theme-win95 .toast { background: var(--tooltip); border: 1px solid #000; padding: 6px 8px; box-shadow: 2px 2px 0 rgba(0,0,0,.35); }
+.theme-win95 .toast .t-title { font-weight: bold; }
+
+/* ---------- Pantalla de BIOS y BSOD (independientes del tema, pero de esta era) ---------- */
+.theme-win95 .bsod { background: #0000aa; color: #fff; font-family: "Lucida Console", "Courier New", monospace; font-size: 16px; }
+.theme-win95 .bsod .bsod-title { background: #aaaaaa; color: #0000aa; padding: 0 6px; }

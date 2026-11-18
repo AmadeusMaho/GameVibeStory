@@ -1,0 +1,169 @@
+/* =========================================================================
+   Estructura del "monitor" y del escritorio (independiente de la era).
+   ========================================================================= */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+body { display: grid; place-items: center; }
+
+button { cursor: inherit; }
+
+#screen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: center center;
+  width: var(--screen-w, 1024px);
+  height: var(--screen-h, 768px);
+  overflow: hidden;
+  background: #000;
+  user-select: none;
+  cursor: var(--cur-arrow, default);
+}
+#screen .clickable, #screen [data-action], #screen .desk-icon { cursor: var(--cur-hand, pointer); }
+#screen.busy, #screen.busy * { cursor: var(--cur-busy, progress) !important; }
+
+.layer { position: absolute; inset: 0; }
+.hidden { display: none !important; }
+.flex { display: flex; }
+.col { display: flex; flex-direction: column; }
+.center { display: flex; align-items: center; justify-content: center; }
+.grow { flex: 1; min-width: 0; min-height: 0; }
+.right { text-align: right; }
+.mid { text-align: center; }
+.nowrap { white-space: nowrap; }
+.bold { font-weight: bold; }
+.dim { color: var(--gray-text); }
+.ok { color: var(--ok); }
+.bad { color: var(--bad); }
+.warn { color: var(--warn); }
+.gap4 { gap: 4px; } .gap8 { gap: 8px; }
+.pad8 { padding: 8px; }
+.mt4 { margin-top: 4px; } .mt8 { margin-top: 8px; }
+
+/* ---------- Escritorio ---------- */
+.desktop { position: absolute; inset: 0 0 28px 0; }
+.desk-icons { position: absolute; inset: 4px; display: grid; grid-auto-flow: column; grid-template-rows: repeat(auto-fill, 72px); grid-auto-columns: 75px; gap: 4px 6px; align-content: start; justify-content: start; }
+.desk-icon { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding-top: 2px; }
+.desk-icon img { object-fit: contain; pointer-events: none; }
+.desk-icon .label { max-width: 73px; word-wrap: break-word; }
+.desk-icon.fresh img { animation: pop .6s ease-out; }
+@keyframes pop { 0% { transform: scale(.2); opacity: 0; } 70% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+
+/* ---------- Ventanas ---------- */
+.windows { position: absolute; inset: 0 0 28px 0; pointer-events: none; }
+.window { position: absolute; display: flex; flex-direction: column; pointer-events: auto; }
+.window.maximized { left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; }
+.window.minimized { display: none; }
+.window.opening { animation: win-open .12s steps(3); }
+@keyframes win-open { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.title-bar { display: flex; align-items: center; flex: none; }
+.title-bar .title-text { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.title-controls { display: flex; align-items: center; }
+.title-controls button { display: flex; align-items: center; justify-content: center; }
+.window-body { flex: 1; min-height: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.window-body > .app { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.fx-canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+.msg-text { white-space: pre-line; }
+
+/* ---------- Barra de tareas ---------- */
+.taskbar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; z-index: 9000; }
+.start-button { display: flex; align-items: center; flex: none; }
+.task-buttons { display: flex; flex: 1; min-width: 0; overflow: hidden; }
+.task-btn { display: flex; align-items: center; overflow: hidden; }
+.task-btn span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tray { display: flex; align-items: center; flex: none; }
+
+/* ---------- Menú Inicio ---------- */
+.start-menu { position: absolute; left: 2px; bottom: 27px; display: flex; z-index: 9500; min-width: 200px; }
+.start-menu .items { display: flex; flex-direction: column; flex: 1; }
+.start-menu .item { display: flex; align-items: center; white-space: nowrap; }
+
+/* ---------- Modales ---------- */
+.modal-layer { position: absolute; inset: 0; z-index: 9800; display: flex; align-items: center; justify-content: center; }
+.modal-layer.block { background: transparent; }
+.dialog { position: relative; min-width: 260px; max-width: 460px; }
+.msg-body { display: flex; align-items: flex-start; }
+.msg-body .msg-text { white-space: pre-line; line-height: 15px; padding-top: 6px; }
+.msg-buttons { display: flex; justify-content: center; }
+
+/* ---------- Notificaciones ---------- */
+.toasts { position: absolute; right: 8px; bottom: 36px; display: flex; flex-direction: column; gap: 6px; z-index: 9700; pointer-events: none; }
+.toast { width: 230px; animation: toast-in .25s ease-out; }
+@keyframes toast-in { from { transform: translateY(10px); opacity: 0; } }
+
+/* ---------- Pantallas completas ---------- */
+.fullscreen { position: absolute; inset: 0; z-index: 9900; }
+.power { background: #000; color: #9a9a9a; font-family: "Lucida Console", "Courier New", monospace; flex-direction: column; gap: 18px; font-size: 14px; }
+.power .power-btn { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #555; background: radial-gradient(circle at 35% 30%, #4a4a4a, #151515); display: flex; align-items: center; justify-content: center; }
+.power .power-btn:hover { border-color: #3c3; box-shadow: 0 0 18px rgba(60, 220, 60, .35); }
+.boot { background: #000; color: #bbb; font-family: "Lucida Console", "Courier New", monospace; font-size: 15px; padding: 26px 34px; white-space: pre; line-height: 20px; }
+.boot .bios-logo { position: absolute; top: 18px; left: 30px; height: 70px; }
+.boot .energy { position: absolute; top: 18px; right: 30px; height: 70px; }
+.boot .lines { margin-top: 90px; }
+.boot .bottom { position: absolute; left: 34px; bottom: 26px; }
+.splash { background: linear-gradient(#2a5cc4 0%, #6d9be3 45%, #b5d0f2 100%); color: #fff; flex-direction: column; }
+.splash .clouds { position: absolute; inset: 0; background:
+  radial-gradient(ellipse 160px 50px at 18% 30%, rgba(255,255,255,.85), transparent 70%),
+  radial-gradient(ellipse 220px 60px at 70% 22%, rgba(255,255,255,.8), transparent 70%),
+  radial-gradient(ellipse 200px 55px at 40% 65%, rgba(255,255,255,.75), transparent 70%),
+  radial-gradient(ellipse 260px 70px at 85% 75%, rgba(255,255,255,.8), transparent 70%),
+  radial-gradient(ellipse 180px 50px at 10% 85%, rgba(255,255,255,.7), transparent 70%); }
+.splash .brand { position: relative; text-align: center; text-shadow: 2px 2px 3px rgba(0,0,0,.4); }
+.splash .brand .ms { font: italic bold 22px Arial, sans-serif; }
+.splash .brand .win { font: bold 64px "Arial Black", Arial, sans-serif; letter-spacing: -2px; }
+.splash .brand .win sup { font-size: 36px; color: #ffef6b; }
+.splash .bar { position: absolute; bottom: 0; left: 0; right: 0; height: 10px; background: linear-gradient(90deg, #0a1a6b, #3c7bff, #0a1a6b); background-size: 200% 100%; animation: splash-bar 1.2s linear infinite; }
+@keyframes splash-bar { to { background-position: -200% 0; } }
+.shutdown-screen { background: #000; color: #ff9c1a; font: bold 30px Arial, sans-serif; text-align: center; flex-direction: column; }
+.bsod { padding: 0 60px; flex-direction: column; justify-content: center; align-items: center; text-align: left; }
+.bsod .bsod-inner { max-width: 640px; white-space: pre-wrap; line-height: 22px; }
+.bsod .bsod-title { display: table; margin: 0 auto 18px; }
+
+/* ---------- Efecto CRT ---------- */
+/* La capa CRT vive fuera de la pantalla escalada (#crt), así las líneas de
+   barrido se dibujan en píxeles reales del monitor y no generan moiré. */
+#crt { position: fixed; pointer-events: none; z-index: 10; border-radius: var(--crt-r, 22px); overflow: hidden; }
+#crt > div { position: absolute; inset: 0; }
+body.crt-off #crt > div:not(.crt-power) { display: none; }
+
+body:not(.crt-off) #screen {
+  border-radius: var(--crt-r-v, 18px);
+  filter: contrast(1.05) saturate(1.12) brightness(1.04);
+}
+/* líneas de barrido (como el sin(y * alto * 3) del shader original) */
+.crt-scan { background: repeating-linear-gradient(to bottom, rgba(0,0,0,.16) 0 1px, rgba(0,0,0,0) 1px 3px); }
+/* rejilla de apertura RGB, muy sutil */
+.crt-mask { background: repeating-linear-gradient(90deg, rgba(255,0,0,.05) 0 1px, rgba(0,255,0,.04) 1px 2px, rgba(0,0,255,.05) 2px 3px); mix-blend-mode: multiply; }
+/* ruido de señal */
+.crt-noise { background-image: var(--crt-noise); background-size: 160px 160px; opacity: .045; animation: crt-noise .35s steps(4) infinite; }
+@keyframes crt-noise { 0% { background-position: 0 0; } 25% { background-position: -37px 61px; } 50% { background-position: 83px -29px; } 75% { background-position: -12px -77px; } }
+/* parpadeo leve de luminosidad */
+.crt-flicker { background: rgba(255,255,255,.025); animation: crt-flicker 4.3s infinite; }
+@keyframes crt-flicker { 0%, 100% { opacity: .35; } 8% { opacity: .9; } 9% { opacity: .2; } 50% { opacity: .6; } 51% { opacity: .3; } 77% { opacity: .8; } }
+/* vidrio curvo: bordes oscuros, esquinas redondeadas y un reflejo */
+.crt-glass {
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse 75% 65% at 50% 45%, rgba(255,255,255,.035), transparent 70%),
+    linear-gradient(135deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,0) 28%),
+    radial-gradient(ellipse 125% 125% at 50% 50%, transparent 62%, rgba(0,0,0,.55) 100%);
+  box-shadow: inset 0 0 22px 6px rgba(0,0,0,.65), inset 0 0 3px 1px rgba(0,0,0,.9);
+}
+/* encendido y apagado del tubo */
+.crt-power { background: #fff; opacity: 0; transform-origin: center; }
+#crt.power-on .crt-power { animation: crt-on .55s ease-out forwards; }
+#crt.power-off .crt-power { animation: crt-off .6s ease-in forwards; }
+@keyframes crt-on {
+  0% { opacity: 1; transform: scale(1, .004); }
+  35% { opacity: 1; transform: scale(1, .004); }
+  60% { opacity: .9; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1, 1); }
+}
+@keyframes crt-off {
+  0% { opacity: 0; transform: scale(1, 1); }
+  20% { opacity: .9; transform: scale(1, 1); }
+  55% { opacity: 1; transform: scale(1, .004); }
+  85% { opacity: 1; transform: scale(.003, .004); }
+  100% { opacity: 0; transform: scale(0, 0); }
+}
