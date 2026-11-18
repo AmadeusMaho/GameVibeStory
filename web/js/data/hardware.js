@@ -110,13 +110,3 @@ export const COMPONENT_ORDER = ['display', 'cpu', 'ram', 'cooling'];
 
 export const TIER_NAMES = ['Básico', 'Avanzado', 'Élite', 'Legendario', 'Épico', 'Mítico', 'Supremo'];
 export const TIER_COLORS = ['#404040', '#20a020', '#2050e0', '#8020c0', '#d08000', '#d04010', '#e00070'];
-
-// Teclados mecánicos (packs de sonido que ya venían en assets/sounds/keyboard)
-export const KEYBOARDS = [
-  { dir: '2', name: 'NK Cream', price: 0 },
-  { dir: '5', name: 'CherryMX Black', price: 150 },
-  { dir: '6', name: 'CherryMX Blue', price: 350 },
-  { dir: '3', name: 'EG Oreo', price: 700 },
-  { dir: '4', name: 'EG Crystal Purple', price: 1200 },
-  { dir: '1', name: 'Topre Purple Hybrid', price: 2000 },
-];

@@ -5,7 +5,7 @@ import { h, raw, money, fmt, rand } from '../core/dom.js';
 import { play } from '../core/audio.js';
 import { msgBox, progressDialog } from '../core/ui.js';
 import { img } from '../core/assets.js';
-import { HW, HW_ORDER, KEYBOARDS } from '../data/hardware.js';
+import { HW, HW_ORDER } from '../data/hardware.js';
 import { PROJECTS, DIFFICULTIES } from '../data/work.js';
 
 const PAGES = {
@@ -136,17 +136,6 @@ export class ExplorerApp extends App {
         play('install', { volume: 0.5 });
         this.say(`${HW[d.stat].name} mejorado a ${g.hwName(d.stat)}.`);
         await progressDialog({ title: 'Asistente para agregar nuevo hardware', text: `Instalando ${g.hwName(d.stat)}...\nWindows está configurando el controlador.`, duration: 1800 });
-        break;
-      }
-      case 'buykbd': {
-        const k = KEYBOARDS[d.i];
-        const owned = g.flags.keyboards || (g.flags.keyboards = ['2']);
-        if (owned.includes(k.dir)) { g.flags.keyboard = k.dir; this.say(`Teclado activo: ${k.name}`); break; }
-        if (!g.spend(k.price)) { this.say('Dinero insuficiente.'); break; }
-        owned.push(k.dir);
-        g.flags.keyboard = k.dir;
-        play('buy', { volume: 0.5 });
-        this.say(`${k.name} instalado y activo.`);
         break;
       }
       case 'buyapp': {
@@ -289,17 +278,6 @@ export class ExplorerApp extends App {
           </tr>`;
         })}
       </table>
-      <h3>Accesorios: teclados mecánicos</h3>
-      <table class="web-table" width="100%" cellpadding="4">
-        <tr><th>Teclado</th><th>Precio</th><th></th></tr>
-        ${KEYBOARDS.map((k, i) => {
-          const owned = (g.flags.keyboards || ['2']).includes(k.dir);
-          const active = (g.flags.keyboard || '2') === k.dir;
-          return h`<tr><td>⌨ ${k.name}</td><td>${k.price ? money(k.price) : 'Incluido'}</td>
-            <td><button class="btn small" data-action="buykbd" data-i="${i}" ${active ? 'disabled' : ''}>${active ? 'En uso' : owned ? 'Usar' : 'Comprar'}</button></td></tr>`;
-        })}
-      </table>
-      <p><small>Suena al escribir en el Code Editor y en todo el escritorio.</small></p>
     </div>`;
   }
 

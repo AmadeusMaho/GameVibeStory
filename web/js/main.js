@@ -71,7 +71,7 @@ const UNLOCK_MAIL = {
   5: ['personal', 'Personal - Empleados disponibles', 'admin@empresa.com',
     '¡Ha desbloqueado la aplicación "Personal"!\n\nAhora puede contratar empleados que generan ingresos pasivos de forma automática.'],
   6: ['winamp', 'Winamp - Reproductor de música', 'admin@winamp.com',
-    '¡Ha desbloqueado Winamp!\n\nEl reproductor de música más popular del momento. Compre su primera canción en la Tienda de Música de Internet Explorer.\n\nMientras escucha música trabaja más concentrado: +10% de pago por tarea.', 'page_music'],
+    '¡Ha desbloqueado Winamp!\n\nEl reproductor de música más popular del momento. Compre su primera canción en la Tienda de Música de Internet Explorer.', 'page_music'],
   7: ['achievements', 'Logros - Aplicación desbloqueada', 'admin@empresa.com',
     '¡Ha desbloqueado "Logros y Estadísticas"!\n\nAhora puede ver todos sus logros y estadísticas de juego.'],
   10: [null, 'Windows XP está en camino', 'windowsupdate@microsoft.com',

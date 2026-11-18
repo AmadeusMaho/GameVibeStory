@@ -116,7 +116,6 @@ export class Game {
     const base = [1, 2, 4, 8, 16, 24, 32][this.hw.display] || 1;
     let mult = 1;
     if (this.hw.cooling) mult *= 1 + (0.1 + (this.hw.cooling - 1) * 0.2);
-    if (this.musicOn) mult *= 1.1;
     return Math.max(1, Math.floor(base * mult));
   }
   jobSlots() { return 1 + (this.hw.ram || 0); }

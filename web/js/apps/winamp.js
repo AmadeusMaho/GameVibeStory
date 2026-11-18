@@ -1,5 +1,4 @@
-// Winamp: reproduce las canciones compradas. Mientras suena música, el
-// freelancer trabaja más concentrado (+10% de pago por tarea).
+// Winamp: reproduce las canciones compradas.
 import { App } from '../core/wm.js';
 import { h } from '../core/dom.js';
 import { createMusic, analyse } from '../core/audio.js';
@@ -103,7 +102,7 @@ export class WinampApp extends App {
         </div>
         <div class="wa-right">
           <div class="wa-title">${shown}</div>
-          <div class="wa-info"><span>128</span> kbps <span>44</span> kHz ${this.game.musicOn ? h`<span class="wa-buff">+10% CONCENTRACIÓN</span>` : ''}</div>
+          <div class="wa-info"><span>128</span> kbps <span>44</span> kHz</div>
         </div>
       </div>
       <div class="wa-seek" data-down="seek"><div style="width:${dur ? ((cur / dur) * 100).toFixed(1) : 0}%"></div></div>
