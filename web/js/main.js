@@ -7,13 +7,14 @@ import { keySound, click } from './core/audio.js';
 import { applyCursors } from './core/cursors.js';
 import * as Save from './core/save.js';
 import { Shell } from './shell.js';
-import { TrabajoApp, ProyectoApp } from './apps/trabajo.js';
+import { TrabajoApp } from './apps/trabajo.js';
 import { EmailApp } from './apps/email.js';
 import { ExplorerApp } from './apps/explorer.js';
 import { CodingApp } from './apps/coding.js';
 import { MyPCApp, RecycleBinApp } from './apps/system.js';
 import { GoalsApp, AchievementsApp, StaffApp } from './apps/progress.js';
 import { WinampApp } from './apps/winamp.js';
+import { TallerApp } from './apps/taller.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -23,21 +24,25 @@ const el = {
 
 const game = new Game();
 window.game = game; // útil para depurar desde la consola
+// ?3d: el juego vive dentro de un monitor en una habitación 3D
+game.mode3d = new URLSearchParams(location.search).has('3d');
 initUI(el.modals, el.toasts);
 
 const wm = new WindowManager(game, el.windows);
 game.wm = wm;
 game.apps = {};
-for (const App of [TrabajoApp, ProyectoApp, EmailApp, ExplorerApp, CodingApp, MyPCApp, RecycleBinApp, GoalsApp, AchievementsApp, StaffApp, WinampApp]) {
+for (const App of [TrabajoApp, EmailApp, ExplorerApp, CodingApp, MyPCApp, RecycleBinApp, GoalsApp, AchievementsApp, StaffApp, WinampApp, TallerApp]) {
   const app = wm.register(new App(game));
   game.apps[app.id] = app;
 }
 
 const shell = new Shell(game, el);
+game.shell = shell;
 
 // --------------------------------------------------------------- escalado
 const crt = document.getElementById('crt');
 function fit() {
+  if (game.mode3d && !game.flat) return; // en 3D la escena posiciona la pantalla (salvo sentado frente al PC)
   const s = Math.min(window.innerWidth / game.screenW, window.innerHeight / game.screenH);
   game.scale = s;
   el.screen.style.transform = `translate(-50%, -50%) scale(${s})`;
@@ -87,19 +92,35 @@ game.on('goal', (id, index) => {
   game.apps.email.add({ type: 'news', subject, from, body: `Estimado usuario:\n\n${body}` });
 });
 
-game.on('taskDone', () => game.apps.email.onTaskDone());
+game.on('taskDone', () => {
+  game.apps.email.onTaskDone();
+  const n = game.stats.tasksCompleted;
+  if ([1, 5, 10, 20, 30, 50, 100].includes(n)) game.milestone(`${n} encargo${n > 1 ? 's' : ''}`);
+});
+// registro de ritmo (F3 con ?debug lo muestra en la consola)
+game.on('upgrade', (stat, lvl) => {
+  game.milestone(`${stat} nv.${lvl}`);
+  const n = game.stats.upgradesPurchased;
+  if (n % 10 === 0) game.milestone(`${n} mejoras`);
+  if (game.hw.cpu >= 6 && game.hw.ram >= 3 && game.hw.disk >= 2) game.milestone('hardware para XP');
+});
+game.on('repLevel', (lvl) => game.milestone(`reputación ${lvl}`));
+game.on('goal', (id) => game.milestone(`objetivo ${id}`));
 game.on('malwareDesktop', () => game.unlockIcon('download'));
 game.on('appInstalled', (id) => {
   if (id === 'coding') game.unlockIcon('coding');
   if (id === 'winbatch') game.setFlag('winbatch');
 });
-game.on('upgrade', () => {
-  const proj = game.apps.particular;
-  if (proj.project) {
-    const timers = proj.components.map((c) => c.timer);
-    proj.components = game.projectComponents();
-    proj.components.forEach((c, i) => { c.timer = timers[i] || 0; });
+game.on('upgrade', () => game.apps.trabajo.refreshComponents());
+game.on('repLevel', (lvl) => {
+  if (lvl !== 1) return;
+  if (game.mode3d && !game.flag('taller')) {
+    game.setFlag('taller');
+    game.unlockIcon('taller');
+    game.apps.taller.offerTimer = 20;
   }
+  game.apps.email.add({ type: 'news', subject: 'Se corre la voz', from: 'admin@empresa.com',
+    body: 'Ya lo conocen en el barrio. Algunos clientes le van a escribir directo con encargos urgentes. Pagan bien, pero no esperan mucho.\n\nSu gerente.' });
 });
 
 // Clic del mouse: como en el original, suena en cada clic sobre el escritorio
@@ -110,10 +131,12 @@ document.addEventListener('keydown', (e) => {
   if (game.state !== 'desktop') return;
   if (!e.repeat) keySound(game.flags.keyboard || '2', e.code);
   if (e.key === 'Escape') shell.closeStart();
-  const coding = game.apps.coding;
+  const coding = game.apps.coding, trabajo = game.apps.trabajo;
   if (wm.activeId() === 'coding' && coding.onKey(e)) { e.preventDefault(); wm.renderApp(coding, true); }
+  if (wm.activeId() === 'trabajo' && trabajo.onKey(e)) { e.preventDefault(); wm.renderApp(trabajo, true); }
   if (new URLSearchParams(location.search).has('debug')) {
     if (e.key === 'F1') { e.preventDefault(); game.earn(1000, 'debug'); }
+    if (e.key === 'F3') { e.preventDefault(); console.table(game.pacing.map(([min, hito]) => ({ min, hito }))); toast('Ritmo', `${game.pacing.length} hitos en la consola (F12)`); }
     if (e.key === 'F2') { e.preventDefault(); ['winbatch', 'coding'].forEach((a) => { game.setFlag('app_' + a); game.emit('appInstalled', a); }); }
   }
 });
@@ -152,11 +175,20 @@ async function start() {
   localStorage.removeItem('gamevibestory_loadslot');
   const data = slot ? Save.read(Number(slot)) : Save.latest();
   if (data) Save.apply(game, data);
+  if (!game.mode3d) { // en 2D no hay caja ni piezas sueltas
+    Object.keys(game.boxed).forEach((s) => game.install(s));
+    game.removed = {}; game.loose = {};
+  }
   shell.applyWallpaper();
+  if (game.mode3d) {
+    document.body.classList.add('mode3d');
+    const { initRoom } = await import('./room3d.js');
+    initRoom(game, el, fit);
+  }
 
   requestAnimationFrame(frame);
-  await shell.powerScreen();
-  await shell.boot();
+  shell.powerOn().then(() => {}); // el bucle de encendido sigue vivo (apagar y volver a prender)
+  await shell.firstBoot;
   if (!data) wm.open('email');
   else toast('Bienvenido de vuelta', `Partida cargada: $${Math.floor(game.money).toLocaleString('es-CL')}`);
 }

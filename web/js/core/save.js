@@ -9,14 +9,22 @@ export function serialize(game) {
     if (d != null) apps[id] = d;
   }
   return {
-    version: 1,
+    version: 2,
     timestamp: Date.now(),
     money: game.money,
     totalEarned: game.totalEarned,
     stats: game.stats,
+    rep: game.rep,
+    streak: game.streak,
+    bestStreak: game.bestStreak,
     hw: game.hw,
+    boxed: game.boxed,
+    spares: game.spares,
+    removed: game.removed,
+    loose: game.loose,
     flags: game.flags,
     icons: game.unlockedIcons,
+    pacing: game.pacing,
     apps,
   };
 }
@@ -25,9 +33,17 @@ export function apply(game, data) {
   game.money = data.money || 0;
   game.totalEarned = data.totalEarned || 0;
   Object.assign(game.stats, data.stats || {});
+  game.rep = data.rep || 0;
+  game.streak = data.streak || 0;
+  game.bestStreak = data.bestStreak || 0;
   Object.assign(game.hw, data.hw || {});
+  game.boxed = data.boxed || {};
+  game.spares = data.spares || [];
+  game.removed = data.removed || {};
+  game.loose = data.loose || {};
   game.flags = data.flags || {};
   game.unlockedIcons = data.icons || [];
+  game.pacing = data.pacing || [];
   for (const [id, d] of Object.entries(data.apps || {})) game.wm.get(id)?.load(d);
 }
 

@@ -6,7 +6,7 @@ import { msgBox, toast } from '../core/ui.js';
 import { img } from '../core/assets.js';
 import { WELCOME, MALWARE_DESKTOP } from '../data/emails.js';
 
-const ACTION_LABEL = { job: 'Enviar CV', malware: 'Descargar', beneficial: 'Cobrar', project: 'Aceptar' };
+const ACTION_LABEL = { job: 'Enviar CV', malware: 'Descargar', beneficial: 'Cobrar', project: 'Aceptar', repair: 'Aceptar' };
 
 export class EmailApp extends App {
   constructor(game) {
@@ -32,7 +32,7 @@ export class EmailApp extends App {
 
   add(email, { silent = false } = {}) {
     const e = { read: false, handled: false, ...email, id: this.nextId++, date: this.clock() };
-    if (e.type === 'project') e.days = 10;
+    if (e.type === 'project') e.days ??= 10;
     this.inbox.unshift(e);
     if (!this.selected) this.selected = e.id;
     if (!silent && this.game.state === 'desktop') {
@@ -48,8 +48,8 @@ export class EmailApp extends App {
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/95 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   }
 
-  // Como en la versión original: los contratos llegan por la Bolsa de Trabajo,
-  // no por correo. El único correo "sorpresa" es el del malware a las 15 tareas.
+  // Los encargos normales salen en Trabajo; por correo llegan los VIP (los
+  // manda Trabajo) y el malware a los 15 encargos.
   onTaskDone() {
     if (!this.malwareSent && this.game.stats.tasksCompleted >= 15) {
       this.malwareSent = true;
@@ -98,14 +98,15 @@ export class EmailApp extends App {
         const lost = g.lose(g.money * e.loss);
         g.stats.scamsFallen = (g.stats.scamsFallen || 0) + 1;
         msgBox({ title: e.subject.slice(0, 30), icon: 'error', text: `Este programa ha realizado una operación no válida y se cerrará.\n\nSe perdieron ${money(lost)} de su cuenta.` });
-      } else if (e.type === 'project') {
-        const proj = g.apps.particular;
-        if (proj.project) {
-          msgBox({ title: 'Aviso', icon: 'warning', text: 'Ya tiene un proyecto en curso.\nComplete o cancele el proyecto actual antes de aceptar uno nuevo.' });
-          return;
-        }
+      } else if (e.type === 'repair') {
+        const why = g.apps.taller.accept(e.job);
+        if (why) { msgBox({ title: 'Aviso', icon: 'warning', text: why }); return; }
         e.handled = true;
-        proj.start(e.project);
+      } else if (e.type === 'project') {
+        const why = g.apps.trabajo.accept(e.project);
+        if (why) { msgBox({ title: 'Aviso', icon: 'warning', text: why }); return; }
+        e.handled = true;
+        g.wm.open('trabajo');
       }
     } else if (action === 'delete') {
       g.stats.emailsDeleted++;
@@ -135,7 +136,7 @@ export class EmailApp extends App {
         <table class="grid">
           <tr><th style="width:18px">!</th><th style="width:170px">De</th><th>Asunto</th><th style="width:100px">Recibido</th></tr>
           ${this.inbox.map((m) => h`<tr class="${m.id === this.selected ? 'selected' : ''} clickable" data-action="select" data-id="${m.id}" data-silent style="${m.read ? '' : 'font-weight:bold'}">
-            <td>${m.type === 'project' ? '!' : m.read ? '' : '✉'}</td><td class="nowrap">${m.from}</td><td class="nowrap">${m.subject}</td><td class="nowrap">${m.date}</td></tr>`)}
+            <td>${m.type === 'project' || m.type === 'repair' ? '!' : m.read ? '' : '✉'}</td><td class="nowrap">${m.from}</td><td class="nowrap">${m.subject}</td><td class="nowrap">${m.date}</td></tr>`)}
         </table>
       </div>
       ${e ? h`

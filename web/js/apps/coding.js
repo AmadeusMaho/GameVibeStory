@@ -5,21 +5,21 @@ import { play } from '../core/audio.js';
 import { img } from '../core/assets.js';
 
 export const PROJECT_TYPES = [
-  { id: 'calculator', name: 'Calculadora', difficulty: 'normal', cost: 800, hp: 1000, reward: 2000, monthly: 80 },
-  { id: 'notepad_pro', name: 'Notepad Pro', difficulty: 'normal', cost: 600, hp: 800, reward: 1500, monthly: 60 },
-  { id: 'file_manager', name: 'Administrador de archivos', difficulty: 'normal', cost: 900, hp: 1200, reward: 2200, monthly: 90 },
-  { id: 'browser', name: 'Navegador Web', difficulty: 'dificil', cost: 2000, hp: 2000, reward: 5000, monthly: 200 },
-  { id: 'email_client', name: 'Cliente de Email', difficulty: 'dificil', cost: 1500, hp: 1600, reward: 4000, monthly: 150 },
-  { id: 'media_player', name: 'Reproductor multimedia', difficulty: 'dificil', cost: 2500, hp: 2400, reward: 6000, monthly: 250 },
-  { id: 'database', name: 'Base de Datos', difficulty: 'pesadilla', cost: 5000, hp: 4000, reward: 12000, monthly: 500 },
-  { id: 'office_suite', name: 'Suite de Oficina', difficulty: 'pesadilla', cost: 8000, hp: 5000, reward: 18000, monthly: 800 },
-  { id: 'game_engine', name: 'Motor de Juegos', difficulty: 'pesadilla', cost: 12000, hp: 6000, reward: 25000, monthly: 1200 },
+  { id: 'calculator', name: 'Calculadora', difficulty: 'normal', cost: 80, hp: 1000, reward: 200, monthly: 8 },
+  { id: 'notepad_pro', name: 'Notepad Pro', difficulty: 'normal', cost: 60, hp: 800, reward: 150, monthly: 6 },
+  { id: 'file_manager', name: 'Administrador de archivos', difficulty: 'normal', cost: 90, hp: 1200, reward: 220, monthly: 9 },
+  { id: 'browser', name: 'Navegador Web', difficulty: 'dificil', cost: 200, hp: 2000, reward: 500, monthly: 20 },
+  { id: 'email_client', name: 'Cliente de Email', difficulty: 'dificil', cost: 150, hp: 1600, reward: 400, monthly: 15 },
+  { id: 'media_player', name: 'Reproductor multimedia', difficulty: 'dificil', cost: 250, hp: 2400, reward: 600, monthly: 25 },
+  { id: 'database', name: 'Base de Datos', difficulty: 'pesadilla', cost: 500, hp: 4000, reward: 1200, monthly: 50 },
+  { id: 'office_suite', name: 'Suite de Oficina', difficulty: 'pesadilla', cost: 800, hp: 5000, reward: 1800, monthly: 80 },
+  { id: 'game_engine', name: 'Motor de Juegos', difficulty: 'pesadilla', cost: 1200, hp: 6000, reward: 2500, monthly: 120 },
 ];
 const DIFF_CLASS = { normal: 'ok', dificil: 'warn', pesadilla: 'bad' };
 const DIFF_LABEL = { normal: 'Normal', dificil: 'Difícil', pesadilla: 'Pesadilla' };
 
 // t = la línea la escribe el jugador; f = se escribe sola al presionar ENTER
-const SNIPPETS = [
+export const SNIPPETS = [
   [['def calculate_total(items):', 1], ['    total = 0', 0], ['    for item in items:', 0], ['        total += item.price', 1], ['    return total', 0]],
   [['class Database:', 1], ['    def __init__(self, name):', 0], ['        self.name = name', 0], ['        self.tables = {}', 1], ['    def create_table(self, name, cols):', 0], ['        table = {"name": name}', 1]],
   [['function processData(input) {', 1], ['    const result = [];', 0], ['    for (let i = 0; i < input.length; i++) {', 0], ['        if (input[i].valid) {', 1], ['            result.push(transform(input[i]));', 0], ['        }', 0], ['    }', 0], ['    return result;', 1], ['}', 0]],
@@ -150,7 +150,6 @@ export class CodingApp extends App {
       if (this.typed.length >= this.target.length) this.completeLine();
     } else {
       this.error = 0.3; this.combo = 0;
-      play('error', { volume: 0.15 });
     }
     return true;
   }
@@ -318,7 +317,7 @@ export class CodingApp extends App {
   }
 }
 
-function highlight(text) {
+export function highlight(text) {
   const escd = String(h`${text}`);
   return raw(escd.replace(KEYWORDS, '<span class="kw">$1</span>').replace(/(&quot;[^&]*&quot;)/g, '<span class="str">$1</span>'));
 }

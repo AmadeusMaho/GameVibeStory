@@ -5,7 +5,7 @@ export const HW_ORDER = ['cpu', 'ram', 'disk', 'display', 'cooling', 'psu', 'mot
 
 export const HW = {
   cpu: {
-    name: 'Procesador', short: 'CPU', icon: 'cpuIcon', basePrice: 80,
+    name: 'Procesador', short: 'CPU', icon: 'cpuIcon', basePrice: 240,
     tiers: [
       { from: 'Pentium 75MHz', to: 'Pentium 100MHz', watts: 40 },
       { from: 'Pentium 100MHz', to: 'Pentium 133MHz', watts: 50 },
@@ -18,7 +18,7 @@ export const HW = {
     effect: 'Tareas más rápidas y más círculos por segundo en proyectos.',
   },
   ram: {
-    name: 'Memoria RAM', short: 'RAM', icon: 'ramIcon', basePrice: 200,
+    name: 'Memoria RAM', short: 'RAM', icon: 'ramIcon', basePrice: 420,
     tiers: [
       { from: '16 MB', to: '32 MB', watts: 5 },
       { from: '32 MB', to: '48 MB', watts: 7 },
@@ -31,7 +31,7 @@ export const HW = {
     effect: '+1 tarea simultánea por nivel y círculos con más puntos.',
   },
   disk: {
-    name: 'Disco Duro', short: 'HDD', icon: 'hddIcon', basePrice: 90,
+    name: 'Disco Duro', short: 'HDD', icon: 'hddIcon', basePrice: 270,
     tiers: [
       { from: '850 MB', to: '1.2 GB', watts: 10 },
       { from: '1.2 GB', to: '2.1 GB', watts: 12 },
@@ -42,7 +42,7 @@ export const HW = {
     effect: 'Más ofertas en la Bolsa de Trabajo y páginas que cargan más rápido.',
   },
   display: {
-    name: 'Placa de Video', short: 'GPU', icon: 'gpuIcon', basePrice: 100,
+    name: 'Placa de Video', short: 'GPU', icon: 'gpuIcon', basePrice: 300,
     tiers: [
       { from: 'Standard VGA', to: 'S3 Trio64', watts: 15 },
       { from: 'S3 Trio64', to: 'S3 ViRGE', watts: 20 },
@@ -55,7 +55,7 @@ export const HW = {
     effect: 'Duplica el pago por tarea y aumenta el daño de los círculos.',
   },
   cooling: {
-    name: 'Refrigeración', short: 'FAN', icon: 'fanIcon', basePrice: 75,
+    name: 'Refrigeración', short: 'FAN', icon: 'fanIcon', basePrice: 225,
     tiers: [
       { from: 'Disipador básico', to: 'Ventilador activo', watts: 4 },
       { from: 'Ventilador activo', to: 'Cooler Turbo', watts: 6 },
@@ -68,7 +68,7 @@ export const HW = {
     effect: 'Tareas más rápidas, mejor pago y menos bugs en proyectos.',
   },
   psu: {
-    name: 'Fuente de Poder', short: 'PSU', icon: 'psuIcon', basePrice: 60,
+    name: 'Fuente de Poder', short: 'PSU', icon: 'psuIcon', basePrice: 180,
     tiers: [
       { from: 'Fuente 150W', to: 'Fuente 200W', capacity: 200 },
       { from: 'Fuente 200W', to: 'Fuente 250W', capacity: 250 },
@@ -79,7 +79,7 @@ export const HW = {
     effect: 'Más watts disponibles para el resto de los componentes.',
   },
   motherboard: {
-    name: 'Placa Madre', short: 'MB', icon: 'mbIcon', basePrice: 150,
+    name: 'Placa Madre', short: 'MB', icon: 'mbIcon', basePrice: 450,
     tiers: [
       { from: 'Socket 5', to: 'Socket 7', watts: 8, intervalReduction: 0.03, powerBonus: 0.01 },
       { from: 'Socket 7', to: 'Super Socket 7', watts: 12, intervalReduction: 0.06, powerBonus: 0.02 },

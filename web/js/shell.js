@@ -20,6 +20,7 @@ export const ICON_DEFS = {
   winamp: { label: 'Winamp', img: 'winamp', app: 'winamp' },
   achievements: { label: 'Logros', img: 'achievements', app: 'achievements' },
   coding: { label: 'Code Editor', img: 'coding', app: 'coding' },
+  taller: { label: 'Taller', img: 'taller', app: 'taller' },
   download: { label: 'WinOptimizer Pro', img: 'download', special: 'malware' },
 };
 
@@ -216,18 +217,75 @@ export class Shell {
   }
   clearFull() { this.el.fullscreen.className = ''; this.el.fullscreen.innerHTML = ''; }
 
+  /**
+   * Bucle de encendido: pantalla de "apagado", botón, prueba del hardware y
+   * arranque. Si falta una pieza, falla y espera que lo apaguen de nuevo.
+   */
+  async powerOn() {
+    let first = true;
+    let resolveFirst;
+    if (!this.firstBoot) this.firstBoot = new Promise((r) => { resolveFirst = r; });
+    for (;;) {
+      await this.powerScreen();
+      const fault = this.game.bootFault();
+      if (fault) { await this.postFail(fault); continue; }
+      const ok = await this.boot();
+      if (!ok) continue;                      // lo apagaron durante el arranque
+      if (first && resolveFirst) { first = false; resolveFirst(); }
+      await new Promise((r) => { this.onPowerOff = r; }); // espera hasta que lo apaguen
+    }
+  }
+
+  /** Botón físico de la torre (modo 3D). */
+  pressPower() {
+    const g = this.game;
+    if (this.pendingPower) { const f = this.pendingPower; this.pendingPower = null; f(); return; }
+    // encendido: apagado a la fuerza
+    this.bootId = (this.bootId || 0) + 1;
+    if (g.state === 'desktop') Save.write('auto', g);
+    g.apps.winamp?.stop();
+    g.wm.closeAll();
+    this.el.taskbar.classList.add('hidden');
+    this.el.screen.classList.remove('busy');
+    g.state = 'off';
+    this.full('', 'boot');
+    tube('power-off', 650);
+    if (this.onPowerOff) { const f = this.onPowerOff; this.onPowerOff = null; f(); }
+    if (this.onFailOff) { const f = this.onFailOff; this.onFailOff = null; f(); }
+  }
+
+  /** El PC no arranca: cada pieza faltante falla a su manera. */
+  async postFail(fault) {
+    const g = this.game;
+    if (fault === 'psu') { await new Promise((r) => setTimeout(r, 400)); return; } // ni la luz
+    g.state = 'fail';
+    tube('power-on', 650);
+    if (fault === 'dead' || fault === 'ram') this.full('', 'boot');
+    if (fault === 'ram') beeps([0.9, 0.9, 0.9]);
+    if (fault === 'video') this.full(h`<div class="no-signal">SIN SEÑAL</div>`, 'boot center');
+    if (fault === 'fan' || fault === 'disk') {
+      this.full(h`<img class="bios-logo" src="${img('bios')}" alt=""><div class="lines">${`AMIBIOS (C)1994 American Megatrends Inc.\n\n${fault === 'fan' ? 'CPU Fan Error!\nPress F1 to Resume' : 'Non-System disk or disk error\nReplace and press any key when ready'}`}</div>`, 'boot');
+      beeps([0.15]);
+    }
+    await new Promise((r) => { this.onFailOff = r; });
+  }
+
   powerScreen() {
     return new Promise((resolve) => {
       const el = this.full(h`<div class="power-btn">${raw('<svg width="30" height="30" viewBox="0 0 30 30"><path d="M10 7a10 10 0 1 0 10 0" fill="none" stroke="#3c3" stroke-width="3" stroke-linecap="round"/><path d="M15 3v11" stroke="#3c3" stroke-width="3" stroke-linecap="round"/></svg>')}</div>
         <div>Presiona el botón o cualquier tecla para encender el PC</div>`, 'power center');
-      const go = () => { window.removeEventListener('keydown', go); el.removeEventListener('click', go); initAudio(); tube('power-on', 650); resolve(); };
+      const go = () => { this.pendingPower = null; window.removeEventListener('keydown', go); el.removeEventListener('click', go); initAudio(); if (!this.game.bootFault()) tube('power-on', 650); resolve(); };
+      this.pendingPower = go;
       el.addEventListener('click', go);
       window.addEventListener('keydown', go);
     });
   }
 
+  /** Arranque normal. Devuelve false si lo apagaron a mitad de camino. */
   async boot() {
     const g = this.game;
+    const id = this.bootId = (this.bootId || 0) + 1;
+    const alive = () => id === this.bootId;
     g.state = 'boot';
     this.el.taskbar.classList.add('hidden');
     this.el.screen.classList.add('busy');
@@ -271,19 +329,24 @@ export class Shell {
       }
       out.textContent = text;
       await wait(110);
+      if (!alive()) return false;
     }
     await wait(700);
     window.removeEventListener('keydown', sk);
+    if (!alive()) return false;
     this.full('Iniciando Windows 95...', 'boot');
     await wait(900);
+    if (!alive()) return false;
     this.full(h`<div class="clouds"></div><div class="brand"><div class="ms">Microsoft®</div><div class="win">Windows<sup>95</sup></div></div><div class="bar"></div>`, 'splash center');
     await wait(2200);
+    if (!alive()) return false;
     this.clearFull();
     this.el.screen.classList.remove('busy');
     this.el.taskbar.classList.remove('hidden');
     g.state = 'desktop';
     play('startup', { volume: 0.7 });
     g.emit('desktopReady');
+    return true;
   }
 
   async malware() {
@@ -298,7 +361,7 @@ export class Shell {
     g.stats.bsods++;
     play('bsod', { volume: 0.6 });
     g.apps.winamp?.stop();
-    if (g.apps.particular.project) g.apps.particular.fail('malware');
+    g.apps.trabajo.failSelected('malware');
     const lost = g.lose(g.money * 0.8);
     this.full(h`<div class="bsod-inner"><span class="bsod-title"> Windows </span>
 Se ha producido una excepción grave 0E en 0137:BFF9B3D4 en VxD VMM(01) +
@@ -335,9 +398,23 @@ Se ha producido una excepción grave 0E en 0137:BFF9B3D4 en VxD VMM(01) +
     await new Promise((r) => { this.el.fullscreen.addEventListener('click', r, { once: true }); window.addEventListener('keydown', r, { once: true }); });
     await tube('power-off', 650);
     this.full('', 'boot');
-    await this.powerScreen();
-    await this.boot();
+    if (this.onPowerOff) { const f = this.onPowerOff; this.onPowerOff = null; f(); }
   }
+}
+
+/** Pitidos del parlante del PC (código de error de la BIOS). */
+function beeps(durations) {
+  try {
+    const ctx = beeps.ctx || (beeps.ctx = new AudioContext());
+    let t = ctx.currentTime + 0.1;
+    for (const d of durations) {
+      const o = ctx.createOscillator(), gn = ctx.createGain();
+      o.type = 'square'; o.frequency.value = 880; gn.gain.value = 0.05;
+      o.connect(gn).connect(ctx.destination);
+      o.start(t); o.stop(t + d);
+      t += d + 0.25;
+    }
+  } catch { /* sin audio */ }
 }
 
 /** Animación del tubo CRT al encender/apagar. */

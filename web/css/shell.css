@@ -167,3 +167,18 @@ body:not(.crt-off) #screen {
   85% { opacity: 1; transform: scale(.003, .004); }
   100% { opacity: 0; transform: scale(0, 0); }
 }
+
+/* ---------- Modo 3D ---------- */
+body.mode3d { display: block; }
+body.mode3d:not(.flat) #crt { display: none; }
+/* sentado frente al PC: pantalla completa como en 2D, sin la pieza alrededor */
+body.mode3d.flat #room-gl { visibility: hidden; }
+body.mode3d #room-gl { position: fixed; inset: 0; z-index: 1; }
+body.mode3d #room-css { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+body.mode3d #room-css #screen { pointer-events: auto; left: auto; top: auto; border-radius: 14px; }
+.room-hud { position: fixed; right: 12px; bottom: 12px; display: flex; gap: 6px; z-index: 20; }
+.room-hud button { width: 40px; height: 40px; padding: 0; display: grid; place-items: center; background: #c0c0c0; border: none;
+  box-shadow: inset -1px -1px #000, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf; cursor: pointer; }
+.room-hud button:active, .room-hud button.on { box-shadow: inset 1px 1px #000, inset -1px -1px #fff, inset 2px 2px #808080, inset -2px -2px #dfdfdf; }
+.room-hud .badge { position: absolute; transform: translate(12px, -12px); background: #c00; color: #fff; font: bold 10px Arial; border-radius: 8px; padding: 1px 4px; }
+.no-signal { color: #30ff40; font: bold 26px "Courier New", monospace; border: 3px solid #30ff40; padding: 10px 24px; background: #001800; }

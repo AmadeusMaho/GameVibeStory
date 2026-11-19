@@ -33,6 +33,24 @@
 .code .caret.off { visibility: hidden; }
 .code-float { position: absolute; right: 16px; bottom: 30px; font: bold 18px Arial, sans-serif; color: #008000; pointer-events: none; }
 
+/* ---------- Trabajo (encargos) ---------- */
+.enc { padding: 4px 6px 6px; gap: 4px; }
+.enc-head { align-items: center; padding: 3px 4px; box-shadow: var(--sunken); }
+.enc-slot { padding: 3px 4px; margin-bottom: 2px; }
+.enc-slot.sel { background: #000080; color: #fff; }
+.enc .dim { color: #505050; }
+.enc-slot.sel .dim { color: #c0c0ff; }
+.enc-offer { padding: 5px 6px; margin-bottom: 5px; display: flex; flex-direction: column; gap: 2px; }
+.enc-tip { font-size: 10px; margin: 4px 0 0; }
+.enc .tag { color: #fff; padding: 0 4px; font-size: 10px; line-height: 14px; }
+.enc-work { box-shadow: var(--sunken); background: #c0c0c0; }
+.enc-comps { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 4px 0; }
+.enc-comps .comp { height: 52px; padding: 3px; display: flex; flex-direction: column; justify-content: center; }
+.enc-focus .fill { background: linear-gradient(90deg, #a0a000, #e06000, #e00000); }
+.enc-type { font-size: 14px; line-height: 22px; display: flex; flex-direction: column; justify-content: flex-end; padding-left: 6px !important; }
+.enc-type .dim-line { color: #808080; }
+.enc-type .dim-line .kw, .enc-type .dim-line .str { color: inherit; font-weight: normal; }
+
 /* ---------- Winamp (piel clásica) ---------- */
 .app-winamp { background: #23232e; }
 .winamp { padding: 5px; color: #00e000; font-family: "Arial", sans-serif; font-size: 10px; background: linear-gradient(#3a3a4a, #22222c); }

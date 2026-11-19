@@ -6,7 +6,7 @@ import { play } from '../core/audio.js';
 import { msgBox, progressDialog } from '../core/ui.js';
 import { img } from '../core/assets.js';
 import { HW, HW_ORDER } from '../data/hardware.js';
-import { PROJECTS, DIFFICULTIES } from '../data/work.js';
+import { DIFFICULTIES, CONTRACT_TYPES } from '../data/work.js';
 
 const PAGES = {
   home: { title: 'Página de inicio', url: 'http://www.home.msn.com/' },
@@ -29,9 +29,9 @@ const FAVORITES = [
 
 export const SOFTWARE = [
   { id: 'winbatch', name: 'WinBatch', price: 500, icon: 'winbatch',
-    desc: 'Automatiza el trabajo freelance: toma una tarea nueva cada 3 segundos sin que hagas clic.' },
-  { id: 'coding', name: 'Code Editor', price: 5000, icon: 'coding', needTasks: 250,
-    desc: 'Programa tus propias aplicaciones y véndelas. Ingresos mensuales mientras estén a la venta.' },
+    desc: 'Macros de teclado. Escriben un poco por usted.' },
+  { id: 'coding', name: 'Code Editor', price: 2500, icon: 'coding', needTasks: 30,
+    desc: 'Programe y venda sus propias aplicaciones.' },
   { id: 'soon1', name: 'Próximamente...', soon: true, desc: 'Nueva aplicación disponible pronto.' },
   { id: 'soon2', name: 'Próximamente...', soon: true, desc: 'Nueva aplicación disponible pronto.' },
 ];
@@ -71,10 +71,6 @@ export class ExplorerApp extends App {
     this.loading = 0;         // tiempo restante de carga
     this.loadTotal = 1;
     this.pending = null;
-    this.board = [];
-    this.selectedJob = -1;
-    this.refreshLeft = 3;
-    this.refreshCooldown = 0;
     this.message = '';
     this.messageTimer = 0;
   }
@@ -82,18 +78,6 @@ export class ExplorerApp extends App {
   get title() { return `${PAGES[this.page].title} - Microsoft Internet Explorer`; }
   get icon() { return img('explorer'); }
   get size() { return { w: 680, h: 500 }; }
-
-  onOpen() { if (!this.board.length) this.refreshBoard(); }
-
-  refreshBoard() {
-    const unlocked = this.game.apps.trabajo.unlocked;
-    const pool = PROJECTS.filter((p) => unlocked.has(p.difficulty));
-    const size = 5 + (this.game.hw.disk || 0);
-    this.board = [];
-    const copy = [...pool];
-    while (this.board.length < size && copy.length) this.board.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0]);
-    this.selectedJob = -1;
-  }
 
   say(msg) { this.message = msg; this.messageTimer = 3; }
 
@@ -115,10 +99,6 @@ export class ExplorerApp extends App {
       if (this.loading <= 0) { this.page = this.pending.page; this.sub = this.pending.sub; this.pending = null; }
     }
     if (this.messageTimer > 0) this.messageTimer -= dt;
-    if (this.refreshCooldown > 0) {
-      this.refreshCooldown -= dt;
-      if (this.refreshCooldown <= 0) this.refreshLeft = 3;
-    }
   }
 
   async onAction(action, d) {
@@ -134,6 +114,7 @@ export class ExplorerApp extends App {
         const why = g.upgrade(d.stat);
         if (why) { this.say(why); msgBox({ title: 'PC Shop', icon: 'warning', text: why }); break; }
         play('install', { volume: 0.5 });
+        if (g.mode3d) { this.say('Llegó a la caja.'); break; }
         this.say(`${HW[d.stat].name} mejorado a ${g.hwName(d.stat)}.`);
         await progressDialog({ title: 'Asistente para agregar nuevo hardware', text: `Instalando ${g.hwName(d.stat)}...\nWindows está configurando el controlador.`, duration: 1800 });
         break;
@@ -141,7 +122,7 @@ export class ExplorerApp extends App {
       case 'buyapp': {
         const s = SOFTWARE.find((x) => x.id === d.id);
         if (!s || g.flag('app_' + s.id)) break;
-        if (s.needTasks && g.stats.tasksCompleted < s.needTasks) { this.say(`Requiere ${s.needTasks} tareas completadas.`); break; }
+        if (s.needTasks && g.stats.tasksCompleted < s.needTasks) { this.say(`Requiere ${s.needTasks} encargos entregados.`); break; }
         if (!g.spend(s.price)) { this.say('Dinero insuficiente.'); break; }
         play('install', { volume: 0.5 });
         await progressDialog({ title: `Instalación de ${s.name}`, text: `Copiando archivos de ${s.name}...`, duration: 2000 });
@@ -150,24 +131,8 @@ export class ExplorerApp extends App {
         this.say(`${s.name} instalado.`);
         break;
       }
-      case 'selectjob': this.selectedJob = Number(d.i); break;
-      case 'acceptjob': {
-        const job = this.board[Number(d.i)];
-        if (!job) break;
-        const proj = g.apps.particular;
-        if (proj.project) { msgBox({ title: 'Aviso', icon: 'warning', text: 'Ya tiene un proyecto en curso.\nComplete o cancele el proyecto actual antes de aceptar uno nuevo.' }); break; }
-        proj.start(job);
-        this.board.splice(Number(d.i), 1);
-        this.selectedJob = -1;
-        break;
-      }
-      case 'refreshjobs':
-        if (this.refreshLeft > 0) {
-          this.refreshBoard();
-          this.refreshLeft--;
-          if (this.refreshLeft === 0) this.refreshCooldown = 30;
-        }
-        break;
+      case 'acceptjob': g.apps.trabajo.acceptOffer(Number(d.id)); break;
+      case 'refreshjobs': g.apps.trabajo.refresh(); break;
       case 'buysong': {
         const s = SONGS[d.i];
         const owned = g.flags.songs || (g.flags.songs = []);
@@ -252,7 +217,7 @@ export class ExplorerApp extends App {
         ${FAVORITES.filter((f) => !f.flag || this.game.flag(f.flag)).map((f) => h`<td class="mid"><a data-action="go" data-page="${f.page}">${f.label}</a></td>`)}
       </tr></table>
       <p>Seleccione una página de <b>Favoritos</b> para comenzar.</p>
-      <p class="blink-text">¡NUEVO! Visite la Bolsa de Trabajo y gane dinero con proyectos particulares.</p>
+      <p class="blink-text">¡NUEVO! La Bolsa de Trabajo muestra todas las ofertas de encargos de su zona.</p>
       <hr><small>Esta página se ve mejor con Internet Explorer a 800x600. Visitante número 000${fmt(1337 + this.game.stats.tasksCompleted)}</small>
     </div>`;
   }
@@ -295,7 +260,7 @@ export class ExplorerApp extends App {
         <tr><th>Modelo</th><th>${stat === 'psu' ? 'Capacidad' : 'Consumo'}</th><th>Estado</th></tr>
         ${def.tiers.map((t, i) => h`<tr class="${i < lvl ? 'dim' : ''}">
           <td>${t.to}</td><td>${stat === 'psu' ? t.capacity + 'W' : t.watts + 'W'}</td>
-          <td>${i < lvl ? 'Comprado' : i === lvl ? h`<button class="btn small" data-action="buyhw" data-stat="${stat}" ${why ? 'disabled' : ''}>Comprar ${money(price)}</button>` : 'Bloqueado'}</td>
+          <td>${i < lvl ? 'Comprado' : i === lvl && g.boxed[stat] ? 'En la caja' : i === lvl ? h`<button class="btn small" data-action="buyhw" data-stat="${stat}" ${why ? 'disabled' : ''}>Comprar ${money(price)}</button>` : 'Bloqueado'}</td>
         </tr>`)}
       </table>
       ${why && price != null ? h`<p class="bad">${why}</p>` : ''}
@@ -312,7 +277,7 @@ export class ExplorerApp extends App {
           const locked = s.needTasks && g.stats.tasksCompleted < s.needTasks;
           return h`<tr>
             <td class="mid" width="56">${s.icon ? h`<img src="${img(s.icon)}" width="40" height="40">` : '?'}</td>
-            <td><b>${s.name}</b><br><small>${s.desc}</small>${locked ? h`<br><small class="bad">Requiere ${s.needTasks} tareas completadas (${g.stats.tasksCompleted}/${s.needTasks}).</small>` : ''}</td>
+            <td><b>${s.name}</b><br><small>${s.desc}</small>${locked ? h`<br><small class="bad">Requiere ${s.needTasks} encargos entregados (${g.stats.tasksCompleted}/${s.needTasks}).</small>` : ''}</td>
             <td class="mid" width="110">${s.soon ? h`<i class="dim">Pronto</i>` : owned ? h`<b class="ok">Instalado</b>` : h`
               <b>${money(s.price)}</b><br><button class="btn small" data-action="buyapp" data-id="${s.id}" ${locked || g.money < s.price ? 'disabled' : ''}>Descargar</button>`}</td>
           </tr>`;
@@ -322,24 +287,25 @@ export class ExplorerApp extends App {
   }
 
   pageJobs() {
-    const busy = !!this.game.apps.particular.project;
+    const t = this.game.apps.trabajo;
+    const full = t.active.length >= t.slots();
     return h`<div class="web-page">
-      <center><h2>Bolsa de Trabajo</h2><i>Proyectos particulares para freelancers</i></center>
-      <p>Proyectos disponibles: <b>${this.board.length}</b> &nbsp;
-        <button class="btn small" data-action="refreshjobs" ${this.refreshLeft > 0 ? '' : 'disabled'}>Buscar otros (${this.refreshLeft})</button>
-        ${this.refreshCooldown > 0 ? h` <small class="dim">Nuevas búsquedas en ${Math.ceil(this.refreshCooldown)}s</small>` : ''}</p>
-      ${busy ? h`<p class="bad">Ya tiene un proyecto en curso. Termínelo antes de aceptar otro.</p>` : ''}
+      <center><h2>Bolsa de Trabajo</h2><i>Encargos para freelancers de su zona</i></center>
+      <p>Ofertas disponibles: <b>${t.board.length}</b> &nbsp;
+        <button class="btn small" data-action="refreshjobs" ${t.refreshLeft > 0 ? '' : 'disabled'}>Buscar otros (${t.refreshLeft})</button>
+        ${t.refreshCooldown > 0 ? h` <small class="dim">Nuevas búsquedas en ${Math.ceil(t.refreshCooldown)}s</small>` : ''}</p>
+      ${full ? h`<p class="bad">No tiene espacios libres.</p>` : ''}
       <table class="web-table" width="100%" cellpadding="4">
-        <tr><th>Proyecto</th><th>Dificultad</th><th>Trabajo</th><th>Pago</th><th></th></tr>
-        ${this.board.map((p, i) => h`<tr class="${this.selectedJob === i ? 'sel' : ''}" data-action="selectjob" data-i="${i}" data-silent>
-          <td><b>${p.name}</b><br><small>${p.desc}</small></td>
+        <tr><th>Encargo</th><th>Tipo</th><th>Dificultad</th><th>Trabajo</th><th>Pago</th><th></th></tr>
+        ${t.board.map((p) => h`<tr>
+          <td><b>${p.name}</b><br><small>${p.client} — ${p.desc}</small></td>
+          <td class="nowrap">${CONTRACT_TYPES[p.type].label}</td>
           <td style="color:${DIFFICULTIES[p.difficulty].color}" class="bold nowrap">${DIFFICULTIES[p.difficulty].label}</td>
-          <td class="nowrap">${p.hp} pts</td>
+          <td class="nowrap">${p.maxHp} pts</td>
           <td class="ok bold">${money(p.reward)}</td>
-          <td><button class="btn small" data-action="acceptjob" data-i="${i}" ${busy ? 'disabled' : ''}>Aceptar</button></td>
+          <td><button class="btn small" data-action="acceptjob" data-id="${p.id}" ${full ? 'disabled' : ''}>Aceptar</button></td>
         </tr>`)}
       </table>
-      <p><small>Sus componentes trabajan solos en el proyecto: mejore su PC para terminar a tiempo.</small></p>
     </div>`;
   }
 
@@ -395,10 +361,6 @@ export class ExplorerApp extends App {
     </div>`;
   }
 
-  save() { return { board: this.board.map((p) => p.name) }; }
-  load(d) {
-    if (d?.board) this.board = d.board.map((n) => PROJECTS.find((p) => p.name === n)).filter(Boolean);
-  }
 }
 
 function arrow(ch, color = '#000') {
